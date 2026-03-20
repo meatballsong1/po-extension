@@ -105,7 +105,16 @@ ${itemsStr}
     buttonLabel: '${btnStr}',
 };`;
 
+    const before = content;
     content = content.replace(/var CHANGELOG\s*=\s*\{[\s\S]*?\};(\s*\/\/ ={3,})/, newBlock + '$1');
+
+    if (content === before) {
+        // Regex didn't match — try a more lenient replacement
+        content = before.replace(/var CHANGELOG\s*=\s*\{[\s\S]*?\};/, newBlock + ';');
+    }
+    if (content === before) {
+        throw new Error('Could not find CHANGELOG object in content.js — regex did not match. Check the file manually.');
+    }
 
     // Update VEIL_CURRENT_VERSION
     content = content.replace(
@@ -245,12 +254,12 @@ app.post('/api/publish', async (req, res) => {
 
         send(`Starting publish: ${oldVersion} → ${newVersion}`);
 
-        // Pre-clean: if there are already uncommitted changes from a previous failed publish, commit them first
+        // Pre-clean: commit any leftover dirty files locally (don't push yet — push happens at end)
         const preDirty = await git.status();
         if (!preDirty.isClean()) {
             await git.add('.');
             await git.commit(`v${oldVersion}: pre-publish cleanup`);
-            send(`Cleaned up ${preDirty.files.length} leftover uncommitted file(s) from previous run`);
+            send(`Cleaned up ${preDirty.files.length} leftover file(s) from previous run`);
         }
 
         // 2. Update manifest version
@@ -276,6 +285,7 @@ app.post('/api/publish', async (req, res) => {
         // 6. Stage all and commit — check status AFTER patching files
         await git.add('.');
         const status = await git.status();
+        const stagedCount = status.staged ? status.staged.length : status.files.filter(f => f.index !== ' ' && f.index !== '?').length;
         if (status.files.length === 0) {
             send('No changes detected after patching — already up to date', 'warn');
         } else {
