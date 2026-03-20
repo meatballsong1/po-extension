@@ -1579,12 +1579,24 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var UPDATE_MESSAGES = ['a'];
+// ---- EDIT THIS to change the random messages shown when an update is found
+var UPDATE_MESSAGES = [
+    "bro update your extension fr",
+    "you're cooked on that old version ngl",
+    "new version just dropped, don't be slow",
+    "update is out, quit slacking",
+    "new shit just hit, go update",
+    "you're behind. fix that.",
+    "update available, don't be that guy",
+];
 // -------------------------------------------------------------------------
 
-var VEIL_CURRENT_VERSION = '2.4.5';
+var VEIL_CURRENT_VERSION = '2.4.6';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
+function getRandomUpdateMsg() {
+    return UPDATE_MESSAGES[Math.floor(Math.random() * UPDATE_MESSAGES.length)];
+}
 
 // The styled blue in-page update box (not a notif — a persistent banner)
 function showUpdateBanner(currentVersion, latestVersion) {
@@ -1615,7 +1627,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
         'animation:po-drain 0s !important',
     ].join(';');
 
-    
+    var randomMsg = getRandomUpdateMsg();
     var dl = document.createElement('a');
     dl.href = 'https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip';
     dl.textContent = 'Download ZIP';
@@ -1640,7 +1652,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
 
     var msg = document.createElement('div');
     msg.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.85);font-weight:500;line-height:1.5;margin-bottom:6px;';
-    msg.innerHTML = 'You’re on <b style="color:#fff;">v' + currentVersion + '</b> but there’s a newer version <b style="color:#00b0ff;">v' + latestVersion + '</b>. ' ;
+    msg.innerHTML = 'You’re on <b style="color:#fff;">v' + currentVersion + '</b> but there’s a newer version <b style="color:#00b0ff;">v' + latestVersion + '</b>. ' + randomMsg;
 
     var body = document.createElement('div');
     body.style.cssText = 'flex:1;min-width:0;';
@@ -1684,10 +1696,10 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.4.5',
+    version: '2.4.6',
 
-    title: '',
-    subtitle: '',
+    title: '2.4.6',
+    subtitle: 'new update',
 
     image: '',
 
@@ -1695,29 +1707,80 @@ var CHANGELOG = {
     mode: 'bullets',
 
     items: [
-        'icons are FULLY fixed so you can effortlessly swap',
-        'Stability and random crashes have been fixed',
-        'Diddy has been added to improve stability',
-        'FULL customization to your pocket option page so you can FAKE WHATEVER THE FUCK YOU WANT!',
-        'New stream mode so you can hide certain aspects of pocket option like your balance',
-        'An about tab that you probably dont give a shit about',
-        'This new changelog popup obviously',
+
     ],
 
     text: '',
 
-    // links mode example:
-    //   items: [
-    //     { text: 'View full changelog', url: 'https://github.com/you/repo' },
-    //     { text: 'Join the Discord',    url: 'https://discord.gg/xyz' },
-    //     'Or just a plain text row with no link',
-    //   ]
-
-    buttonLabel: 'Pretty tuff',
+    buttonLabel: 'cool ',
 };
 // ============================================================
 
 var CL_KEY = 'po_seen_version';
+
+function showUpdateToast(version) {
+    var existing = document.getElementById('po-update-toast');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var toast = document.createElement('div');
+    toast.id = 'po-update-toast';
+    toast.style.cssText = [
+        'position:fixed !important',
+        'bottom:24px !important',
+        'right:24px !important',
+        'z-index:2147483647 !important',
+        'background:rgba(8,24,40,0.97) !important',
+        'border:1px solid rgba(0,176,255,0.35) !important',
+        'border-radius:14px !important',
+        'padding:13px 16px !important',
+        'display:flex !important',
+        'align-items:center !important',
+        'gap:10px !important',
+        'box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 24px rgba(0,176,255,0.12) !important',
+        'font-family:-apple-system,BlinkMacSystemFont,sans-serif !important',
+        'max-width:320px !important',
+        'backdrop-filter:blur(20px) !important',
+        'opacity:0 !important',
+        'transform:translateY(12px) !important',
+        'transition:opacity 0.35s ease,transform 0.35s cubic-bezier(0.22,1,0.36,1) !important',
+    ].join(';');
+
+    var icon = document.createElement('div');
+    icon.style.cssText = 'width:28px;height:28px;border-radius:50%;background:rgba(0,176,255,0.15);border:1px solid rgba(0,176,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+    icon.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#00b0ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    var text = document.createElement('div');
+    text.style.cssText = 'flex:1;';
+
+    var line1 = document.createElement('div');
+    line1.style.cssText = 'font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#00b0ff;margin-bottom:3px;';
+    line1.textContent = 'extension updated';
+
+    var line2 = document.createElement('div');
+    line2.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.85);font-weight:500;line-height:1.4;';
+    line2.textContent = 'Your extension has been updated to v' + version + '. Enjoy.';
+
+    text.appendChild(line1);
+    text.appendChild(line2);
+    toast.appendChild(icon);
+    toast.appendChild(text);
+    (document.body || document.documentElement).appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Auto dismiss after 5s
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(12px)';
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 400);
+    }, 5000);
+}
 
 function showChangelog() {
     injectStyles();
@@ -1766,6 +1829,10 @@ function showChangelog() {
         overlay.style.transition = 'opacity 0.25s ease';
         setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 250);
         var s = {}; s[CL_KEY] = CHANGELOG.version; chrome.storage.local.set(s);
+        // Fire the "updated to version x" blue notification
+        setTimeout(function() {
+            showUpdateToast(CHANGELOG.version);
+        }, 400);
     }
     document.getElementById('po-cl-dismiss').addEventListener('click', dismiss);
     document.getElementById('po-cl-blur').addEventListener('click', dismiss);

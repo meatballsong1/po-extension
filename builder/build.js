@@ -71,47 +71,40 @@ function updateUpdatesXml(version, extId) {
     fs.writeFileSync(p, xml);
 }
 
-function updateChangelogInContentJs(version, title, subtitle, items, mode, image) {
+function updateChangelogInContentJs(version, title, subtitle, items, mode, image, buttonLabel) {
     const p = path.join(EXT_PATH, 'content.js');
     let content = fs.readFileSync(p, 'utf8');
 
-    // Build items array string
-    const itemsStr = items.map(i => `        '${i.replace(/'/g, "\\'")}',`).join('\n');
-    const imageStr = image || '';
+    // Find the CHANGELOG object block and replace it entirely — no risky field-by-field regexes
+    const itemsStr = (items || []).map(i => `        '${i.replace(/\\/g,'\\\\').replace(/'/g, "\\'")}',`).join('\n');
+    const imageStr = (image || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
+    const titleStr = (title || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
+    const subStr   = (subtitle || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
+    const btnStr   = (buttonLabel || 'Got it').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
 
-    // Replace version
-    content = content.replace(
-        /version:\s*'[^']+',/,
-        `version: '${version}',`
-    );
-    // Replace title
-    content = content.replace(
-        /title:\s*'[^']*',/,
-        `title: '${title.replace(/'/g, "\\'")}',`
-    );
-    // Replace subtitle
-    content = content.replace(
-        /subtitle:\s*'[^']*',/,
-        `subtitle: '${subtitle.replace(/'/g, "\\'")}',`
-    );
-    // Replace image
-    content = content.replace(
-        /image:\s*'[^']*',/,
-        `image: '${imageStr}',`
-    );
-    // Replace mode
-    content = content.replace(
-        /mode:\s*'[^']*',/,
-        `mode: '${mode}',`
-    );
+    const newBlock = `var CHANGELOG = {
+    version: '${version}',
 
-    // Replace items array
-    content = content.replace(
-        /items:\s*\[([\s\S]*?)\],(\s*\/\/ Used when mode is 'text')/,
-        `items: [\n${itemsStr}\n    ],$2`
-    );
+    title: '${titleStr}',
+    subtitle: '${subStr}',
 
-    // Also update VEIL_CURRENT_VERSION if present
+    image: '${imageStr}',
+
+    // 'bullets' | 'text' | 'links' | 'none'
+    mode: '${mode || 'bullets'}',
+
+    items: [
+${itemsStr}
+    ],
+
+    text: '',
+
+    buttonLabel: '${btnStr}',
+};`;
+
+    content = content.replace(/var CHANGELOG\s*=\s*\{[\s\S]*?\};(\s*\/\/ ={3,})/, newBlock + '$1');
+
+    // Update VEIL_CURRENT_VERSION
     content = content.replace(
         /var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/,
         `var VEIL_CURRENT_VERSION = '${version}';`
@@ -231,10 +224,10 @@ app.get('/api/diff', async (req, res) => {
 
 // POST publish — the big one
 app.post('/api/publish', async (req, res) => {
-    const { bumpType, title, subtitle, items, mode, imageUrl, imageIsUrl, extId } = req.body;
+    const { bumpType, title, subtitle, items, mode, imageUrl, imageIsUrl, extId, buttonLabel } = req.body;
 
     try {
-        // 1. Read current version and bump
+        // 1. Read current version — always from manifest (already synced to GitHub on startup)
         const manifest    = readManifest();
         const oldVersion  = manifest.version;
         const newVersion  = bumpVersion(oldVersion, bumpType || 'patch');
@@ -266,7 +259,7 @@ app.post('/api/publish', async (req, res) => {
 
         // 5. Update changelog in content.js
         const imageField = imageIsUrl ? imageUrl : (imageUrl ? path.basename(imageUrl) : '');
-        updateChangelogInContentJs(newVersion, title, subtitle, items || [], mode || 'bullets', imageField);
+        updateChangelogInContentJs(newVersion, title, subtitle, items || [], mode || 'bullets', imageField, buttonLabel || 'Got it');
         send('Updated changelog in content.js');
 
         // 6. Check git status

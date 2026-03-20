@@ -1,20 +1,13 @@
 // -- NOTIFICATION SYSTEM ----------------------------------------------
-const NOTIF_DURATION = 4000; // ms before auto-dismiss
+const NOTIF_DURATION = 4000;
 
 function showNotif({ title = 'pocket option config', desc = '', isError = false } = {}) {
     const stack = document.getElementById('po-notif-stack');
     if (!stack) return;
-
     const notif = document.createElement('div');
     notif.className = 'po-notif' + (isError ? ' error' : '');
-
-    const checkIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M2 5L4.2 7.5L8 3" stroke="${isError ? '#ff4444' : '#00b0ff'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`;
-    const errorIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M5 2V5.5M5 7.5V8" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>`;
-
+    const checkIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 5L4.2 7.5L8 3" stroke="${isError ? '#ff4444' : '#00b0ff'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const errorIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 2V5.5M5 7.5V8" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round"/></svg>`;
     notif.innerHTML = `
         <div class="po-notif-icon">${isError ? errorIcon : checkIcon}</div>
         <div class="po-notif-body">
@@ -28,22 +21,10 @@ function showNotif({ title = 'pocket option config', desc = '', isError = false 
         </button>
         <div class="po-notif-progress"><div class="po-notif-progress-bar"></div></div>
     `;
-
     stack.appendChild(notif);
-
-    // Animate in (next frame so transition fires)
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => notif.classList.add('show'));
-    });
-
-    // Auto-dismiss
+    requestAnimationFrame(() => { requestAnimationFrame(() => notif.classList.add('show')); });
     const timer = setTimeout(() => dismissNotif(notif), NOTIF_DURATION);
-
-    // Manual close
-    notif.querySelector('.po-notif-close').addEventListener('click', () => {
-        clearTimeout(timer);
-        dismissNotif(notif);
-    });
+    notif.querySelector('.po-notif-close').addEventListener('click', () => { clearTimeout(timer); dismissNotif(notif); });
 }
 
 function dismissNotif(notif) {
@@ -53,46 +34,32 @@ function dismissNotif(notif) {
 }
 
 // -- BUILD CHANGE LOG -------------------------------------------------
-// Returns a human-readable list of what changed between oldData and newData
 function buildChangeLog(oldData, newData) {
     const lines = [];
-
     const label = (key) => ({
-        isEnabled:          'swap script',
-        isGuruEnabled:      'guru title',
-        isSpoofEnabled:     'stat spoof',
-        isVerifiedEnabled:  'spoof verified',
-        isStreamModeEnabled:'stream mode',
-        streamMaskBalance:  'mask balance',
-        streamMaskId:       'mask account id',
-        streamMaskIp:       'mask ip',
-        streamMaskEmail:    'mask email',
-        customName:         'display alias',
-        streamEmailAlias:   'email alias',
-        spBranch:           'branch level',
-        spLevel:            'disp level',
-        spExp:              'current xp',
-        spTrades:           'total trades',
-        spTurnover:         'turnover',
-        spProfit:           'profit',
+        isEnabled:           'swap script',
+        isGuruEnabled:       'guru title',
+        isSpoofEnabled:      'stat spoof',
+        isVerifiedEnabled:   'spoof verified',
+        isStreamModeEnabled: 'stream mode',
+        streamMaskBalance:   'mask balance',
+        streamMaskId:        'mask account id',
+        streamMaskIp:        'mask ip',
+        streamMaskEmail:     'mask email',
+        customName:          'display alias',
+        streamEmailAlias:    'email alias',
+        spBranch:            'branch level',
+        spLevel:             'disp level',
+        spExp:               'current xp',
+        spTrades:            'total trades',
+        spTurnover:          'turnover',
+        spProfit:            'profit',
     }[key] || key);
-
     const boolKeys = ['isEnabled','isGuruEnabled','isSpoofEnabled','isVerifiedEnabled','isStreamModeEnabled',
                       'streamMaskBalance','streamMaskId','streamMaskIp','streamMaskEmail'];
     const valKeys  = ['customName','streamEmailAlias','spBranch','spLevel','spExp','spTrades','spTurnover','spProfit'];
-
-    boolKeys.forEach(k => {
-        if (oldData[k] !== newData[k]) {
-            lines.push(`${label(k)} -> ${newData[k] ? 'on' : 'off'}`);
-        }
-    });
-
-    valKeys.forEach(k => {
-        if (oldData[k] !== newData[k]) {
-            lines.push(`${label(k)} updated`);
-        }
-    });
-
+    boolKeys.forEach(k => { if (oldData[k] !== newData[k]) lines.push(`${label(k)} -> ${newData[k] ? 'on' : 'off'}`); });
+    valKeys.forEach(k =>  { if (oldData[k] !== newData[k]) lines.push(`${label(k)} updated`); });
     return lines;
 }
 
@@ -111,25 +78,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabId === 'about') populateAbout();
         });
     });
-    // Set initial save btn state
     updateSaveBtn('main');
 
-    // Hide/show save button based on active tab
     function updateSaveBtn(tabId) {
         var btn = document.getElementById('saveBtn');
         if (!btn) return;
-        var hide = (tabId === 'about' || tabId === 'customize');
-        btn.style.display = hide ? 'none' : 'block';
+        btn.style.display = (tabId === 'about' || tabId === 'customize') ? 'none' : 'block';
     }
 
-    // Populate About tab stats
     function set(id, val) {
         var el = document.getElementById(id);
         if (el) el.textContent = val;
     }
 
     function populateAbout() {
-        // Manifest info --- always available synchronously
         try {
             var m = chrome.runtime.getManifest();
             set('ab-name',    m.name || 'pocket option config');
@@ -140,16 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
             set('ab-version', '-');
             set('ab-mv', 'MV3');
         }
-
-        // Browser detection
         var ua = navigator.userAgent;
-        var browser = 'Edge';
-        if (ua.indexOf('Edg') !== -1)     browser = 'Edge';
-        else if (ua.indexOf('OPR') !== -1) browser = 'Opera';
+        var browser = 'Chrome';
+        if (ua.indexOf('Edg') !== -1)      browser = 'Edge';
+        else if (ua.indexOf('OPR') !== -1)  browser = 'Opera';
         else if (ua.indexOf('Brave') !== -1) browser = 'Brave';
         set('ab-browser', browser);
-
-        // Active tab URL
         try {
             chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
                 if (chrome.runtime.lastError) { set('ab-url', 'n/a'); return; }
@@ -165,8 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         } catch(e) { set('ab-url', 'n/a'); }
-
-        // Live storage values
         chrome.storage.local.get({ isEnabled: true, isStreamModeEnabled: false }, function(data) {
             if (chrome.runtime.lastError) return;
             set('ab-stream', data.isStreamModeEnabled ? 'on' : 'off');
@@ -174,20 +130,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Always populate on load so values show immediately when About tab is opened
     populateAbout();
 
-    // Check for updates
+    // -- CHECK FOR UPDATES --
     function checkUpdate() {
-        var btn = document.getElementById('update-btn');
+        var btn    = document.getElementById('update-btn');
         var result = document.getElementById('update-result');
         var verEl  = document.getElementById('update-result-ver');
         var msgEl  = document.getElementById('update-result-msg');
+        var dlBtn  = document.getElementById('download-btn');
+        var steps  = document.getElementById('install-steps');
         var link   = document.getElementById('refresh-link');
 
         btn.disabled = true;
         btn.textContent = 'Checking...';
         result.style.display = 'none';
+        if (dlBtn)  dlBtn.style.display  = 'none';
+        if (steps)  steps.style.display  = 'none';
+        if (link)   link.style.display   = 'none';
 
         var m = chrome.runtime.getManifest();
         var current = m.version;
@@ -200,26 +160,35 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(function(data) {
                 var latest = data.version;
                 result.style.display = 'block';
-                link.style.display = 'none';
 
                 if (latest === current) {
                     result.className = 'update-result up-to-date';
                     verEl.style.display = 'none';
-                    msgEl.textContent = 'You are on the latest version (' + current + ')';
+                    msgEl.textContent = "you're on v" + current + ", that's the latest. you're good.";
                 } else {
                     result.className = 'update-result has-update';
                     verEl.style.display = 'block';
                     verEl.textContent = 'v' + latest + ' available';
-                    msgEl.textContent = 'You have v' + current + '. Download the latest and load it.';
-                    link.style.display = 'inline-block';
-                    link.textContent = 'Show install steps';
+                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + ". updating you now would be sick.";
+                    if (link) { link.style.display = 'inline-block'; link.textContent = 'how to update'; }
+
+                    // Fire changelog popup + update banner on the active tab
+                    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                        if (tabs && tabs[0] && tabs[0].id) {
+                            chrome.tabs.sendMessage(tabs[0].id, {
+                                type: 'PO_UPDATE_AVAILABLE',
+                                current: current,
+                                latest: latest,
+                            });
+                        }
+                    });
                 }
             })
             .catch(function(e) {
                 result.style.display = 'block';
                 result.className = 'update-result update-error';
                 verEl.style.display = 'none';
-                msgEl.textContent = 'Could not check: ' + e.message;
+                msgEl.textContent = 'could not check: ' + e.message;
             })
             .finally(function() {
                 btn.disabled = false;
@@ -227,20 +196,72 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    function showDownloadOption() {
-        document.getElementById('download-btn').style.display = 'block';
-        document.getElementById('install-steps').style.display = 'block';
-        document.getElementById('refresh-link').style.display = 'none';
+    // Detect browser and return extensions page URL + name
+    function getBrowserInfo() {
+        var ua = navigator.userAgent;
+        if (ua.indexOf('Edg/') !== -1)     return { name: 'Edge',    url: 'edge://extensions',    label: 'edge://extensions' };
+        if (ua.indexOf('OPR/') !== -1)     return { name: 'Opera',   url: 'opera://extensions',   label: 'opera://extensions' };
+        if (ua.indexOf('Brave') !== -1)    return { name: 'Brave',   url: 'brave://extensions',   label: 'brave://extensions' };
+        if (ua.indexOf('Vivaldi') !== -1)  return { name: 'Vivaldi', url: 'vivaldi://extensions', label: 'vivaldi://extensions' };
+        return { name: 'Chrome', url: 'chrome://extensions', label: 'chrome://extensions' };
     }
 
-    // Update check button
+    function openExtPage() {
+        var browser = getBrowserInfo();
+        chrome.tabs.create({ url: browser.url }, function() {
+            if (chrome.runtime.lastError) {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(browser.url).then(function() {
+                    var openBtn = document.getElementById('open-ext-page-btn');
+                    if (openBtn) {
+                        openBtn.textContent = 'Copied ' + browser.url + ' — paste in address bar';
+                        openBtn.style.color = '#24b15b';
+                        openBtn.style.borderColor = 'rgba(36,177,91,0.4)';
+                    }
+                });
+            }
+        });
+    }
+
+    function showDownloadOption() {
+        var dlBtn = document.getElementById('download-btn');
+        var steps = document.getElementById('install-steps');
+        var link  = document.getElementById('refresh-link');
+        if (dlBtn)  dlBtn.style.display  = 'block';
+        if (steps)  steps.style.display  = 'block';
+        if (link)   link.style.display   = 'none';
+
+        var browser = getBrowserInfo();
+
+        // Update instruction text to show the right browser URL
+        var extPageName = document.getElementById('ext-page-name');
+        if (extPageName) extPageName.textContent = browser.label;
+
+        // Wire open extensions button
+        var openBtn = document.getElementById('open-ext-page-btn');
+        if (openBtn) {
+            openBtn.textContent = 'Open ' + browser.name + ' Extensions Page';
+            openBtn.onclick = openExtPage;
+        }
+
+        // Wire download button — after click, auto-open extensions page after 2s
+        if (dlBtn && !dlBtn._wired) {
+            dlBtn._wired = true;
+            dlBtn.addEventListener('click', function() {
+                setTimeout(function() {
+                    openExtPage();
+                }, 2000);
+            });
+        }
+    }
+
     var updateBtn = document.getElementById('update-btn');
     if (updateBtn) updateBtn.addEventListener('click', checkUpdate);
 
     var refreshLink = document.getElementById('refresh-link');
     if (refreshLink) refreshLink.addEventListener('click', showDownloadOption);
 
-    // Popout button -> sends message to content.js to show floating widget
+    // Popout button
     document.getElementById('popoutBtn').addEventListener('click', function() {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (tabs && tabs[0] && tabs[0].id) {
@@ -250,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Enable Editing Mode -> sends message then closes popup
+    // Enable Editing Mode
     document.getElementById('enableEditingBtn').addEventListener('click', function() {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (tabs && tabs[0] && tabs[0].id) {
@@ -260,33 +281,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Stream mode toggle -> animate options panel in/out
-    const streamToggle = document.getElementById('streamModeToggle');
+    // Stream mode toggle
+    const streamToggle  = document.getElementById('streamModeToggle');
     const streamOptions = document.getElementById('streamOptions');
 
-    function setStreamPanel(active, animate) {
+    function setStreamPanel(active) {
         if (active) {
-            // Set to actual scroll height so transition has a concrete target
-            streamOptions.style.maxHeight = streamOptions.scrollHeight + 'px';
-            streamOptions.style.opacity = '1';
-            streamOptions.style.transform = 'translateY(0)';
+            streamOptions.style.maxHeight    = streamOptions.scrollHeight + 'px';
+            streamOptions.style.opacity      = '1';
+            streamOptions.style.transform    = 'translateY(0)';
             streamOptions.style.pointerEvents = 'all';
             streamOptions.classList.add('stream-active');
         } else {
-            // Collapse back to 0
-            streamOptions.style.maxHeight = '0';
-            streamOptions.style.opacity = '0';
-            streamOptions.style.transform = 'translateY(-6px)';
+            streamOptions.style.maxHeight    = '0';
+            streamOptions.style.opacity      = '0';
+            streamOptions.style.transform    = 'translateY(-6px)';
             streamOptions.style.pointerEvents = 'none';
             streamOptions.classList.remove('stream-active');
         }
     }
 
-    streamToggle.addEventListener('change', function() {
-        setStreamPanel(streamToggle.checked, true);
-    });
+    streamToggle.addEventListener('change', function() { setStreamPanel(streamToggle.checked); });
 
-    // Default values
+    // Defaults
     const DEFAULTS = {
         isEnabled: true,
         isGuruEnabled: false,
@@ -320,33 +337,26 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('streamMaskEmail').checked   = data.streamMaskEmail;
         document.getElementById('streamEmailAlias').value    = data.streamEmailAlias;
         document.getElementById('customName').value          = data.customName;
-        // Reflect saved state on load - show instantly without animation
         if (data.isStreamModeEnabled) {
-            streamOptions.style.transition = 'none';
-            streamOptions.style.maxHeight = '999px';
-            streamOptions.style.opacity = '1';
-            streamOptions.style.transform = 'translateY(0)';
+            streamOptions.style.transition    = 'none';
+            streamOptions.style.maxHeight     = '999px';
+            streamOptions.style.opacity       = '1';
+            streamOptions.style.transform     = 'translateY(0)';
             streamOptions.style.pointerEvents = 'all';
             streamOptions.classList.add('stream-active');
-            requestAnimationFrame(function() {
-                requestAnimationFrame(function() {
-                    streamOptions.style.transition = '';
-                });
-            });
+            requestAnimationFrame(() => requestAnimationFrame(() => { streamOptions.style.transition = ''; }));
         }
-        document.getElementById('spBranch').value            = data.spBranch;
-        document.getElementById('spLevel').value             = data.spLevel;
-        document.getElementById('spExp').value               = data.spExp;
-        document.getElementById('spTrades').value            = data.spTrades;
-        document.getElementById('spTurnover').value          = data.spTurnover;
-        document.getElementById('spProfit').value            = data.spProfit;
+        document.getElementById('spBranch').value   = data.spBranch;
+        document.getElementById('spLevel').value    = data.spLevel;
+        document.getElementById('spExp').value      = data.spExp;
+        document.getElementById('spTrades').value   = data.spTrades;
+        document.getElementById('spTurnover').value = data.spTurnover;
+        document.getElementById('spProfit').value   = data.spProfit;
     });
 
-    // Save data + fire notifications
+    // Save
     document.getElementById('saveBtn').addEventListener('click', () => {
-        // Snapshot what's currently saved before overwriting
         chrome.storage.local.get(DEFAULTS, (oldData) => {
-
             const newData = {
                 isEnabled:           document.getElementById('masterToggle').checked,
                 isGuruEnabled:       document.getElementById('guruToggle').checked,
@@ -367,7 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 spProfit:            document.getElementById('spProfit').value,
             };
 
-            // Basic validation
             const errors = [];
             if (!newData.customName) errors.push('display alias is empty');
             if (newData.isStreamModeEnabled && !newData.streamEmailAlias) errors.push('email alias is empty');
@@ -376,10 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                     if (tabs && tabs[0] && tabs[0].id) {
                         errors.forEach(err => chrome.tabs.sendMessage(tabs[0].id, {
-                            type: 'PO_NOTIFY',
-                            title: 'pocket option config',
-                            desc: err,
-                            isError: true
+                            type: 'PO_NOTIFY', title: 'pocket option config', desc: err, isError: true
                         }));
                     }
                 });
@@ -388,30 +394,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             chrome.storage.local.set(newData, () => {
                 const changes = buildChangeLog(oldData, newData);
-                const desc = changes.length === 0
-                    ? 'settings applied!'
-                    : 'settings applied! - ' + changes.join(', ');
-
-                // In-page notification on the PocketOption tab
+                const desc = changes.length === 0 ? 'settings applied!' : 'settings applied! - ' + changes.join(', ');
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                     if (tabs && tabs[0] && tabs[0].id) {
                         chrome.tabs.sendMessage(tabs[0].id, {
-                            type: 'PO_NOTIFY',
-                            title: 'pocket option config',
-                            desc: desc,
-                            isError: false
+                            type: 'PO_NOTIFY', title: 'pocket option config', desc: desc, isError: false
                         });
                     }
                 });
-
-                // Button feedback
                 const btn = document.getElementById('saveBtn');
                 btn.innerText = 'Saved!';
                 btn.style.background = '#24B15B';
-                setTimeout(() => {
-                    btn.innerText = 'Apply Settings';
-                    btn.style.background = 'var(--accent)';
-                }, 1000);
+                setTimeout(() => { btn.innerText = 'Apply Settings'; btn.style.background = 'var(--accent)'; }, 1000);
             });
         });
     });

@@ -171,7 +171,7 @@
   .hist-dl:hover { background: #0a2030; }
 
   /* CARDS */
-  .card { background: #151520; border: 1px solid #2a2a3d; border-radius: 12px; overflow: hidden; }
+  .card { background: #151520; border: 1px solid #2a2a3d; border-radius: 12px; }
   .card-hdr {
     display: flex; align-items: center; gap: 8px;
     padding: 8px 12px;
@@ -180,6 +180,10 @@
     background: #111119;
   }
   .card-body { padding: 11px; display: flex; flex-direction: column; gap: 9px; }
+  .card-body::-webkit-scrollbar { width: 6px; }
+  .card-body::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  .card-body::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  .card-body::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
 
   /* FIELDS */
   .field { display: flex; flex-direction: column; gap: 5px; }
@@ -231,6 +235,10 @@
 
   /* ITEMS */
   .items-list { display: flex; flex-direction: column; gap: 6px; }
+  .items-list::-webkit-scrollbar { width: 6px; }
+  .items-list::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  .items-list::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  .items-list::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
   .item-row { display: flex; gap: 6px; align-items: center; }
   .item-row input { flex: 1; }
   .item-del {
@@ -388,6 +396,10 @@
         <div class="field">
           <div class="fl">Subtitle</div>
           <input type="text" id="cl-subtitle" placeholder="this is a pretty big update">
+        </div>
+        <div class="field">
+          <div class="fl">Dismiss Button Label</div>
+          <input type="text" id="cl-btn-label" placeholder="Pretty tuff">
         </div>
         <div class="field">
           <div class="fl">Content Mode</div>
@@ -635,6 +647,7 @@ async function publish() {
     bumpType: S.bump,
     title: document.getElementById('cl-title').value,
     subtitle: document.getElementById('cl-subtitle').value,
+    buttonLabel: document.getElementById('cl-btn-label').value || 'Pretty tuff',
     mode: S.mode, items: items,
     imageUrl: S.imageUrl, imageIsUrl: S.imageIsUrl,
     extId: document.getElementById('ext-id').value.trim(),
