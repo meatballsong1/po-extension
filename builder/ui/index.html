@@ -169,6 +169,14 @@
     display: inline-block;
   }
   .hist-dl:hover { background: #0a2030; }
+  .hist-del {
+    width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0;
+    background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.2);
+    color: rgba(255,69,58,0.6); cursor: pointer; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: inherit; transition: all 0.15s; padding: 0;
+  }
+  .hist-del:hover { background: rgba(255,69,58,0.25); color: #ff453a; border-color: rgba(255,69,58,0.5); }
 
   /* CARDS */
   .card { background: #151520; border: 1px solid #2a2a3d; border-radius: 12px; }
@@ -653,11 +661,38 @@ function clearImg() {
 function renderHist(history) {
   var el = document.getElementById('hist-list');
   if (!history.length) { el.innerHTML = '<div style="font-size:11px;color:#555;">No releases yet.</div>'; return; }
-  el.innerHTML = history.map(function(h) {
+  el.innerHTML = history.map(function(h, i) {
     var date = new Date(h.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     var dl = h.zipFile ? '<a class="hist-dl" href="/api/download/' + h.version + '" download>Download ZIP</a>' : '';
-    return '<div class="hist-item"><div class="hist-top"><span class="hist-ver">v' + h.version + '</span><span class="hist-date">' + date + '</span></div><div class="hist-title">' + (h.title||'') + '</div>' + dl + '</div>';
+    return '<div class="hist-item">' +
+      '<div class="hist-top">' +
+        '<span class="hist-ver">v' + h.version + '</span>' +
+        '<div style="display:flex;align-items:center;gap:6px;">' +
+          '<span class="hist-date">' + date + '</span>' +
+          '<button class="hist-del" data-index="' + i + '" title="Delete">x</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="hist-title">' + (h.title||'') + '</div>' +
+      dl +
+    '</div>';
   }).join('');
+
+  // Wire delete buttons
+  el.querySelectorAll('.hist-del').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var idx = parseInt(btn.getAttribute('data-index'));
+      deleteHistoryItem(idx);
+    });
+  });
+}
+
+async function deleteHistoryItem(idx) {
+  try {
+    var r = await fetch('/api/delete-history/' + idx, { method: 'DELETE' });
+    var d = await r.json();
+    if (d.success) renderHist(d.history);
+  } catch(e) { console.error('delete failed', e); }
 }
 
 async function publish() {

@@ -242,6 +242,14 @@ app.post('/api/publish', async (req, res) => {
 
         send(`Starting publish: ${oldVersion} → ${newVersion}`);
 
+        // Pre-clean: if there are already uncommitted changes from a previous failed publish, commit them first
+        const preDirty = await git.status();
+        if (!preDirty.isClean()) {
+            await git.add('.');
+            await git.commit(`v${oldVersion}: pre-publish cleanup`);
+            send(`Cleaned up ${preDirty.files.length} leftover uncommitted file(s) from previous run`);
+        }
+
         // 2. Update manifest version
         manifest.version = newVersion;
         writeManifest(manifest);
@@ -262,16 +270,13 @@ app.post('/api/publish', async (req, res) => {
         updateChangelogInContentJs(newVersion, title, subtitle, items || [], mode || 'bullets', imageField, buttonLabel || 'Got it');
         send('Updated changelog in content.js');
 
-        // 6. Check git status
+        // 6. Stage all and commit — check status AFTER patching files
+        await git.add('.');
         const status = await git.status();
         if (status.files.length === 0) {
-            send('No changes to commit', 'warn');
+            send('No changes detected after patching — already up to date', 'warn');
         } else {
-            // 7. Stage all
-            await git.add('.');
             send(`Staged ${status.files.length} file(s)`);
-
-            // 8. Commit with version as message
             const commitMsg = `v${newVersion}: ${title}`;
             await git.commit(commitMsg);
             send(`Committed: "${commitMsg}"`);
@@ -434,6 +439,18 @@ app.get('/api/download/:version', (req, res) => {
 // GET history
 app.get('/api/history', (req, res) => {
     res.json(readHistory());
+});
+
+// DELETE history item by index
+app.delete('/api/delete-history/:idx', (req, res) => {
+    try {
+        const idx = parseInt(req.params.idx);
+        const history = readHistory();
+        if (isNaN(idx) || idx < 0 || idx >= history.length) return res.status(400).json({ error: 'invalid index' });
+        history.splice(idx, 1);
+        writeHistory(history);
+        res.json({ success: true, history });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── START ─────────────────────────────────────────────────────────────────
