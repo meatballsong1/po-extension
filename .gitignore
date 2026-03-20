@@ -1,5 +1,6 @@
 node_modules/
 builder/uploads/
+builder/
 builder/release-history.json
 builder/*.zip
 builder/github-token.txt

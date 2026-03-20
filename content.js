@@ -1741,8 +1741,8 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 var CHANGELOG = {
     version: '2.5.4',
 
-    title: 'minor update',
-    subtitle: 'security patches',
+    title: 'anwjidep',
+    subtitle: 'djpiwjspi',
 
     image: '',
 
@@ -1750,12 +1750,12 @@ var CHANGELOG = {
     mode: 'bullets',
 
     items: [
-        'nothing new',
+
     ],
 
     text: '',
 
-    buttonLabel: 'cool',
+    buttonLabel: 'djsdjdihhhh',
 };
 // ============================================================
 
