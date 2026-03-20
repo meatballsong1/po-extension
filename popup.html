@@ -1,652 +1,583 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>PO Extension Builder</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0c0c10;
+    --card: rgba(255,255,255,0.045);
+    --card-b: rgba(255,255,255,0.08);
+    --accent: #00b0ff;
+    --border: rgba(255,255,255,0.07);
+    --dim: rgba(255,255,255,0.38);
+    --mid: rgba(255,255,255,0.72);
+    --err: #ff453a;
+    --p: #bf5af2;
+    --pk: #ff375f;
+    --r: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    overflow: hidden;
+    /* Prevents Chrome from adding scrollbar to the popup window */
+  }
+
+  ::-webkit-scrollbar { display: none; }
 
   body {
-    font-family: 'Inter', Arial, sans-serif;
-    font-size: 12px;
-    background: #0d0d18;
-    color: #e0e0e0;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    width: 300px;
+    background: var(--bg);
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    border-radius: 20px;
+    overflow: visible;
+    border: 1px solid rgba(255,255,255,0.06);
   }
 
-  /* TOP BAR */
-  #top {
-    background: #13131f;
-    border-bottom: 1px solid #2a2a3d;
-    padding: 0 20px;
-    height: 50px;
+  /* ------ HEADER ------ */
+  .header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    flex: 0 0 50px;
+    justify-content: space-between;
+    padding: 13px 14px 0;
   }
-  #top-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: #bf5af2;
-    letter-spacing: 0.3px;
-  }
-  #top-sub { font-size: 11px; color: #555; }
-  #top-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-  #git-pill {
-    display: flex; align-items: center; gap: 6px;
-    background: #1a1a2a; border: 1px solid #2a2a3d;
-    border-radius: 20px; padding: 4px 12px;
-    font-size: 11px; color: #888;
-  }
-  #git-dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
-  #git-dot.clean { background: #24b15b; }
-  #git-dot.dirty { background: #ffd60a; }
-  #git-text { color: #aaa; }
-
-  /* CONTENT AREA */
-  #content {
-    display: flex;
-    flex: 1 1 0;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  /* SIDEBAR */
-  #sidebar {
-    width: 270px;
-    flex: 0 0 270px;
-    background: #111119;
-    border-right: 1px solid #2a2a3d;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 12px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  #sidebar::-webkit-scrollbar { width: 6px; }
-  #sidebar::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
-  #sidebar::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
-  #sidebar::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
-
-  /* MAIN */
-  #main {
-    flex: 1 1 0;
-    min-width: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 14px 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  #main::-webkit-scrollbar { width: 6px; }
-  #main::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
-  #main::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
-  #main::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
-
-  /* SIDEBAR ELEMENTS */
-  .s-label {
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #bf5af2;
-    margin-bottom: -8px;
-  }
-
-  .ver-block {
-    background: #1a102a;
-    border: 1px solid #3a1f5a;
-    border-radius: 10px;
-    padding: 9px 11px;
-  }
-  .ver-n {
-    font-size: 22px;
-    font-weight: bold;
-    font-family: 'Courier New', monospace;
-    color: #bf5af2;
-    line-height: 1;
-    margin-bottom: 2px;
-  }
-  .ver-sub { font-size: 11px; color: #666; }
-
-  .file-box {
-    background: #151520;
-    border: 1px solid #2a2a3d;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .file-box-hdr {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid #2a2a3d;
-    font-size: 11px; font-weight: bold; color: #ccc;
-  }
-  .file-cnt {
-    background: #1e1a10; border: 1px solid #3a3010;
-    border-radius: 8px; padding: 2px 8px;
-    font-size: 10px; color: #ffd60a;
-    font-family: 'Courier New', monospace;
-  }
-  .file-cnt.ok { background: #0f2018; border-color: #1a4028; color: #24b15b; }
-  .file-list { max-height: 130px; overflow-y: auto; }
-  .file-row {
-    display: flex; align-items: center; gap: 8px;
-    padding: 5px 12px; border-bottom: 1px solid #1e1e2e;
+  .header-title {
     font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, var(--p), var(--pk), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: lowercase;
   }
-  .file-tag {
-    width: 16px; height: 16px; border-radius: 3px;
-    background: #2a2010; color: #ffd60a;
-    font-size: 9px; font-weight: bold;
+  /* Popout button */
+  #popoutBtn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--card-b);
+    cursor: pointer;
     display: flex; align-items: center; justify-content: center;
+    padding: 0;
+    transition: background 0.2s, box-shadow 0.2s;
     flex-shrink: 0;
+    margin: 0; margin-top: 0;
+    width: 28px;
   }
-  .file-name {
-    font-family: 'Courier New', monospace;
-    font-size: 10px; color: #ffd60a;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  #popoutBtn:hover {
+    background: rgba(191,90,242,0.15);
+    box-shadow: 0 0 10px rgba(191,90,242,0.3);
+    transform: none;
+  }
+  #popoutBtn svg { width: 13px; height: 13px; }
+
+  /* ------ TABS ------ */
+  .tabs {
+    display: flex;
+    padding: 10px 10px 0;
+    gap: 2px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 2px;
+    cursor: pointer;
+    color: var(--dim);
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    transition: color 0.2s;
+    z-index: 0;
+  }
+  /* glow layer */
+  .tab::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px 8px 0 0;
+    opacity: 0;
+    background: radial-gradient(ellipse at 50% 120%, rgba(191,90,242,0.22) 0%, rgba(255,55,95,0.1) 45%, transparent 70%);
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .tab:hover { color: #fff; }
+  .tab:hover::after { opacity: 1; }
+  .tab.active { color: #fff; }
+  .tab.active::after { opacity: 1; }
+  /* active underline */
+  .tab.active::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20%; right: 20%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--p), var(--pk));
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 0 8px rgba(191,90,242,0.7);
   }
 
-  .hist-list { display: flex; flex-direction: column; gap: 6px; }
-  .hist-item {
-    background: #151520; border: 1px solid #2a2a3d;
-    border-radius: 9px; padding: 9px 11px;
+  /* tab border-bottom line */
+  .tab-bar-line {
+    height: 1px;
+    background: var(--border);
+    margin: 0 10px;
   }
-  .hist-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-  .hist-ver { font-size: 12px; font-weight: bold; color: #bf5af2; font-family: 'Courier New', monospace; }
-  .hist-date { font-size: 10px; color: #555; }
-  .hist-title { font-size: 11px; color: #888; margin-bottom: 6px; }
-  .hist-dl {
-    font-size: 10px; color: #00b0ff;
-    text-decoration: none;
-    border: 1px solid #0a3a5a; border-radius: 5px; padding: 2px 7px;
-    display: inline-block;
-  }
-  .hist-dl:hover { background: #0a2030; }
 
-  /* CARDS */
-  .card { background: #151520; border: 1px solid #2a2a3d; border-radius: 12px; overflow: hidden; }
-  .card-hdr {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px;
-    border-bottom: 1px solid #2a2a3d;
-    font-size: 11px; font-weight: bold; color: #ccc;
-    background: #111119;
-  }
-  .card-body { padding: 11px; display: flex; flex-direction: column; gap: 9px; }
+  /* ------ CONTAINER ------ */
+  .container { padding: 12px 14px 14px; }
 
-  /* FIELDS */
-  .field { display: flex; flex-direction: column; gap: 5px; }
-  .fl {
-    font-size: 10px; font-weight: bold;
-    text-transform: uppercase; letter-spacing: 0.5px; color: #666;
+  /* ------ TAB PANELS ------ */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeUp 0.2s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .fl span { text-transform: none; font-weight: normal; color: #444; margin-left: 4px; }
 
-  input[type=text], input[type=number], textarea, select {
-    background: #0d0d18; border: 1px solid #2a2a3d;
-    color: #e0e0e0; border-radius: 8px;
-    padding: 5px 8px; font-size: 11px;
-    font-family: 'Inter', Arial, sans-serif;
-    outline: none; width: 100%;
-    transition: border-color 0.15s;
+  /* ------ SECTION TITLE ------ */
+  .title {
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-transform: lowercase;
+    letter-spacing: 0.4px;
+    background: linear-gradient(90deg, var(--p), var(--pk) 50%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  input:focus, textarea:focus, select:focus { border-color: #6a2ab0; }
-  textarea { resize: vertical; min-height: 75px; line-height: 1.5; }
-  select option { background: #1a1a2e; }
 
-  /* BUMP */
-  .bump-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .bump-btn {
-    background: #0d0d18; border: 1px solid #2a2a3d;
-    border-radius: 9px; padding: 7px 5px;
-    cursor: pointer; text-align: center;
-    transition: all 0.15s; font-family: 'Inter', Arial, sans-serif;
-    color: #ccc;
+  /* ------ GLASS ROW ------ */
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    background: var(--card);
+    padding: 10px 12px;
+    border-radius: var(--r);
+    border: 1px solid var(--card-b);
+    transition: border-color 0.2s, background 0.2s;
   }
-  .bump-btn:hover { border-color: #6a2ab0; background: #1a1028; }
-  .bump-btn.active { border-color: #bf5af2; background: #1e0f30; }
-  .bb-t { display: block; font-size: 11px; font-weight: bold; color: #ddd; margin-bottom: 2px; }
-  .bb-ex { display: block; font-size: 9px; color: #555; font-family: 'Courier New', monospace; }
-  .bump-btn.active .bb-t { color: #bf5af2; }
-  .bump-btn.active .bb-ex { color: #8a4ab0; }
-
-  /* MODE TABS */
-  .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-  .mode-tab {
-    padding: 5px 13px; border-radius: 20px;
-    border: 1px solid #2a2a3d; background: transparent;
-    color: #666; cursor: pointer; font-size: 11px; font-weight: bold;
-    font-family: 'Inter', Arial, sans-serif;
-    transition: all 0.15s;
+  .row:hover {
+    background: rgba(255,255,255,0.065);
+    border-color: rgba(255,255,255,0.13);
   }
-  .mode-tab:hover { border-color: #6a2ab0; color: #ccc; }
-  .mode-tab.active { border-color: #bf5af2; background: #1e0f30; color: #bf5af2; }
+  .row span { font-size: 12.5px; font-weight: 500; color: var(--mid); }
 
-  /* ITEMS */
-  .items-list { display: flex; flex-direction: column; gap: 6px; }
-  .item-row { display: flex; gap: 6px; align-items: center; }
-  .item-row input { flex: 1; }
-  .item-del {
-    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-    background: #200f0f; border: 1px solid #4a1515;
-    color: #ff453a; cursor: pointer; font-size: 14px;
+  /* ------ SWITCH ------ */
+  .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 22px;
+    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .slider:before {
+    position: absolute; content: "";
+    height: 16px; width: 16px;
+    left: 2px; bottom: 2px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  input:checked + .slider {
+    background: linear-gradient(135deg, var(--p), var(--accent));
+    border-color: transparent;
+    box-shadow: 0 0 10px rgba(191,90,242,0.3);
+  }
+  input:checked + .slider:before { transform: translateX(18px); }
+
+  /* ------ FIELDS ------ */
+  .field-group { margin-bottom: 7px; }
+  .field-group.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field-label { font-size: 9px; color: var(--dim); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  input[type="text"], input[type="number"] {
+    width: 100%; padding: 9px 11px; font-size: 12px; font-family: inherit;
+    background: var(--card); border: 1px solid var(--card-b); color: #fff;
+    border-radius: var(--r); outline: none; transition: all 0.2s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color: rgba(191,90,242,0.45);
+    box-shadow: 0 0 0 3px rgba(191,90,242,0.1);
+    background: rgba(255,255,255,0.06);
+  }
+
+  /* ------ STREAM OPTIONS ------ */
+  #streamOptions {
+    overflow: hidden; max-height: 0; opacity: 0;
+    transform: translateY(-5px); pointer-events: none;
+    transition: max-height 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease, transform 0.3s ease;
+  }
+  .stream-info {
+    background: rgba(191,90,242,0.05);
+    border: 1px solid rgba(191,90,242,0.14);
+    border-radius: var(--r); padding: 9px 11px; margin-bottom: 9px;
+    font-size: 10px; color: var(--dim); line-height: 1.6;
+  }
+  .stream-info b { color: var(--p); -webkit-text-fill-color: var(--p); }
+
+  /* ------ SAVE BUTTON ------ */
+  #saveBtn {
+    width: 100%; padding: 11px; margin-top: 10px;
+    background: linear-gradient(135deg, var(--p), var(--pk));
+    border: none; color: #fff; font-weight: 700; font-size: 12px;
+    border-radius: var(--r); cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    letter-spacing: 0.4px; font-family: inherit;
+    box-shadow: 0 4px 16px rgba(191,90,242,0.25);
+  }
+  #saveBtn:hover { opacity: 0.88; box-shadow: 0 6px 22px rgba(191,90,242,0.4); transform: translateY(-1px); }
+  #saveBtn:active { transform: scale(0.97); }
+
+  /* ------ CUSTOMIZE TAB ------ */
+  .cust-desc {
+    font-size: 11px; color: var(--dim); line-height: 1.6;
+    margin-bottom: 16px; padding: 10px 12px;
+    background: var(--card); border: 1px solid var(--card-b);
+    border-radius: var(--r);
+  }
+  .cust-desc b { color: var(--mid); -webkit-text-fill-color: var(--mid); font-weight: 600; }
+
+  #enableEditingBtn {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, rgba(191,90,242,0.15), rgba(255,55,95,0.1));
+    border: 1px solid rgba(191,90,242,0.35);
+    color: #fff; font-weight: 700; font-size: 12.5px;
+    border-radius: var(--r); cursor: pointer;
+    transition: all 0.25s; font-family: inherit;
+    letter-spacing: 0.3px;
+    box-shadow: 0 0 20px rgba(191,90,242,0.12);
+    margin-top: 0;
+  }
+  #enableEditingBtn:hover {
+    background: linear-gradient(135deg, rgba(191,90,242,0.28), rgba(255,55,95,0.18));
+    border-color: rgba(191,90,242,0.6);
+    box-shadow: 0 0 28px rgba(191,90,242,0.3);
+    transform: translateY(-1px);
+  }
+  #enableEditingBtn:active { transform: scale(0.97); }
+
+  .cust-note {
+    margin-top: 10px; font-size: 10px; color: var(--dim);
+    text-align: center; line-height: 1.5;
+  }
+
+  /* ------ FOOTER ------ */
+  .footer-note { margin-top: 10px; font-size: 10px; line-height: 1.4; color: var(--dim); text-align: center; }
+  .footer-note b { color: #ffd60a; -webkit-text-fill-color: #ffd60a; }
+
+  .watermark-container {
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Inter', Arial, sans-serif; transition: background 0.15s;
+    gap: 8px; margin-top: 8px; padding-top: 10px;
+    border-top: 1px solid var(--border);
   }
-  .item-del:hover { background: #3a1515; }
-  .add-btn {
-    width: 100%; padding: 7px;
-    background: rgba(255,255,255,0.02);
-    border: 1px dashed #2a2a3d; border-radius: 8px;
-    color: #555; cursor: pointer; font-size: 12px;
-    font-family: 'Inter', Arial, sans-serif;
-    transition: all 0.15s;
-  }
-  .add-btn:hover { border-color: #6a2ab0; color: #bf5af2; }
+  .watermark-avatar { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--card-b); object-fit: cover; }
+  .watermark-text { font-size: 10px; color: var(--dim); font-weight: 600; letter-spacing: 0.4px; }
 
-  /* IMAGE */
-  .img-area {
-    border: 2px dashed #2a1a40; border-radius: 10px;
-    padding: 18px; text-align: center; cursor: pointer;
-    position: relative; transition: all 0.15s;
-    min-height: 65px; display: flex; align-items: center; justify-content: center;
+  /* ------ ABOUT TAB ------ */
+  .about-stat {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 12px; margin-bottom: 6px;
+    background: var(--card); border: 1px solid var(--card-b);
+    border-radius: var(--r); transition: border-color 0.2s;
   }
-  .img-area:hover { border-color: #6a2ab0; background: #120a1e; }
-  .img-area.has-img { padding: 6px; border-style: solid; }
-  .img-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  #img-preview { width: 100%; max-height: 120px; object-fit: cover; border-radius: 7px; display: none; }
-  .img-hint { font-size: 11px; color: #555; pointer-events: none; }
-  .img-or { text-align: center; font-size: 11px; color: #444; margin: 5px 0; }
-
-  /* NEXT VER */
-  .nv-box {
-    background: #150f20; border: 1px solid #3a1f5a;
-    border-radius: 8px; padding: 8px 12px;
-    font-size: 12px; color: #888;
+  .about-stat:hover { border-color: rgba(191,90,242,0.22); }
+  .about-stat .as-key {
+    font-size: 10px; font-weight: 600; color: var(--dim);
+    text-transform: uppercase; letter-spacing: 0.5px;
   }
-  .nv-box strong { color: #bf5af2; font-family: 'Courier New', monospace; }
-
-  /* PUBLISH BTN */
-  .pub-btn {
-    width: 100%; padding: 10px;
-    background: linear-gradient(135deg, #bf5af2, #ff375f);
-    border: none; border-radius: 10px;
-    color: #fff; font-size: 13px; font-weight: bold;
-    cursor: pointer; font-family: 'Inter', Arial, sans-serif;
-    transition: opacity 0.15s, transform 0.1s;
-    box-shadow: 0 4px 18px rgba(191,90,242,0.25);
+  .about-stat .as-val {
+    font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.85);
+    font-variant-numeric: tabular-nums;
   }
-  .pub-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-  .pub-btn:active { transform: scale(0.98); }
-  .pub-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-
-  /* LOG */
-  .log {
-    background: #080810; border: 1px solid #1e1e30;
-    border-radius: 8px; padding: 10px;
-    font-family: 'Courier New', monospace; font-size: 11px;
-    max-height: 190px; overflow-y: auto; display: none;
+  .about-stat .as-val.grad {
+    background: linear-gradient(90deg, var(--p), var(--pk));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
-  .log.on { display: block; }
-  .log-row { display: flex; gap: 10px; margin-bottom: 3px; line-height: 1.4; }
-  .log-t { color: #444; flex-shrink: 0; }
-  .log-m { color: #aaa; }
-  .log-m.success { color: #24b15b; }
-  .log-m.error   { color: #ff453a; }
-  .log-m.warn    { color: #ffd60a; }
-  .log-m.done    { color: #bf5af2; font-weight: bold; }
+  .about-divider {
+    height: 1px; background: var(--border); margin: 10px 0;
+  }
+  .about-credit {
+    text-align: center; font-size: 10px; color: var(--dim);
+    line-height: 1.7; margin-top: 10px;
+  }
+  .about-credit b { color: rgba(255,255,255,0.6); -webkit-text-fill-color: rgba(255,255,255,0.6); }
 
-  /* global custom scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
+  /* ------ UPDATE CHECK ------ */
+  #update-btn {
+    width: 100%; padding: 10px; margin-top: 10px;
+    background: rgba(0,176,255,0.1);
+    border: 1px solid rgba(0,176,255,0.25);
+    color: #00b0ff; font-weight: 700; font-size: 11.5px;
+    border-radius: var(--r); cursor: pointer;
+    transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
+  }
+  #update-btn:hover {
+    background: rgba(0,176,255,0.2);
+    border-color: rgba(0,176,255,0.5);
+    box-shadow: 0 0 14px rgba(0,176,255,0.2);
+  }
+  #update-btn:active { transform: scale(0.97); }
+  #update-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  #update-result {
+    margin-top: 10px; border-radius: var(--r);
+    padding: 10px 12px; font-size: 11px; line-height: 1.5;
+    display: none;
+  }
+  #update-result.up-to-date {
+    background: rgba(36,177,91,0.08);
+    border: 1px solid rgba(36,177,91,0.2);
+    color: rgba(36,177,91,0.9);
+  }
+  #update-result.has-update {
+    background: rgba(191,90,242,0.08);
+    border: 1px solid rgba(191,90,242,0.25);
+    color: rgba(255,255,255,0.85);
+  }
+  #update-result.update-error {
+    background: rgba(255,69,58,0.08);
+    border: 1px solid rgba(255,69,58,0.2);
+    color: rgba(255,69,58,0.85);
+  }
+  #update-result-ver {
+    font-weight: 800; font-size: 13px;
+    background: linear-gradient(90deg, var(--p), var(--pk));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 4px;
+  }
+  #refresh-link {
+    display: inline-block; margin-top: 8px; padding: 6px 14px;
+    background: linear-gradient(135deg, var(--p), var(--pk));
+    border-radius: 8px; color: #fff; font-weight: 700;
+    font-size: 11px; cursor: pointer; border: none;
+    font-family: inherit; transition: opacity 0.15s;
+  }
+  #refresh-link:hover { opacity: 0.85; }
+
+  #download-btn {
+    width: 100%; padding: 10px; margin-top: 8px;
+    background: rgba(36,177,91,0.1);
+    border: 1px solid rgba(36,177,91,0.25);
+    color: #24b15b; font-weight: 700; font-size: 11.5px;
+    border-radius: var(--r); cursor: pointer;
+    transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
+    display: none;
+  }
+  #download-btn:hover {
+    background: rgba(36,177,91,0.2);
+    border-color: rgba(36,177,91,0.5);
+    box-shadow: 0 0 14px rgba(36,177,91,0.2);
+  }
+  #download-btn:active { transform: scale(0.97); }
+  .install-steps {
+    margin-top: 10px; padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--r); font-size: 10.5px;
+    color: var(--dim); line-height: 1.8; display: none;
+  }
+  .install-steps b { color: var(--mid); -webkit-text-fill-color: var(--mid); }
+  .install-steps ol { padding-left: 16px; }
+
+  /* ------ POPUP NOTIF (not used for page notifs, kept for structure) ------ */
+  #po-notif-stack { display: none; }
 </style>
 </head>
 <body>
 
-<div id="top">
-  <div id="top-title">PO Extension Builder</div>
-  <div id="top-sub">pocket option config</div>
-  <div id="top-right">
-    <div id="git-pill">
-      <div id="git-dot"></div>
-      <span id="git-text">checking...</span>
-    </div>
-  </div>
+<div id="po-notif-stack"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">pocket option config</div>
+  <button id="popoutBtn" title="Pop out to page">
+    <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="4" width="8" height="8" rx="1.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+      <path d="M5.5 1H12M12 1V7.5M12 1L6.5 6.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 </div>
 
-<div id="content">
-
-  <div id="sidebar">
-    <div class="s-label">Current Version</div>
-    <div class="ver-block">
-      <div class="ver-n" id="ver-num">—</div>
-      <div class="ver-sub" id="ver-name">loading...</div>
-    </div>
-
-    <div class="s-label">Changed Files</div>
-    <div class="file-box">
-      <div class="file-box-hdr">
-        Uncommitted
-        <span class="file-cnt ok" id="file-cnt">0</span>
-      </div>
-      <div class="file-list" id="file-list">
-        <div class="file-row" style="color:#555;">loading...</div>
-      </div>
-    </div>
-
-    <div class="s-label">Release History</div>
-    <div class="hist-list" id="hist-list">
-      <div style="font-size:11px;color:#555;">No releases yet.</div>
-    </div>
-  </div>
-
-  <div id="main">
-
-    <div class="card">
-      <div class="card-hdr">🚀 New Release</div>
-      <div class="card-body">
-        <div class="field">
-          <div class="fl">Version Bump</div>
-          <div class="bump-grid">
-            <button class="bump-btn" onclick="selectBump('patch',this)">
-              <span class="bb-t">Patch</span>
-              <span class="bb-ex" id="bx-patch">—</span>
-            </button>
-            <button class="bump-btn active" onclick="selectBump('minor',this)">
-              <span class="bb-t">Minor</span>
-              <span class="bb-ex" id="bx-minor">—</span>
-            </button>
-            <button class="bump-btn" onclick="selectBump('major',this)">
-              <span class="bb-t">Major</span>
-              <span class="bb-ex" id="bx-major">—</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hdr">📝 Changelog</div>
-      <div class="card-body" style="max-height:340px;overflow-y:auto;">
-        <div class="field">
-          <div class="fl">Title</div>
-          <input type="text" id="cl-title" placeholder="Welcome to v2.5!">
-        </div>
-        <div class="field">
-          <div class="fl">Subtitle</div>
-          <input type="text" id="cl-subtitle" placeholder="this is a pretty big update">
-        </div>
-        <div class="field">
-          <div class="fl">Content Mode</div>
-          <div class="mode-tabs">
-            <button class="mode-tab active" onclick="selMode('bullets',this)">Bullets</button>
-            <button class="mode-tab" onclick="selMode('text',this)">Text</button>
-            <button class="mode-tab" onclick="selMode('links',this)">Links</button>
-            <button class="mode-tab" onclick="selMode('none',this)">None</button>
-          </div>
-        </div>
-        <div id="mode-bullets">
-          <div class="field">
-            <div class="fl">Bullet Points</div>
-            <button class="add-btn" onclick="addItem('')" style="margin-bottom:6px;">+ Add bullet</button>
-            <div class="items-list" id="items-list" style="max-height:220px;overflow-y:auto;padding-right:2px;"></div>
-          </div>
-        </div>
-        <div id="mode-text" style="display:none;">
-          <div class="field">
-            <div class="fl">Paragraph</div>
-            <textarea id="cl-text" placeholder="Write your update here..."></textarea>
-          </div>
-        </div>
-        <div id="mode-links" style="display:none;">
-          <div class="field">
-            <div class="fl">Links <span>format: "Label | https://url" or plain text</span></div>
-            <button class="add-btn" onclick="addLink('')" style="margin-bottom:6px;">+ Add link</button>
-            <div class="items-list" id="links-list" style="max-height:220px;overflow-y:auto;padding-right:2px;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hdr">🖼️ Banner Image</div>
-      <div class="card-body">
-        <div class="field">
-          <div class="fl">Upload</div>
-          <div class="img-area" id="upload-area">
-            <input type="file" id="img-file" accept="image/*" onchange="handleImgFile(this)">
-            <img id="img-preview">
-            <div id="upload-hint" class="img-hint">Click or drag an image here</div>
-          </div>
-          <div class="img-or">— or paste a URL —</div>
-          <input type="text" id="img-url" placeholder="https://i.imgur.com/..." oninput="handleImgUrl(this.value)">
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hdr">⚙️ Settings</div>
-      <div class="card-body">
-        <div class="field">
-          <div class="fl">Extension ID <span>from chrome://extensions (dev mode on)</span></div>
-          <input type="text" id="ext-id" placeholder="khaegbogkpcodjifcepgloiiincfnopf" style="font-family:'Courier New',monospace;font-size:11px;">
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-hdr">📦 Publish</div>
-      <div class="card-body">
-        <div class="nv-box" id="nv-box">Next version: <strong>—</strong></div>
-        <button class="pub-btn" id="pub-btn" onclick="publish()">🚀 Build &amp; Publish to GitHub</button>
-        <div class="log" id="log"></div>
-      </div>
-    </div>
-
-  </div>
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="main">Main</div>
+  <div class="tab" data-tab="spoof">Stats</div>
+  <div class="tab" data-tab="stream">Stream</div>
+  <div class="tab" data-tab="customize">Customize</div>
+  <div class="tab" data-tab="about">About</div>
 </div>
+<div class="tab-bar-line"></div>
 
-<script>
-var S = { version: '1.0.0', bump: 'minor', mode: 'bullets', imageUrl: '', imageIsUrl: false };
+<div class="container">
 
-async function init() {
-  await loadStatus();
-}
+  <!-- MAIN TAB -->
+  <div id="main" class="tab-content active">
+    <div class="title">pocket option config</div>
+    <div class="row">
+      <span>Enable Swap Script</span>
+      <label class="switch"><input type="checkbox" id="masterToggle"><span class="slider"></span></label>
+    </div>
+    <div class="row">
+      <span>Add Guru Title</span>
+      <label class="switch"><input type="checkbox" id="guruToggle"><span class="slider"></span></label>
+    </div>
+    <div class="field-group" style="margin-top:4px;">
+      <div class="field-label">Display Alias</div>
+      <input type="text" id="customName" placeholder="QT Real">
+    </div>
+  </div>
 
-async function loadStatus() {
-  try {
-    var r = await fetch('/api/status');
-    var d = await r.json();
-    S.version = d.version;
+  <!-- STATS TAB -->
+  <div id="spoof" class="tab-content">
+    <div class="title">stat injector</div>
+    <div class="row">
+      <span style="color:#ffd60a;">Enable Stat Spoof</span>
+      <label class="switch"><input type="checkbox" id="spoofToggle"><span class="slider"></span></label>
+    </div>
+    <div class="row">
+      <span style="color:#ffd60a;">Spoof Verified</span>
+      <label class="switch"><input type="checkbox" id="verifiedToggle"><span class="slider"></span></label>
+    </div>
+    <div class="field-group grid" style="margin-top:4px;">
+      <div><div class="field-label">Branch Level</div><input type="number" id="spBranch" value="13"></div>
+      <div><div class="field-label">Disp Level</div><input type="number" id="spLevel" value="87"></div>
+    </div>
+    <div class="field-group grid">
+      <div><div class="field-label">Current XP</div><input type="text" id="spExp" value="14,530"></div>
+      <div><div class="field-label">Total Trades</div><input type="number" id="spTrades" value="113"></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Turnover</div>
+      <input type="text" id="spTurnover" value="$21,300.00">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Profit</div>
+      <input type="text" id="spProfit" value="$4,225.00">
+    </div>
+  </div>
 
-    document.getElementById('ver-num').textContent  = d.version;
-    document.getElementById('ver-name').textContent = d.name;
+  <!-- STREAM TAB -->
+  <div id="stream" class="tab-content">
+    <div class="title">stream mode</div>
+    <div class="row">
+      <span>Stream Mode</span>
+      <label class="switch"><input type="checkbox" id="streamModeToggle"><span class="slider"></span></label>
+    </div>
+    <div id="streamOptions">
+      <div class="field-label" style="margin: 8px 0 6px; padding-left:2px;">Mask Options</div>
+      <div class="row" style="margin-bottom:6px;">
+        <span style="font-size:12px;">Hide Balance</span>
+        <label class="switch"><input type="checkbox" id="streamMaskBalance" checked><span class="slider"></span></label>
+      </div>
+      <div class="row" style="margin-bottom:6px;">
+        <span style="font-size:12px;">Mask Account ID</span>
+        <label class="switch"><input type="checkbox" id="streamMaskId" checked><span class="slider"></span></label>
+      </div>
+      <div class="row" style="margin-bottom:6px;">
+        <span style="font-size:12px;">Mask IP Address</span>
+        <label class="switch"><input type="checkbox" id="streamMaskIp" checked><span class="slider"></span></label>
+      </div>
+      <div class="row" style="margin-bottom:10px;">
+        <span style="font-size:12px;">Replace Email</span>
+        <label class="switch"><input type="checkbox" id="streamMaskEmail" checked><span class="slider"></span></label>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Email Alias</div>
+        <input type="text" id="streamEmailAlias" placeholder="hidden@domain.com">
+      </div>
+      <div class="stream-info">
+        <b>balance</b> masked to *******&nbsp;&nbsp;<b>id/ip/email</b> replaced
+      </div>
+    </div>
+  </div>
 
-    var dot  = document.getElementById('git-dot');
-    var txt  = document.getElementById('git-text');
-    var cnt  = document.getElementById('file-cnt');
-    var fl   = document.getElementById('file-list');
+  <!-- CUSTOMIZE TAB -->
+  <div id="customize" class="tab-content">
+    <div class="title">customize</div>
+    <div class="cust-desc">
+      <b>Edit Mode</b> lets you click any element on the Pocket Option page to edit its text, drag it to reposition, and save your layout. Your changes persist across sessions.
+    </div>
+    <button id="enableEditingBtn">Enable Editing Mode</button>
+    <div class="cust-note">closes the popup and injects the editor onto the page</div>
+  </div>
 
-    if (d.isClean) {
-      dot.className = 'clean';
-      txt.textContent = 'All committed';
-      cnt.className = 'file-cnt ok';
-      cnt.textContent = '✓';
-      fl.innerHTML = '<div class="file-row" style="color:#24b15b;">All committed</div>';
-    } else {
-      dot.className = 'dirty';
-      txt.textContent = d.uncommitted + ' file' + (d.uncommitted !== 1 ? 's' : '') + ' changed';
-      cnt.className = 'file-cnt';
-      cnt.textContent = d.uncommitted;
-      fl.innerHTML = (d.modifiedFiles || []).map(function(f) {
-        return '<div class="file-row"><span class="file-tag">M</span><span class="file-name">' + f + '</span></div>';
-      }).join('');
-    }
+  <!-- ABOUT TAB -->
+  <div id="about" class="tab-content">
+    <div class="title">about</div>
+    <div class="about-stat">
+      <span class="as-key">Extension Name</span>
+      <span class="as-val" id="ab-name">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Version</span>
+      <span class="as-val grad" id="ab-version">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Manifest Version</span>
+      <span class="as-val" id="ab-mv">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Browser</span>
+      <span class="as-val" id="ab-browser">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Active Tab</span>
+      <span class="as-val" id="ab-url">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Stream Mode</span>
+      <span class="as-val" id="ab-stream">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Swap Script</span>
+      <span class="as-val" id="ab-swap">-</span>
+    </div>
+    <div class="about-divider"></div>
+    <div class="about-credit">
+      built for <b>pocket option</b> streaming<br>
+      made with care by <b>oofbomb</b>
+    </div>
+    <button id="update-btn">Check for Updates</button>
+    <div id="update-result">
+      <div id="update-result-ver"></div>
+      <div id="update-result-msg"></div>
+      <button id="refresh-link" style="display:none;">How to update</button>
+    </div>
+    <a id="download-btn" href="https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip" target="_blank">
+      Download Latest ZIP
+    </a>
+    <div class="install-steps" id="install-steps">
+      <ol>
+        <li>Click <b>Download Latest ZIP</b> above</li>
+        <li>Unzip the downloaded file anywhere</li>
+        <li>Go to <b>edge://extensions</b></li>
+        <li>Turn on <b>Developer Mode</b> (top right)</li>
+        <li>Click <b>Load unpacked</b> and select the unzipped folder</li>
+        <li>Done — remove the old version</li>
+      </ol>
+    </div>
+  </div>
 
-    updateBumps(d.version);
-    updateNV();
-    renderHist(d.history || []);
-  } catch(e) {
-    document.getElementById('git-text').textContent = 'error';
-  }
-}
+  <button id="saveBtn">Apply Settings</button>
 
-function bumpV(v, t) {
-  var p = v.split('.').map(Number);
-  while (p.length < 3) p.push(0);
-  if (t === 'major') { p[0]++; p[1] = 0; p[2] = 0; }
-  else if (t === 'minor') { p[1]++; p[2] = 0; }
-  else p[2]++;
-  return p.join('.');
-}
+  <div class="footer-note">
+    <b>Note:</b> only use on demo /cabinet/ pages.
+  </div>
+  <div class="watermark-container">
+    <img src="image.jpg" alt="" class="watermark-avatar" onerror="this.style.display='none'">
+    <span class="watermark-text">created by oofbomb</span>
+  </div>
 
-function updateBumps(v) {
-  document.getElementById('bx-patch').textContent = v + ' → ' + bumpV(v, 'patch');
-  document.getElementById('bx-minor').textContent = v + ' → ' + bumpV(v, 'minor');
-  document.getElementById('bx-major').textContent = v + ' → ' + bumpV(v, 'major');
-}
+</div><!-- /container -->
 
-function updateNV() {
-  document.getElementById('nv-box').innerHTML = 'Next version: <strong>' + bumpV(S.version, S.bump) + '</strong>';
-}
-
-function selectBump(t, el) {
-  document.querySelectorAll('.bump-btn').forEach(function(b) { b.classList.remove('active'); });
-  el.classList.add('active');
-  S.bump = t;
-  updateNV();
-}
-
-function selMode(m, el) {
-  document.querySelectorAll('.mode-tab').forEach(function(b) { b.classList.remove('active'); });
-  el.classList.add('active');
-  S.mode = m;
-  ['bullets','text','links','none'].forEach(function(x) {
-    var e = document.getElementById('mode-' + x);
-    if (e) e.style.display = x === m ? 'block' : 'none';
-  });
-}
-
-var iC = 0;
-function addItem(v) {
-  var list = document.getElementById('items-list');
-  var id = 'item-' + (iC++);
-  var row = document.createElement('div');
-  row.className = 'item-row'; row.id = id;
-  row.innerHTML = '<input type="text" placeholder="What\'s new..." value="' + (v||'').replace(/"/g,'&quot;') + '"><button class="item-del" onclick="delItem(\'' + id + '\')">×</button>';
-  list.appendChild(row);
-}
-function delItem(id) { var e = document.getElementById(id); if (e) e.remove(); }
-
-var lC = 0;
-function addLink(v) {
-  var list = document.getElementById('links-list');
-  var id = 'link-' + (lC++);
-  var row = document.createElement('div');
-  row.className = 'item-row'; row.id = id;
-  row.innerHTML = '<input type="text" placeholder="Label | https://url.com" value="' + (v||'') + '"><button class="item-del" onclick="delItem(\'' + id + '\')">×</button>';
-  list.appendChild(row);
-}
-
-function getItems() { return Array.from(document.querySelectorAll('#items-list input')).map(function(i){return i.value;}).filter(Boolean); }
-function getLinks() {
-  return Array.from(document.querySelectorAll('#links-list input')).map(function(i) {
-    var v = i.value.trim(); if (!v) return null;
-    if (v.includes('|')) { var p = v.split('|'); return { text: p[0].trim(), url: p[1].trim() }; }
-    return v;
-  }).filter(Boolean);
-}
-
-async function handleImgFile(input) {
-  if (!input.files[0]) return;
-  var form = new FormData(); form.append('image', input.files[0]);
-  var r = await fetch('/api/upload-image', { method: 'POST', body: form });
-  var d = await r.json();
-  if (d.url) { S.imageUrl = d.url; S.imageIsUrl = false; showImg(d.url); }
-}
-function handleImgUrl(v) { S.imageUrl = v; S.imageIsUrl = true; if (v) showImg(v); else clearImg(); }
-function showImg(src) {
-  var img = document.getElementById('img-preview');
-  var hint = document.getElementById('upload-hint');
-  img.src = src; img.style.display = 'block'; hint.style.display = 'none';
-  document.getElementById('upload-area').classList.add('has-img');
-}
-function clearImg() {
-  document.getElementById('img-preview').style.display = 'none';
-  document.getElementById('upload-hint').style.display = 'block';
-  document.getElementById('upload-area').classList.remove('has-img');
-}
-
-function renderHist(history) {
-  var el = document.getElementById('hist-list');
-  if (!history.length) { el.innerHTML = '<div style="font-size:11px;color:#555;">No releases yet.</div>'; return; }
-  el.innerHTML = history.map(function(h) {
-    var date = new Date(h.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    var dl = h.zipFile ? '<a class="hist-dl" href="/api/download/' + h.version + '" download>Download ZIP</a>' : '';
-    return '<div class="hist-item"><div class="hist-top"><span class="hist-ver">v' + h.version + '</span><span class="hist-date">' + date + '</span></div><div class="hist-title">' + (h.title||'') + '</div>' + dl + '</div>';
-  }).join('');
-}
-
-async function publish() {
-  var btn = document.getElementById('pub-btn');
-  var log = document.getElementById('log');
-  btn.disabled = true; btn.textContent = 'Publishing...';
-  log.classList.add('on'); log.innerHTML = '';
-
-  function addLog(msg, type) {
-    var t = new Date().toLocaleTimeString('en-US',{hour12:false});
-    var row = document.createElement('div'); row.className = 'log-row';
-    row.innerHTML = '<span class="log-t">' + t + '</span><span class="log-m ' + (type||'') + '">' + msg + '</span>';
-    log.appendChild(row); log.scrollTop = log.scrollHeight;
-  }
-
-  var items = S.mode === 'bullets' ? getItems() : S.mode === 'links' ? getLinks() : [];
-  var payload = {
-    bumpType: S.bump,
-    title: document.getElementById('cl-title').value,
-    subtitle: document.getElementById('cl-subtitle').value,
-    mode: S.mode, items: items,
-    imageUrl: S.imageUrl, imageIsUrl: S.imageIsUrl,
-    extId: document.getElementById('ext-id').value.trim(),
-  };
-
-  try {
-    var r = await fetch('/api/publish', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    var reader = r.body.getReader(); var dec = new TextDecoder();
-    while (true) {
-      var res = await reader.read(); if (res.done) break;
-      res.decoder = dec;
-      var text = dec.decode(res.value);
-      text.split('\n').filter(function(l){return l.startsWith('data:');}).forEach(function(line) {
-        try {
-          var d = JSON.parse(line.slice(5));
-          addLog(d.msg, d.type);
-          if (d.type === 'done') {
-            btn.textContent = 'Published!';
-            btn.style.background = 'linear-gradient(135deg,#24b15b,#00b0ff)';
-            setTimeout(function() { btn.disabled=false; btn.textContent='🚀 Build & Publish to GitHub'; btn.style.background=''; loadStatus(); }, 3000);
-          }
-          if (d.type === 'error') { btn.disabled=false; btn.textContent='🚀 Build & Publish to GitHub'; }
-        } catch(e){}
-      });
-    }
-  } catch(e) {
-    addLog('Network error: ' + e.message, 'error');
-    btn.disabled = false; btn.textContent = '🚀 Build & Publish to GitHub';
-  }
-}
-
-init();
-setInterval(loadStatus, 15000);
-</script>
+<script src="popup.js"></script>
 </body>
 </html>
