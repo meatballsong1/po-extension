@@ -2,678 +2,462 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PO Extension Builder</title>
 <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 12px;
+    background: #0d0d18;
+    color: #e0e0e0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-:root {
-  --bg:    #07070f;
-  --card:  rgba(255,255,255,0.03);
-  --cb:    rgba(255,255,255,0.07);
-  --p:     #bf5af2;
-  --pk:    #ff375f;
-  --blue:  #00b0ff;
-  --green: #24b15b;
-  --warn:  #ffd60a;
-  --dim:   rgba(255,255,255,0.35);
-  --mid:   rgba(255,255,255,0.65);
-  --r:     14px;
-  --mono:  'Courier New', Courier, monospace;
-  --sans:  Arial, Helvetica, sans-serif;
-}
+  /* TOP BAR */
+  #top {
+    background: #13131f;
+    border-bottom: 1px solid #2a2a3d;
+    padding: 0 20px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 0 0 50px;
+  }
+  #top-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #bf5af2;
+    letter-spacing: 0.3px;
+  }
+  #top-sub { font-size: 11px; color: #555; }
+  #top-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  #git-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: #1a1a2a; border: 1px solid #2a2a3d;
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 11px; color: #888;
+  }
+  #git-dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
+  #git-dot.clean { background: #24b15b; }
+  #git-dot.dirty { background: #ffd60a; }
+  #git-text { color: #aaa; }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+  /* CONTENT AREA */
+  #content {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
 
-body {
-  background: var(--bg);
-  color: #fff;
-  font-family: var(--sans);
-  min-height: 100vh;
-  overflow-x: hidden;
-  overflow: hidden;
-}
+  /* SIDEBAR */
+  #sidebar {
+    width: 270px;
+    flex: 0 0 270px;
+    background: #111119;
+    border-right: 1px solid #2a2a3d;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #sidebar::-webkit-scrollbar { width: 6px; }
+  #sidebar::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  #sidebar::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  #sidebar::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
 
-/* Ambient glow bg */
-body::before {
-  content: '';
-  position: fixed;
-  top: -200px; left: -200px;
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(191,90,242,0.06) 0%, transparent 70%);
-  pointer-events: none;
-}
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -150px; right: -150px;
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(255,55,95,0.05) 0%, transparent 70%);
-  pointer-events: none;
-}
+  /* MAIN */
+  #main {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #main::-webkit-scrollbar { width: 6px; }
+  #main::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  #main::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  #main::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
 
-/* ── LAYOUT ── */
-.shell {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  grid-template-rows: 64px 1fr;
-  height: 100vh;
-  gap: 0;
-}
+  /* SIDEBAR ELEMENTS */
+  .s-label {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #bf5af2;
+    margin-bottom: -8px;
+  }
 
-/* ── HEADER ── */
-header {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 28px;
-  background: rgba(7,7,15,0.95);
-  border-bottom: 1px solid rgba(191,90,242,0.15);
-  backdrop-filter: blur(20px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
+  .ver-block {
+    background: #1a102a;
+    border: 1px solid #3a1f5a;
+    border-radius: 10px;
+    padding: 9px 11px;
+  }
+  .ver-n {
+    font-size: 22px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    color: #bf5af2;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .ver-sub { font-size: 11px; color: #666; }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.logo-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--p), var(--pk));
-  box-shadow: 0 0 10px rgba(191,90,242,0.7);
-  animation: pulse 2s ease infinite;
-}
-@keyframes pulse {
-  0%,100% { box-shadow: 0 0 10px rgba(191,90,242,0.7); }
-  50%      { box-shadow: 0 0 20px rgba(191,90,242,1), 0 0 40px rgba(255,55,95,0.4); }
-}
-.logo-name {
-  font-size: 15px;
-  font-weight: 800;
-  background: linear-gradient(90deg, var(--p), var(--pk), var(--blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.3px;
-}
-.logo-sub {
-  font-size: 10px;
-  color: var(--dim);
-  font-weight: 600;
-  font-family: var(--mono);
-}
+  .file-box {
+    background: #151520;
+    border: 1px solid #2a2a3d;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .file-box-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2a3d;
+    font-size: 11px; font-weight: bold; color: #ccc;
+  }
+  .file-cnt {
+    background: #1e1a10; border: 1px solid #3a3010;
+    border-radius: 8px; padding: 2px 8px;
+    font-size: 10px; color: #ffd60a;
+    font-family: 'Courier New', monospace;
+  }
+  .file-cnt.ok { background: #0f2018; border-color: #1a4028; color: #24b15b; }
+  .file-list { max-height: 130px; overflow-y: auto; }
+  .file-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 12px; border-bottom: 1px solid #1e1e2e;
+    font-size: 11px;
+  }
+  .file-tag {
+    width: 16px; height: 16px; border-radius: 3px;
+    background: #2a2010; color: #ffd60a;
+    font-size: 9px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .file-name {
+    font-family: 'Courier New', monospace;
+    font-size: 10px; color: #ffd60a;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 
-.header-status {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-.status-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  background: var(--card);
-  border: 1px solid var(--cb);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--mid);
-  font-family: var(--mono);
-}
-.status-pill .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px rgba(36,177,91,0.8);
-}
-.status-pill .dot.warn { background: var(--warn); box-shadow: 0 0 6px rgba(255,214,10,0.8); }
-.status-pill .dot.err  { background: var(--pk);   box-shadow: 0 0 6px rgba(255,55,95,0.8); }
+  .hist-list { display: flex; flex-direction: column; gap: 6px; }
+  .hist-item {
+    background: #151520; border: 1px solid #2a2a3d;
+    border-radius: 9px; padding: 9px 11px;
+  }
+  .hist-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+  .hist-ver { font-size: 12px; font-weight: bold; color: #bf5af2; font-family: 'Courier New', monospace; }
+  .hist-date { font-size: 10px; color: #555; }
+  .hist-title { font-size: 11px; color: #888; margin-bottom: 6px; }
+  .hist-dl {
+    font-size: 10px; color: #00b0ff;
+    text-decoration: none;
+    border: 1px solid #0a3a5a; border-radius: 5px; padding: 2px 7px;
+    display: inline-block;
+  }
+  .hist-dl:hover { background: #0a2030; }
 
-/* ── SIDEBAR ── */
-.sidebar {
-  background: rgba(255,255,255,0.015);
-  border-right: 1px solid rgba(255,255,255,0.06);
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 20px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: calc(100vh - 64px);
-  position: sticky;
-  top: 64px;
-  align-self: start;
-}
-.sidebar::-webkit-scrollbar { width: 4px; }
-.sidebar::-webkit-scrollbar-thumb { background: rgba(191,90,242,0.3); border-radius: 4px; }
+  /* CARDS */
+  .card { background: #151520; border: 1px solid #2a2a3d; border-radius: 12px; overflow: hidden; }
+  .card-hdr {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2a3d;
+    font-size: 11px; font-weight: bold; color: #ccc;
+    background: #111119;
+  }
+  .card-body { padding: 11px; display: flex; flex-direction: column; gap: 9px; }
 
-.section-label {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: rgba(191,90,242,0.6);
-  padding: 0 4px;
-  margin-top: 4px;
-}
+  /* FIELDS */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .fl {
+    font-size: 10px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.5px; color: #666;
+  }
+  .fl span { text-transform: none; font-weight: normal; color: #444; margin-left: 4px; }
 
-/* Current version card */
-.ver-card {
-  background: linear-gradient(135deg, rgba(191,90,242,0.1), rgba(255,55,95,0.06));
-  border: 1px solid rgba(191,90,242,0.25);
-  border-radius: var(--r);
-  padding: 16px;
-}
-.ver-current-label { font-size: 9px; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
-.ver-number { font-size: 32px; font-weight: 800; font-family: var(--mono); background: linear-gradient(90deg, var(--p), var(--pk)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -1px; }
-.ver-name   { font-size: 10px; color: var(--dim); margin-top: 2px; }
+  input[type=text], input[type=number], textarea, select {
+    background: #0d0d18; border: 1px solid #2a2a3d;
+    color: #e0e0e0; border-radius: 8px;
+    padding: 5px 8px; font-size: 11px;
+    font-family: 'Inter', Arial, sans-serif;
+    outline: none; width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #6a2ab0; }
+  textarea { resize: vertical; min-height: 75px; line-height: 1.5; }
+  select option { background: #1a1a2e; }
 
-/* Uncommitted files */
-.uncommitted-card {
-  background: var(--card);
-  border: 1px solid var(--cb);
-  border-radius: var(--r);
-  overflow: hidden;
-}
-.uncommitted-hdr {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 13px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--mid);
-  border-bottom: 1px solid var(--cb);
-}
-.uncommitted-count {
-  background: rgba(255,193,7,0.15);
-  border: 1px solid rgba(255,193,7,0.3);
-  border-radius: 10px;
-  padding: 1px 8px;
-  font-size: 10px;
-  color: var(--warn);
-  font-family: var(--mono);
-}
-.uncommitted-count.clean { background: rgba(36,177,91,0.1); border-color: rgba(36,177,91,0.3); color: var(--green); }
-.file-list { max-height: 160px; overflow-y: auto; }
-.file-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 13px;
-  font-size: 10.5px;
-  font-family: var(--mono);
-  color: var(--dim);
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-.file-item .fi-icon { font-size: 10px; }
-.file-item .fi-name { color: var(--warn); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* BUMP */
+  .bump-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .bump-btn {
+    background: #0d0d18; border: 1px solid #2a2a3d;
+    border-radius: 9px; padding: 7px 5px;
+    cursor: pointer; text-align: center;
+    transition: all 0.15s; font-family: 'Inter', Arial, sans-serif;
+    color: #ccc;
+  }
+  .bump-btn:hover { border-color: #6a2ab0; background: #1a1028; }
+  .bump-btn.active { border-color: #bf5af2; background: #1e0f30; }
+  .bb-t { display: block; font-size: 11px; font-weight: bold; color: #ddd; margin-bottom: 2px; }
+  .bb-ex { display: block; font-size: 9px; color: #555; font-family: 'Courier New', monospace; }
+  .bump-btn.active .bb-t { color: #bf5af2; }
+  .bump-btn.active .bb-ex { color: #8a4ab0; }
 
-/* History list */
-.history-list { display: flex; flex-direction: column; gap: 6px; }
-.hist-item {
-  background: var(--card);
-  border: 1px solid var(--cb);
-  border-radius: 10px;
-  padding: 10px 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.hist-item:hover { border-color: rgba(191,90,242,0.3); background: rgba(191,90,242,0.05); }
-.hist-top { display: flex; align-items: center; justify-content: space-between; }
-.hist-ver { font-size: 13px; font-weight: 700; font-family: var(--mono); color: var(--p); }
-.hist-date { font-size: 9px; color: var(--dim); font-family: var(--mono); }
-.hist-title { font-size: 10.5px; color: var(--mid); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hist-dl {
-  margin-top: 6px;
-  font-size: 9.5px;
-  font-weight: 600;
-  color: var(--blue);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  opacity: 0.7;
-  transition: opacity 0.15s;
-}
-.hist-dl:hover { opacity: 1; }
+  /* MODE TABS */
+  .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mode-tab {
+    padding: 5px 13px; border-radius: 20px;
+    border: 1px solid #2a2a3d; background: transparent;
+    color: #666; cursor: pointer; font-size: 11px; font-weight: bold;
+    font-family: 'Inter', Arial, sans-serif;
+    transition: all 0.15s;
+  }
+  .mode-tab:hover { border-color: #6a2ab0; color: #ccc; }
+  .mode-tab.active { border-color: #bf5af2; background: #1e0f30; color: #bf5af2; }
 
-/* ── MAIN ── */
-.main {
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 28px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  height: calc(100vh - 64px);
-}
-.main::-webkit-scrollbar { width: 4px; }
-.main::-webkit-scrollbar-thumb { background: rgba(191,90,242,0.3); border-radius: 4px; }
+  /* ITEMS */
+  .items-list { display: flex; flex-direction: column; gap: 6px; }
+  .item-row { display: flex; gap: 6px; align-items: center; }
+  .item-row input { flex: 1; }
+  .item-del {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: #200f0f; border: 1px solid #4a1515;
+    color: #ff453a; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', Arial, sans-serif; transition: background 0.15s;
+  }
+  .item-del:hover { background: #3a1515; }
+  .add-btn {
+    width: 100%; padding: 7px;
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed #2a2a3d; border-radius: 8px;
+    color: #555; cursor: pointer; font-size: 12px;
+    font-family: 'Inter', Arial, sans-serif;
+    transition: all 0.15s;
+  }
+  .add-btn:hover { border-color: #6a2ab0; color: #bf5af2; }
 
-/* ── CARDS ── */
-.card {
-  background: var(--card);
-  border: 1px solid var(--cb);
-  border-radius: 18px;
-  overflow: hidden;
-}
-.card-hdr {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--cb);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--mid);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.card-hdr .ch-icon { font-size: 14px; }
-.card-body { padding: 20px; }
+  /* IMAGE */
+  .img-area {
+    border: 2px dashed #2a1a40; border-radius: 10px;
+    padding: 18px; text-align: center; cursor: pointer;
+    position: relative; transition: all 0.15s;
+    min-height: 65px; display: flex; align-items: center; justify-content: center;
+  }
+  .img-area:hover { border-color: #6a2ab0; background: #120a1e; }
+  .img-area.has-img { padding: 6px; border-style: solid; }
+  .img-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  #img-preview { width: 100%; max-height: 120px; object-fit: cover; border-radius: 7px; display: none; }
+  .img-hint { font-size: 11px; color: #555; pointer-events: none; }
+  .img-or { text-align: center; font-size: 11px; color: #444; margin: 5px 0; }
 
-/* ── FORM ELEMENTS ── */
-.field { margin-bottom: 14px; }
-.field:last-child { margin-bottom: 0; }
-.field-label {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  color: var(--dim);
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.field-label span { color: rgba(191,90,242,0.6); }
+  /* NEXT VER */
+  .nv-box {
+    background: #150f20; border: 1px solid #3a1f5a;
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 12px; color: #888;
+  }
+  .nv-box strong { color: #bf5af2; font-family: 'Courier New', monospace; }
 
-input[type="text"], textarea, select {
-  width: 100%;
-  padding: 10px 13px;
-  font-size: 12.5px;
-  font-family: var(--sans);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
-  color: #fff;
-  border-radius: 10px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-input:focus, textarea:focus, select:focus {
-  border-color: rgba(191,90,242,0.5);
-  box-shadow: 0 0 0 3px rgba(191,90,242,0.08);
-}
-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
-select option { background: #1a1a2e; }
+  /* PUBLISH BTN */
+  .pub-btn {
+    width: 100%; padding: 10px;
+    background: linear-gradient(135deg, #bf5af2, #ff375f);
+    border: none; border-radius: 10px;
+    color: #fff; font-size: 13px; font-weight: bold;
+    cursor: pointer; font-family: 'Inter', Arial, sans-serif;
+    transition: opacity 0.15s, transform 0.1s;
+    box-shadow: 0 4px 18px rgba(191,90,242,0.25);
+  }
+  .pub-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .pub-btn:active { transform: scale(0.98); }
+  .pub-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
 
-/* Version bump selector */
-.bump-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-.bump-btn {
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  color: var(--mid);
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.15s;
-  font-family: var(--sans);
-}
-.bump-btn .bb-type { font-size: 11px; font-weight: 700; display: block; }
-.bump-btn .bb-ex   { font-size: 9px; color: var(--dim); font-family: var(--mono); }
-.bump-btn:hover    { border-color: rgba(191,90,242,0.4); background: rgba(191,90,242,0.08); }
-.bump-btn.active   { border-color: var(--p); background: rgba(191,90,242,0.14); color: #fff; box-shadow: 0 0 12px rgba(191,90,242,0.15); }
-.bump-btn.active .bb-ex { color: var(--p); }
+  /* LOG */
+  .log {
+    background: #080810; border: 1px solid #1e1e30;
+    border-radius: 8px; padding: 10px;
+    font-family: 'Courier New', monospace; font-size: 11px;
+    max-height: 190px; overflow-y: auto; display: none;
+  }
+  .log.on { display: block; }
+  .log-row { display: flex; gap: 10px; margin-bottom: 3px; line-height: 1.4; }
+  .log-t { color: #444; flex-shrink: 0; }
+  .log-m { color: #aaa; }
+  .log-m.success { color: #24b15b; }
+  .log-m.error   { color: #ff453a; }
+  .log-m.warn    { color: #ffd60a; }
+  .log-m.done    { color: #bf5af2; font-weight: bold; }
 
-/* Changelog items */
-.items-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
-.item-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.item-row input { flex: 1; }
-.item-del {
-  width: 28px; height: 28px;
-  border-radius: 8px;
-  background: rgba(255,69,58,0.1);
-  border: 1px solid rgba(255,69,58,0.2);
-  color: rgba(255,69,58,0.7);
-  cursor: pointer;
-  font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-.item-del:hover { background: rgba(255,69,58,0.22); color: #ff453a; }
-
-.add-item-btn {
-  width: 100%;
-  padding: 8px;
-  border-radius: 9px;
-  border: 1px dashed rgba(191,90,242,0.3);
-  background: transparent;
-  color: rgba(191,90,242,0.6);
-  cursor: pointer;
-  font-size: 11.5px;
-  font-weight: 600;
-  font-family: var(--sans);
-  transition: all 0.15s;
-}
-.add-item-btn:hover { border-color: var(--p); color: var(--p); background: rgba(191,90,242,0.05); }
-
-/* Mode tabs */
-.mode-tabs { display: flex; gap: 6px; }
-.mode-tab {
-  padding: 6px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  color: var(--dim);
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
-  font-family: var(--sans);
-  transition: all 0.15s;
-}
-.mode-tab:hover  { border-color: rgba(191,90,242,0.3); color: var(--mid); }
-.mode-tab.active { border-color: var(--p); background: rgba(191,90,242,0.12); color: var(--p); }
-
-/* Image upload */
-.img-upload-area {
-  border: 2px dashed rgba(255,255,255,0.1);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-}
-.img-upload-area:hover { border-color: rgba(191,90,242,0.4); background: rgba(191,90,242,0.04); }
-.img-upload-area.has-img { border-style: solid; border-color: rgba(191,90,242,0.3); }
-.img-upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.img-preview { max-width: 100%; max-height: 140px; border-radius: 8px; display: block; margin: 0 auto 8px; object-fit: cover; }
-.img-upload-hint { font-size: 11px; color: var(--dim); }
-.img-or { font-size: 10px; color: var(--dim); text-align: center; margin: 8px 0; }
-
-/* Publish button */
-.publish-btn {
-  width: 100%;
-  padding: 16px;
-  border-radius: 14px;
-  border: none;
-  background: linear-gradient(135deg, var(--p), var(--pk));
-  color: #fff;
-  font-size: 14px;
-  font-weight: 800;
-  font-family: var(--sans);
-  letter-spacing: 0.3px;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 6px 24px rgba(191,90,242,0.3);
-  position: relative;
-  overflow: hidden;
-}
-.publish-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.publish-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(191,90,242,0.45); }
-.publish-btn:hover::before { opacity: 1; }
-.publish-btn:active { transform: scale(0.98); }
-.publish-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-.next-ver-preview {
-  text-align: center;
-  font-size: 11px;
-  color: var(--dim);
-  margin-bottom: 10px;
-  font-family: var(--mono);
-}
-.next-ver-preview strong { color: var(--p); }
-
-/* ── LOG TERMINAL ── */
-.log-terminal {
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px;
-  padding: 14px;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  line-height: 1.7;
-  max-height: 240px;
-  overflow-y: auto;
-  display: none;
-}
-.log-terminal.active { display: block; }
-.log-terminal::-webkit-scrollbar { width: 3px; }
-.log-terminal::-webkit-scrollbar-thumb { background: rgba(191,90,242,0.3); border-radius: 3px; }
-.log-line { display: flex; gap: 10px; }
-.log-time  { color: rgba(255,255,255,0.25); flex-shrink: 0; }
-.log-msg   { color: rgba(255,255,255,0.75); }
-.log-msg.success { color: var(--green); }
-.log-msg.warn    { color: var(--warn); }
-.log-msg.error   { color: var(--pk); }
-.log-msg.done    { color: var(--p); font-weight: 700; }
-
-/* Ext ID field */
-.ext-id-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.ext-id-row input { flex: 1; font-family: var(--mono); font-size: 11px; }
-.how-link {
-  font-size: 10px;
-  color: var(--blue);
-  text-decoration: none;
-  white-space: nowrap;
-  opacity: 0.7;
-}
-.how-link:hover { opacity: 1; }
-
-/* Responsive grid inside cards */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  /* global custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
 </style>
 </head>
 <body>
-<div class="shell">
 
-<!-- HEADER -->
-<header>
-  <div class="logo">
-    <div class="logo-dot"></div>
-    <div>
-      <div class="logo-name">PO Extension Builder</div>
-      <div class="logo-sub">pocket option config</div>
+<div id="top">
+  <div id="top-title">PO Extension Builder</div>
+  <div id="top-sub">pocket option config</div>
+  <div id="top-right">
+    <div id="git-pill">
+      <div id="git-dot"></div>
+      <span id="git-text">checking...</span>
     </div>
   </div>
-  <div class="header-status">
-    <div class="status-pill" id="git-status-pill">
-      <div class="dot" id="git-dot"></div>
-      <span id="git-status-text">checking...</span>
-    </div>
-    <div class="status-pill">
-      <span id="ext-path-display" style="font-size:9.5px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-    </div>
-  </div>
-</header>
+</div>
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
+<div id="content">
 
-  <div class="section-label">Current Release</div>
-  <div class="ver-card">
-    <div class="ver-current-label">Active Version</div>
-    <div class="ver-number" id="current-ver">—</div>
-    <div class="ver-name" id="ext-name">loading...</div>
-  </div>
-
-  <div class="section-label">Uncommitted Changes</div>
-  <div class="uncommitted-card">
-    <div class="uncommitted-hdr">
-      <span>Changed Files</span>
-      <span class="uncommitted-count" id="uncommitted-count">0</span>
+  <div id="sidebar">
+    <div class="s-label">Current Version</div>
+    <div class="ver-block">
+      <div class="ver-n" id="ver-num">—</div>
+      <div class="ver-sub" id="ver-name">loading...</div>
     </div>
-    <div class="file-list" id="file-list">
-      <div class="file-item" style="color:var(--dim);font-size:10px;padding:10px 13px;">loading...</div>
+
+    <div class="s-label">Changed Files</div>
+    <div class="file-box">
+      <div class="file-box-hdr">
+        Uncommitted
+        <span class="file-cnt ok" id="file-cnt">0</span>
+      </div>
+      <div class="file-list" id="file-list">
+        <div class="file-row" style="color:#555;">loading...</div>
+      </div>
+    </div>
+
+    <div class="s-label">Release History</div>
+    <div class="hist-list" id="hist-list">
+      <div style="font-size:11px;color:#555;">No releases yet.</div>
     </div>
   </div>
 
-  <div class="section-label">Release History</div>
-  <div class="history-list" id="history-list">
-    <div style="font-size:10px;color:var(--dim);padding:4px;">No releases yet.</div>
-  </div>
+  <div id="main">
 
-</aside>
-
-<!-- MAIN -->
-<main class="main">
-
-  <!-- VERSION BUMP -->
-  <div class="card">
-    <div class="card-hdr"><span class="ch-icon">🚀</span> New Release</div>
-    <div class="card-body">
-      <div class="field">
-        <div class="field-label">Version Bump <span>select how much this changes</span></div>
-        <div class="bump-grid">
-          <button class="bump-btn" data-bump="patch" onclick="selectBump('patch',this)">
-            <span class="bb-type">Patch</span>
-            <span class="bb-ex" id="bump-ex-patch">1.0.0 → 1.0.1</span>
-          </button>
-          <button class="bump-btn active" data-bump="minor" onclick="selectBump('minor',this)">
-            <span class="bb-type">Minor</span>
-            <span class="bb-ex" id="bump-ex-minor">1.0.0 → 1.1.0</span>
-          </button>
-          <button class="bump-btn" data-bump="major" onclick="selectBump('major',this)">
-            <span class="bb-type">Major</span>
-            <span class="bb-ex" id="bump-ex-major">1.0.0 → 2.0.0</span>
-          </button>
+    <div class="card">
+      <div class="card-hdr">🚀 New Release</div>
+      <div class="card-body">
+        <div class="field">
+          <div class="fl">Version Bump</div>
+          <div class="bump-grid">
+            <button class="bump-btn" onclick="selectBump('patch',this)">
+              <span class="bb-t">Patch</span>
+              <span class="bb-ex" id="bx-patch">—</span>
+            </button>
+            <button class="bump-btn active" onclick="selectBump('minor',this)">
+              <span class="bb-t">Minor</span>
+              <span class="bb-ex" id="bx-minor">—</span>
+            </button>
+            <button class="bump-btn" onclick="selectBump('major',this)">
+              <span class="bb-t">Major</span>
+              <span class="bb-ex" id="bx-major">—</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- CHANGELOG -->
-  <div class="card">
-    <div class="card-hdr"><span class="ch-icon">📝</span> Changelog</div>
-    <div class="card-body">
-      <div class="two-col">
+    <div class="card">
+      <div class="card-hdr">📝 Changelog</div>
+      <div class="card-body" style="max-height:340px;overflow-y:auto;">
         <div class="field">
-          <div class="field-label">Title</div>
-          <input type="text" id="cl-title" placeholder="Welcome to v2.4!" value="Welcome to v2.4!">
+          <div class="fl">Title</div>
+          <input type="text" id="cl-title" placeholder="Welcome to v2.5!">
         </div>
         <div class="field">
-          <div class="field-label">Subtitle</div>
-          <input type="text" id="cl-subtitle" placeholder="this is a big one" value="this is a big one">
+          <div class="fl">Subtitle</div>
+          <input type="text" id="cl-subtitle" placeholder="this is a pretty big update">
         </div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">Content Mode</div>
-        <div class="mode-tabs">
-          <button class="mode-tab active" data-mode="bullets" onclick="selectMode('bullets',this)">Bullets</button>
-          <button class="mode-tab" data-mode="text" onclick="selectMode('text',this)">Text</button>
-          <button class="mode-tab" data-mode="links" onclick="selectMode('links',this)">Links</button>
-          <button class="mode-tab" data-mode="none" onclick="selectMode('none',this)">None</button>
-        </div>
-      </div>
-
-      <!-- BULLETS MODE -->
-      <div id="mode-bullets">
         <div class="field">
-          <div class="field-label">Bullet Points</div>
-          <div class="items-list" id="items-list"></div>
-          <button class="add-item-btn" onclick="addItem()">+ Add bullet point</button>
+          <div class="fl">Content Mode</div>
+          <div class="mode-tabs">
+            <button class="mode-tab active" onclick="selMode('bullets',this)">Bullets</button>
+            <button class="mode-tab" onclick="selMode('text',this)">Text</button>
+            <button class="mode-tab" onclick="selMode('links',this)">Links</button>
+            <button class="mode-tab" onclick="selMode('none',this)">None</button>
+          </div>
+        </div>
+        <div id="mode-bullets">
+          <div class="field">
+            <div class="fl">Bullet Points</div>
+            <button class="add-btn" onclick="addItem('')" style="margin-bottom:6px;">+ Add bullet</button>
+            <div class="items-list" id="items-list" style="max-height:220px;overflow-y:auto;padding-right:2px;"></div>
+          </div>
+        </div>
+        <div id="mode-text" style="display:none;">
+          <div class="field">
+            <div class="fl">Paragraph</div>
+            <textarea id="cl-text" placeholder="Write your update here..."></textarea>
+          </div>
+        </div>
+        <div id="mode-links" style="display:none;">
+          <div class="field">
+            <div class="fl">Links <span>format: "Label | https://url" or plain text</span></div>
+            <button class="add-btn" onclick="addLink('')" style="margin-bottom:6px;">+ Add link</button>
+            <div class="items-list" id="links-list" style="max-height:220px;overflow-y:auto;padding-right:2px;"></div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- TEXT MODE -->
-      <div id="mode-text" style="display:none;">
+    <div class="card">
+      <div class="card-hdr">🖼️ Banner Image</div>
+      <div class="card-body">
         <div class="field">
-          <div class="field-label">Paragraph Text</div>
-          <textarea id="cl-text" placeholder="Write your update description here..."></textarea>
+          <div class="fl">Upload</div>
+          <div class="img-area" id="upload-area">
+            <input type="file" id="img-file" accept="image/*" onchange="handleImgFile(this)">
+            <img id="img-preview">
+            <div id="upload-hint" class="img-hint">Click or drag an image here</div>
+          </div>
+          <div class="img-or">— or paste a URL —</div>
+          <input type="text" id="img-url" placeholder="https://i.imgur.com/..." oninput="handleImgUrl(this.value)">
         </div>
       </div>
+    </div>
 
-      <!-- LINKS MODE -->
-      <div id="mode-links" style="display:none;">
+    <div class="card">
+      <div class="card-hdr">⚙️ Settings</div>
+      <div class="card-body">
         <div class="field">
-          <div class="field-label">Links <span>format: "Label | https://url.com" or just text</span></div>
-          <div class="items-list" id="links-list"></div>
-          <button class="add-item-btn" onclick="addLink()">+ Add link</button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- IMAGE -->
-  <div class="card">
-    <div class="card-hdr"><span class="ch-icon">🖼️</span> Banner Image</div>
-    <div class="card-body">
-      <div class="field">
-        <div class="field-label">Upload Image</div>
-        <div class="img-upload-area" id="upload-area">
-          <input type="file" id="img-file" accept="image/*" onchange="handleImageFile(this)">
-          <img id="img-preview" class="img-preview" style="display:none;">
-          <div id="upload-hint" class="img-upload-hint">Click or drag an image here</div>
-        </div>
-        <div class="img-or">— or paste a URL —</div>
-        <input type="text" id="img-url" placeholder="https://i.imgur.com/..." oninput="handleImageUrl(this.value)">
-      </div>
-    </div>
-  </div>
-
-  <!-- SETTINGS -->
-  <div class="card">
-    <div class="card-hdr"><span class="ch-icon">⚙️</span> Settings</div>
-    <div class="card-body">
-      <div class="field">
-        <div class="field-label">Extension ID <span>from chrome://extensions with dev mode on</span></div>
-        <div class="ext-id-row">
-          <input type="text" id="ext-id" placeholder="khaegbogkpcodjifcepgloiiincfnopf" style="font-family:var(--mono);font-size:11px;">
-          <a class="how-link" href="chrome://extensions" target="_blank">→ chrome://extensions</a>
+          <div class="fl">Extension ID <span>from chrome://extensions (dev mode on)</span></div>
+          <input type="text" id="ext-id" placeholder="khaegbogkpcodjifcepgloiiincfnopf" style="font-family:'Courier New',monospace;font-size:11px;">
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- PUBLISH -->
-  <div class="card">
-    <div class="card-hdr"><span class="ch-icon">📦</span> Publish</div>
-    <div class="card-body">
-      <div class="next-ver-preview" id="next-ver-preview">Next version: <strong>—</strong></div>
-      <button class="publish-btn" id="publish-btn" onclick="publish()">
-        🚀 Build &amp; Publish to GitHub
-      </button>
-      <div class="log-terminal" id="log-terminal"></div>
+    <div class="card">
+      <div class="card-hdr">📦 Publish</div>
+      <div class="card-body">
+        <div class="nv-box" id="nv-box">Next version: <strong>—</strong></div>
+        <button class="pub-btn" id="pub-btn" onclick="publish()">🚀 Build &amp; Publish to GitHub</button>
+        <div class="log" id="log"></div>
+      </div>
     </div>
-  </div>
 
-</main>
+  </div>
 </div>
 
 <script>
-// ── STATE ─────────────────────────────────────────────────────────────────
-var state = { version: '1.0.0', bump: 'minor', mode: 'bullets', imageUrl: '', imageIsUrl: false };
+var S = { version: '1.0.0', bump: 'minor', mode: 'bullets', imageUrl: '', imageIsUrl: false };
 
-// ── INIT ──────────────────────────────────────────────────────────────────
 async function init() {
   await loadStatus();
   addItem('icons are FULLY fixed so you can effortlessly swap');
@@ -682,266 +466,189 @@ async function init() {
 
 async function loadStatus() {
   try {
-    const r = await fetch('/api/status');
-    const d = await r.json();
-    state.version = d.version;
+    var r = await fetch('/api/status');
+    var d = await r.json();
+    S.version = d.version;
 
-    document.getElementById('current-ver').textContent    = d.version;
-    document.getElementById('ext-name').textContent       = d.name;
-    document.getElementById('ext-path-display').textContent = d.extPath;
+    document.getElementById('ver-num').textContent  = d.version;
+    document.getElementById('ver-name').textContent = d.name;
 
-    // Git status
-    const dot  = document.getElementById('git-dot');
-    const text = document.getElementById('git-status-text');
-    const cnt  = document.getElementById('uncommitted-count');
+    var dot  = document.getElementById('git-dot');
+    var txt  = document.getElementById('git-text');
+    var cnt  = document.getElementById('file-cnt');
+    var fl   = document.getElementById('file-list');
 
-    if (d.uncommitted > 0) {
-      dot.className = 'dot warn';
-      text.textContent = d.uncommitted + ' uncommitted';
-      cnt.className = 'uncommitted-count';
+    if (d.isClean) {
+      dot.className = 'clean';
+      txt.textContent = 'All committed';
+      cnt.className = 'file-cnt ok';
+      cnt.textContent = '✓';
+      fl.innerHTML = '<div class="file-row" style="color:#24b15b;">All committed</div>';
+    } else {
+      dot.className = 'dirty';
+      txt.textContent = d.uncommitted + ' file' + (d.uncommitted !== 1 ? 's' : '') + ' changed';
+      cnt.className = 'file-cnt';
       cnt.textContent = d.uncommitted;
-    } else {
-      dot.className = 'dot';
-      text.textContent = 'clean';
-      cnt.className = 'uncommitted-count clean';
-      cnt.textContent = '0';
+      fl.innerHTML = (d.modifiedFiles || []).map(function(f) {
+        return '<div class="file-row"><span class="file-tag">M</span><span class="file-name">' + f + '</span></div>';
+      }).join('');
     }
 
-    // File list
-    const fl = document.getElementById('file-list');
-    if (d.changedFiles.length === 0) {
-      fl.innerHTML = '<div class="file-item" style="color:var(--green);font-size:10px;padding:10px 13px;">✓ All committed</div>';
-    } else {
-      fl.innerHTML = d.changedFiles.map(f =>
-        '<div class="file-item"><span class="fi-icon">M</span><span class="fi-name">' + f + '</span></div>'
-      ).join('');
-    }
-
-    // History
-    renderHistory(d.history);
-    updateBumpPreviews(d.version);
-    updateNextVerPreview();
+    updateBumps(d.version);
+    updateNV();
+    renderHist(d.history || []);
   } catch(e) {
-    document.getElementById('git-status-text').textContent = 'error';
+    document.getElementById('git-text').textContent = 'error';
   }
 }
 
-// ── BUMP ──────────────────────────────────────────────────────────────────
-function bumpVersion(v, type) {
-  var parts = v.split('.').map(Number);
-  while (parts.length < 3) parts.push(0);
-  if (type === 'major') { parts[0]++; parts[1] = 0; parts[2] = 0; }
-  else if (type === 'minor') { parts[1]++; parts[2] = 0; }
-  else { parts[2]++; }
-  return parts.join('.');
+function bumpV(v, t) {
+  var p = v.split('.').map(Number);
+  while (p.length < 3) p.push(0);
+  if (t === 'major') { p[0]++; p[1] = 0; p[2] = 0; }
+  else if (t === 'minor') { p[1]++; p[2] = 0; }
+  else p[2]++;
+  return p.join('.');
 }
 
-function updateBumpPreviews(v) {
-  document.getElementById('bump-ex-patch').textContent = v + ' → ' + bumpVersion(v, 'patch');
-  document.getElementById('bump-ex-minor').textContent = v + ' → ' + bumpVersion(v, 'minor');
-  document.getElementById('bump-ex-major').textContent = v + ' → ' + bumpVersion(v, 'major');
+function updateBumps(v) {
+  document.getElementById('bx-patch').textContent = v + ' → ' + bumpV(v, 'patch');
+  document.getElementById('bx-minor').textContent = v + ' → ' + bumpV(v, 'minor');
+  document.getElementById('bx-major').textContent = v + ' → ' + bumpV(v, 'major');
 }
 
-function selectBump(type, el) {
-  document.querySelectorAll('.bump-btn').forEach(b => b.classList.remove('active'));
+function updateNV() {
+  document.getElementById('nv-box').innerHTML = 'Next version: <strong>' + bumpV(S.version, S.bump) + '</strong>';
+}
+
+function selectBump(t, el) {
+  document.querySelectorAll('.bump-btn').forEach(function(b) { b.classList.remove('active'); });
   el.classList.add('active');
-  state.bump = type;
-  updateNextVerPreview();
+  S.bump = t;
+  updateNV();
 }
 
-function updateNextVerPreview() {
-  var next = bumpVersion(state.version, state.bump);
-  document.getElementById('next-ver-preview').innerHTML = 'Next version: <strong>' + next + '</strong>';
-}
-
-// ── MODE ──────────────────────────────────────────────────────────────────
-function selectMode(mode, el) {
-  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+function selMode(m, el) {
+  document.querySelectorAll('.mode-tab').forEach(function(b) { b.classList.remove('active'); });
   el.classList.add('active');
-  state.mode = mode;
-  ['bullets','text','links','none'].forEach(m => {
-    var el = document.getElementById('mode-' + m);
-    if (el) el.style.display = m === mode ? 'block' : 'none';
+  S.mode = m;
+  ['bullets','text','links','none'].forEach(function(x) {
+    var e = document.getElementById('mode-' + x);
+    if (e) e.style.display = x === m ? 'block' : 'none';
   });
 }
 
-// ── ITEMS ─────────────────────────────────────────────────────────────────
-var itemCount = 0;
-function addItem(val) {
+var iC = 0;
+function addItem(v) {
   var list = document.getElementById('items-list');
-  var id = 'item-' + (itemCount++);
+  var id = 'item-' + (iC++);
   var row = document.createElement('div');
-  row.className = 'item-row';
-  row.id = id;
-  row.innerHTML = '<input type="text" placeholder="What\'s new in this update..." value="' + (val||'').replace(/"/g,'&quot;') + '">' +
-    '<button class="item-del" onclick="removeItem(\'' + id + '\')">×</button>';
+  row.className = 'item-row'; row.id = id;
+  row.innerHTML = '<input type="text" placeholder="What\'s new..." value="' + (v||'').replace(/"/g,'&quot;') + '"><button class="item-del" onclick="delItem(\'' + id + '\')">×</button>';
   list.appendChild(row);
 }
-function removeItem(id) {
-  var el = document.getElementById(id);
-  if (el) el.parentNode.removeChild(el);
-}
+function delItem(id) { var e = document.getElementById(id); if (e) e.remove(); }
 
-var linkCount = 0;
-function addLink(val) {
+var lC = 0;
+function addLink(v) {
   var list = document.getElementById('links-list');
-  var id = 'link-' + (linkCount++);
+  var id = 'link-' + (lC++);
   var row = document.createElement('div');
-  row.className = 'item-row';
-  row.id = id;
-  row.innerHTML = '<input type="text" placeholder="Label | https://url.com  OR just plain text" value="' + (val||'') + '">' +
-    '<button class="item-del" onclick="removeItem(\'' + id + '\')">×</button>';
+  row.className = 'item-row'; row.id = id;
+  row.innerHTML = '<input type="text" placeholder="Label | https://url.com" value="' + (v||'') + '"><button class="item-del" onclick="delItem(\'' + id + '\')">×</button>';
   list.appendChild(row);
 }
 
-function getItems() {
-  return Array.from(document.querySelectorAll('#items-list input')).map(i => i.value).filter(Boolean);
-}
+function getItems() { return Array.from(document.querySelectorAll('#items-list input')).map(function(i){return i.value;}).filter(Boolean); }
 function getLinks() {
-  return Array.from(document.querySelectorAll('#links-list input')).map(i => {
-    var v = i.value.trim();
-    if (!v) return null;
-    if (v.includes('|')) {
-      var parts = v.split('|');
-      return { text: parts[0].trim(), url: parts[1].trim() };
-    }
+  return Array.from(document.querySelectorAll('#links-list input')).map(function(i) {
+    var v = i.value.trim(); if (!v) return null;
+    if (v.includes('|')) { var p = v.split('|'); return { text: p[0].trim(), url: p[1].trim() }; }
     return v;
   }).filter(Boolean);
 }
 
-// ── IMAGE ─────────────────────────────────────────────────────────────────
-async function handleImageFile(input) {
+async function handleImgFile(input) {
   if (!input.files[0]) return;
-  var form = new FormData();
-  form.append('image', input.files[0]);
+  var form = new FormData(); form.append('image', input.files[0]);
   var r = await fetch('/api/upload-image', { method: 'POST', body: form });
   var d = await r.json();
-  if (d.url) {
-    state.imageUrl  = d.url;
-    state.imageIsUrl = false;
-    showPreview(d.url);
-  }
+  if (d.url) { S.imageUrl = d.url; S.imageIsUrl = false; showImg(d.url); }
 }
-
-function handleImageUrl(val) {
-  state.imageUrl   = val;
-  state.imageIsUrl = true;
-  if (val) showPreview(val);
-  else     clearPreview();
-}
-
-function showPreview(src) {
+function handleImgUrl(v) { S.imageUrl = v; S.imageIsUrl = true; if (v) showImg(v); else clearImg(); }
+function showImg(src) {
   var img = document.getElementById('img-preview');
   var hint = document.getElementById('upload-hint');
-  var area = document.getElementById('upload-area');
-  img.src = src;
-  img.style.display = 'block';
-  hint.style.display = 'none';
-  area.classList.add('has-img');
+  img.src = src; img.style.display = 'block'; hint.style.display = 'none';
+  document.getElementById('upload-area').classList.add('has-img');
 }
-function clearPreview() {
-  var img = document.getElementById('img-preview');
-  img.style.display = 'none';
+function clearImg() {
+  document.getElementById('img-preview').style.display = 'none';
   document.getElementById('upload-hint').style.display = 'block';
   document.getElementById('upload-area').classList.remove('has-img');
 }
 
-// ── HISTORY ───────────────────────────────────────────────────────────────
-function renderHistory(history) {
-  var list = document.getElementById('history-list');
-  if (!history || !history.length) {
-    list.innerHTML = '<div style="font-size:10px;color:var(--dim);padding:4px;">No releases yet.</div>';
-    return;
-  }
-  list.innerHTML = history.map(function(h) {
-    var date = new Date(h.date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-    var dlLink = h.zipFile ? '<a class="hist-dl" href="/api/download/' + h.version + '" download>⬇ Download ZIP</a>' : '';
-    return '<div class="hist-item">' +
-      '<div class="hist-top"><span class="hist-ver">v' + h.version + '</span><span class="hist-date">' + date + '</span></div>' +
-      '<div class="hist-title">' + (h.title || '') + '</div>' +
-      dlLink +
-    '</div>';
+function renderHist(history) {
+  var el = document.getElementById('hist-list');
+  if (!history.length) { el.innerHTML = '<div style="font-size:11px;color:#555;">No releases yet.</div>'; return; }
+  el.innerHTML = history.map(function(h) {
+    var date = new Date(h.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var dl = h.zipFile ? '<a class="hist-dl" href="/api/download/' + h.version + '" download>Download ZIP</a>' : '';
+    return '<div class="hist-item"><div class="hist-top"><span class="hist-ver">v' + h.version + '</span><span class="hist-date">' + date + '</span></div><div class="hist-title">' + (h.title||'') + '</div>' + dl + '</div>';
   }).join('');
 }
 
-// ── PUBLISH ───────────────────────────────────────────────────────────────
 async function publish() {
-  var btn = document.getElementById('publish-btn');
-  var log = document.getElementById('log-terminal');
-  btn.disabled = true;
-  btn.textContent = '⏳ Publishing...';
-  log.classList.add('active');
-  log.innerHTML = '';
+  var btn = document.getElementById('pub-btn');
+  var log = document.getElementById('log');
+  btn.disabled = true; btn.textContent = 'Publishing...';
+  log.classList.add('on'); log.innerHTML = '';
 
   function addLog(msg, type) {
-    var time = new Date().toLocaleTimeString('en-US', { hour12: false });
-    var line = document.createElement('div');
-    line.className = 'log-line';
-    line.innerHTML = '<span class="log-time">' + time + '</span><span class="log-msg ' + (type||'') + '">' + msg + '</span>';
-    log.appendChild(line);
-    log.scrollTop = log.scrollHeight;
+    var t = new Date().toLocaleTimeString('en-US',{hour12:false});
+    var row = document.createElement('div'); row.className = 'log-row';
+    row.innerHTML = '<span class="log-t">' + t + '</span><span class="log-m ' + (type||'') + '">' + msg + '</span>';
+    log.appendChild(row); log.scrollTop = log.scrollHeight;
   }
 
-  var items = state.mode === 'bullets' ? getItems() :
-              state.mode === 'links'   ? getLinks()  : [];
-
+  var items = S.mode === 'bullets' ? getItems() : S.mode === 'links' ? getLinks() : [];
   var payload = {
-    bumpType:   state.bump,
-    title:      document.getElementById('cl-title').value,
-    subtitle:   document.getElementById('cl-subtitle').value,
-    mode:       state.mode,
-    items:      items,
-    imageUrl:   state.imageUrl,
-    imageIsUrl: state.imageIsUrl,
-    extId:      document.getElementById('ext-id').value.trim(),
+    bumpType: S.bump,
+    title: document.getElementById('cl-title').value,
+    subtitle: document.getElementById('cl-subtitle').value,
+    mode: S.mode, items: items,
+    imageUrl: S.imageUrl, imageIsUrl: S.imageIsUrl,
+    extId: document.getElementById('ext-id').value.trim(),
   };
 
   try {
-    var r = await fetch('/api/publish', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    var reader = r.body.getReader();
-    var decoder = new TextDecoder();
-
+    var r = await fetch('/api/publish', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    var reader = r.body.getReader(); var dec = new TextDecoder();
     while (true) {
-      var { done, value } = await reader.read();
-      if (done) break;
-      var text = decoder.decode(value);
-      var lines = text.split('\n').filter(l => l.startsWith('data:'));
-      lines.forEach(function(line) {
+      var res = await reader.read(); if (res.done) break;
+      res.decoder = dec;
+      var text = dec.decode(res.value);
+      text.split('\n').filter(function(l){return l.startsWith('data:');}).forEach(function(line) {
         try {
           var d = JSON.parse(line.slice(5));
           addLog(d.msg, d.type);
           if (d.type === 'done') {
-            btn.textContent = '✓ Published!';
-            btn.style.background = 'linear-gradient(135deg, var(--green), #00b0ff)';
-            setTimeout(() => {
-              btn.disabled = false;
-              btn.textContent = '🚀 Build & Publish to GitHub';
-              btn.style.background = '';
-              loadStatus();
-            }, 3000);
+            btn.textContent = 'Published!';
+            btn.style.background = 'linear-gradient(135deg,#24b15b,#00b0ff)';
+            setTimeout(function() { btn.disabled=false; btn.textContent='🚀 Build & Publish to GitHub'; btn.style.background=''; loadStatus(); }, 3000);
           }
-          if (d.type === 'error') {
-            btn.disabled = false;
-            btn.textContent = '🚀 Build & Publish to GitHub';
-          }
-        } catch(e) {}
+          if (d.type === 'error') { btn.disabled=false; btn.textContent='🚀 Build & Publish to GitHub'; }
+        } catch(e){}
       });
     }
   } catch(e) {
     addLog('Network error: ' + e.message, 'error');
-    btn.disabled = false;
-    btn.textContent = '🚀 Build & Publish to GitHub';
+    btn.disabled = false; btn.textContent = '🚀 Build & Publish to GitHub';
   }
 }
 
-// ── START ─────────────────────────────────────────────────────────────────
 init();
-setInterval(loadStatus, 15000); // refresh every 15s
+setInterval(loadStatus, 15000);
 </script>
 </body>
 </html>
