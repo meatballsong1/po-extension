@@ -1249,13 +1249,19 @@ function edHout(e) {
 function applyLayout(ch) {
     Object.keys(ch).forEach(function(sel) {
         try {
+            // Skip our own injected overlay elements
+            if (sel.indexOf('po-veil-el-') !== -1) return;
             var el = document.querySelector(sel);
             if (!el) return;
             var c = ch[sel];
-            if (c.text !== undefined) el.innerText = c.text;
-            if (c.hidden)  el.style.visibility = 'hidden';
-            if (c.imgSrc)  { el.src = c.imgSrc; }
-            if (c.imgAlt)  el.alt  = c.imgAlt;
+            // Use setAttribute so MutationObserver swap doesn't clobber it
+            if (c.text !== undefined) {
+                el.setAttribute('data-veil-text', c.text);
+                el.innerText = c.text;
+            }
+            if (c.hidden)  el.style.setProperty('visibility', 'hidden', 'important');
+            if (c.imgSrc)  el.src = c.imgSrc;
+            if (c.imgAlt)  el.alt = c.imgAlt;
             if (c.imgWidth) el.style.width = c.imgWidth;
             if (c.styles) { Object.keys(c.styles).forEach(function(p) { el.style[p] = c.styles[p]; }); }
             if (c.fixed) {
@@ -1267,9 +1273,23 @@ function applyLayout(ch) {
             }
         } catch(e) {}
     });
+    // Restore custom overlay elements
+    restoreVeilElements();
 }
 
 function edSave() {
+    // Also persist overlay elements
+    var overlayEls = [];
+    document.querySelectorAll('[data-veil-overlay]').forEach(function(el) {
+        overlayEls.push({
+            type:    el.getAttribute('data-veil-type'),
+            content: el.getAttribute('data-veil-content') || el.innerText,
+            x:       el.style.left,
+            y:       el.style.top,
+            style:   el.getAttribute('style') || '',
+        });
+    });
+    editChanges['__veil_overlays__'] = overlayEls;
     var store = {}; store[STORE_KEY] = JSON.stringify(editChanges);
     chrome.storage.local.set(store, function() { showPageNotif({ desc: 'layout saved!' }); });
 }
@@ -1287,6 +1307,305 @@ chrome.storage.local.get(STORE_KEY, function(d) {
         }
     } catch(e) {}
 });
+
+
+// =========================================================================
+// -- HOTKEY SYSTEM --------------------------------------------------------
+// =========================================================================
+var HOTKEYS = {
+    // Alt + key combos
+    's': function() { if (CONFIG.isStreamModeEnabled !== undefined) { CONFIG.isStreamModeEnabled = !CONFIG.isStreamModeEnabled; chrome.storage.local.set({ isStreamModeEnabled: CONFIG.isStreamModeEnabled }); showPageNotif({ desc: 'stream mode ' + (CONFIG.isStreamModeEnabled ? 'on' : 'off') }); } },
+    'p': function() { buildPopoutWidget(); showPageNotif({ desc: 'popout opened' }); },
+    'e': function() { if (!editActive) startEditor(); else edStop(); },
+    'h': function() {
+        var f = document.getElementById('po-float');
+        if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    },
+};
+
+document.addEventListener('keydown', function(e) {
+    if (!e.altKey) return;
+    if (['INPUT','TEXTAREA'].indexOf(e.target.tagName) !== -1) return;
+    if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+    var k = e.key.toLowerCase();
+    if (HOTKEYS[k]) {
+        e.preventDefault();
+        HOTKEYS[k]();
+    }
+});
+
+// =========================================================================
+// -- CUSTOM OVERLAY ELEMENTS SYSTEM ---------------------------------------
+// =========================================================================
+
+var VEIL_ELEMENTS = [
+    // TEXT ELEMENTS
+    { cat: 'Text',   id: 'live-badge',    label: 'LIVE Badge',         html: '<div style="background:linear-gradient(135deg,#ff375f,#bf5af2);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:1px;font-family:-apple-system,sans-serif;box-shadow:0 0 16px rgba(255,55,95,0.6)">LIVE</div>' },
+    { cat: 'Text',   id: 'not-financial', label: 'Not Financial Advice', html: '<div style="background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.6);padding:5px 12px;border-radius:8px;font-size:10px;font-family:-apple-system,sans-serif;border:1px solid rgba(255,255,255,0.1)">Not financial advice</div>' },
+    { cat: 'Text',   id: 'custom-label',  label: 'Custom Text Label',  html: '<div style="color:#fff;font-size:14px;font-weight:600;font-family:-apple-system,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,0.8)" contenteditable="true">Your text here</div>' },
+    { cat: 'Text',   id: 'profit-display',label: 'Profit Display',     html: '<div style="background:rgba(36,177,91,0.15);border:1px solid rgba(36,177,91,0.4);border-radius:12px;padding:8px 16px;color:#24b15b;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">+$0.00</div>' },
+    { cat: 'Text',   id: 'loss-display',  label: 'Loss Display',       html: '<div style="background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.4);border-radius:12px;padding:8px 16px;color:#ff453a;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">-$0.00</div>' },
+    { cat: 'Text',   id: 'win-rate',      label: 'Win Rate Badge',     html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif;color:#fff"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Win Rate</div><div style="font-size:20px;font-weight:800;color:#24b15b">0%</div></div>' },
+    { cat: 'Text',   id: 'streak',        label: 'Streak Counter',     html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,193,7,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Streak</div><div style="font-size:20px;font-weight:800;color:#ffd60a">0x</div></div>' },
+    { cat: 'Text',   id: 'trades-today',  label: 'Trades Today',       html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(0,176,255,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Trades Today</div><div style="font-size:20px;font-weight:800;color:#00b0ff">0</div></div>' },
+    { cat: 'Text',   id: 'disclaimer',    label: 'Risk Disclaimer',    html: '<div style="background:rgba(0,0,0,0.5);color:rgba(255,255,255,0.4);padding:4px 10px;border-radius:6px;font-size:9px;font-family:-apple-system,sans-serif;max-width:280px;text-align:center">Trading involves risk. Past performance does not guarantee future results.</div>' },
+    { cat: 'Text',   id: 'channel-name',  label: 'Channel Name',       html: '<div style="background:linear-gradient(135deg,#bf5af2,#ff375f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:22px;font-weight:900;font-family:-apple-system,sans-serif;letter-spacing:-0.5px" contenteditable="true">YourChannel</div>' },
+
+    // BADGE / STATUS
+    { cat: 'Badge',  id: 'verified-badge',label: 'Verified Badge',     html: '<div style="display:flex;align-items:center;gap:6px;background:rgba(36,177,91,0.12);border:1px solid rgba(36,177,91,0.3);border-radius:20px;padding:4px 12px;font-family:-apple-system,sans-serif"><div style="width:6px;height:6px;border-radius:50%;background:#24b15b;box-shadow:0 0 8px rgba(36,177,91,0.8)"></div><span style="font-size:11px;font-weight:600;color:#24b15b">Verified</span></div>' },
+    { cat: 'Badge',  id: 'demo-badge',    label: 'Demo Mode Badge',    html: '<div style="background:rgba(255,193,7,0.12);border:1px solid rgba(255,193,7,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#ffd60a;font-family:-apple-system,sans-serif;letter-spacing:0.5px">DEMO</div>' },
+    { cat: 'Badge',  id: 'real-badge',    label: 'Real Mode Badge',    html: '<div style="background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#bf5af2;font-family:-apple-system,sans-serif;letter-spacing:0.5px">REAL</div>' },
+    { cat: 'Badge',  id: 'pro-badge',     label: 'PRO Badge',          html: '<div style="background:linear-gradient(135deg,#bf5af2,#ff375f);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;color:#fff;font-family:-apple-system,sans-serif;letter-spacing:1px;box-shadow:0 4px 12px rgba(191,90,242,0.35)">PRO</div>' },
+    { cat: 'Badge',  id: 'sponsored',     label: 'Sponsored Tag',      html: '<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:3px 8px;font-size:9px;font-weight:600;color:rgba(255,255,255,0.4);font-family:-apple-system,sans-serif;text-transform:uppercase;letter-spacing:0.8px">Sponsored</div>' },
+
+    // SHAPES / DIVIDERS
+    { cat: 'Shape',  id: 'divider-h',     label: 'Horizontal Divider', html: '<div style="width:200px;height:1px;background:linear-gradient(90deg,transparent,rgba(191,90,242,0.6),transparent)"></div>' },
+    { cat: 'Shape',  id: 'divider-v',     label: 'Vertical Divider',   html: '<div style="width:1px;height:80px;background:linear-gradient(180deg,transparent,rgba(191,90,242,0.6),transparent)"></div>' },
+    { cat: 'Shape',  id: 'glow-dot',      label: 'Glow Dot',           html: '<div style="width:10px;height:10px;border-radius:50%;background:#bf5af2;box-shadow:0 0 0 4px rgba(191,90,242,0.2),0 0 20px rgba(191,90,242,0.6)"></div>' },
+    { cat: 'Shape',  id: 'corner-accent', label: 'Corner Accent',      html: '<div style="width:40px;height:40px;border-top:2px solid #bf5af2;border-left:2px solid #bf5af2;border-radius:4px 0 0 0;opacity:0.7"></div>' },
+    { cat: 'Shape',  id: 'glass-box',     label: 'Glass Box',          html: '<div style="width:120px;height:60px;background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:12px"></div>' },
+
+    // OVERLAYS / PANELS
+    { cat: 'Panel',  id: 'stats-panel',   label: 'Stats Panel',        html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(16px);border:1px solid rgba(191,90,242,0.18);border-radius:14px;padding:12px 16px;font-family:-apple-system,sans-serif;min-width:160px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:rgba(191,90,242,0.8);margin-bottom:8px">Session Stats</div><div style="display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>Win Rate</span><span style="color:#24b15b;font-weight:600">0%</span></div><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>Trades</span><span style="color:#fff;font-weight:600">0</span></div><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>P&L</span><span style="color:#24b15b;font-weight:600">$0.00</span></div></div></div>' },
+    { cat: 'Panel',  id: 'timer-panel',   label: 'Session Timer',      html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(16px);border:1px solid rgba(0,176,255,0.2);border-radius:12px;padding:10px 16px;font-family:-apple-system,sans-serif;text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Session</div><div style="font-size:22px;font-weight:800;color:#00b0ff;letter-spacing:2px;font-variant-numeric:tabular-nums">00:00</div></div>' },
+    { cat: 'Panel',  id: 'alert-box',     label: 'Alert Box',          html: '<div style="background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.3);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;max-width:200px"><div style="font-size:10px;font-weight:700;color:#ff453a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Alert</div><div style="font-size:11px;color:rgba(255,255,255,0.7)" contenteditable="true">Your alert message here</div></div>' },
+    { cat: 'Panel',  id: 'note-box',      label: 'Sticky Note',        html: '<div style="background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.25);border-radius:10px;padding:10px 14px;font-family:-apple-system,sans-serif;max-width:180px"><div style="font-size:9px;font-weight:700;color:#ffd60a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Note</div><div style="font-size:11px;color:rgba(255,255,255,0.75);line-height:1.5" contenteditable="true">Your note here...</div></div>' },
+    { cat: 'Panel',  id: 'social-links',  label: 'Social Links Bar',   html: '<div style="display:flex;gap:8px;align-items:center;background:rgba(10,10,16,0.8);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 12px;font-family:-apple-system,sans-serif"><span style="font-size:11px;color:rgba(255,255,255,0.5)">Follow:</span><span style="font-size:11px;font-weight:600;color:#00b0ff" contenteditable="true">@yourname</span></div>' },
+
+    // STREAM SPECIFIC
+    { cat: 'Stream', id: 'stream-badge',  label: 'Stream Live Badge',  html: '<div style="display:flex;align-items:center;gap:8px;background:rgba(10,10,16,0.9);backdrop-filter:blur(10px);border:1px solid rgba(255,55,95,0.3);border-radius:20px;padding:6px 14px;font-family:-apple-system,sans-serif"><div style="width:7px;height:7px;border-radius:50%;background:#ff375f;box-shadow:0 0 8px rgba(255,55,95,0.9);animation:po-drain 0s"></div><span style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.5px">LIVE</span><span style="font-size:10px;color:rgba(255,255,255,0.4)" contenteditable="true">0 viewers</span></div>' },
+    { cat: 'Stream', id: 'no-spoilers',   label: 'No Spoilers Bar',    html: '<div style="background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);padding:6px 16px;font-family:-apple-system,sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:0.3px;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)">Stream - No Spoilers Please</div>' },
+    { cat: 'Stream', id: 'hype-train',    label: 'Hype Bar',           html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(191,90,242,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px">Hype</span><span contenteditable="true">0%</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#bf5af2,#ff375f);border-radius:4px;transition:width 0.5s ease"></div></div></div>' },
+    { cat: 'Stream', id: 'goal-tracker',  label: 'Goal Tracker',       html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(36,177,91,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px" contenteditable="true">Daily Goal</span><span contenteditable="true">$0 / $100</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#24b15b,#00b0ff);border-radius:4px"></div></div></div>' },
+];
+
+// ---- CUSTOM ELEMENTS CSS ----
+function injectVeilElementsCSS() {
+    if (document.getElementById('po-vel-styles')) return;
+    var s = document.createElement('style');
+    s.id = 'po-vel-styles';
+    s.textContent = [
+        '#po-vel-panel{position:fixed !important;top:50px !important;right:0 !important;width:240px !important;bottom:0 !important;background:rgba(8,8,14,0.97) !important;border-left:1px solid rgba(191,90,242,0.18) !important;z-index:2147483644 !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;display:flex !important;flex-direction:column !important;transition:transform 0.3s cubic-bezier(0.22,1,0.36,1) !important;}',
+        '#po-vel-panel.closed{transform:translateX(240px) !important;}',
+        '#po-vel-hdr{padding:10px 12px 8px !important;border-bottom:1px solid rgba(191,90,242,0.12) !important;font-size:9px !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:0.8px !important;background:linear-gradient(90deg,#bf5af2,#ff375f) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;flex-shrink:0 !important;}',
+        '#po-vel-search{margin:6px 8px !important;padding:6px 10px !important;font-size:11px !important;font-family:inherit !important;background:rgba(255,255,255,0.04) !important;border:1px solid rgba(255,255,255,0.08) !important;color:#fff !important;border-radius:8px !important;outline:none !important;width:calc(100% - 16px) !important;box-sizing:border-box !important;}',
+        '#po-vel-search:focus{border-color:rgba(191,90,242,0.4) !important;}',
+        '#po-vel-cats{display:flex !important;gap:4px !important;padding:0 8px 6px !important;flex-wrap:wrap !important;flex-shrink:0 !important;}',
+        '.po-vel-cat{padding:2px 8px !important;border-radius:10px !important;font-size:9px !important;font-weight:600 !important;cursor:pointer !important;border:1px solid rgba(255,255,255,0.1) !important;color:rgba(255,255,255,0.45) !important;transition:all 0.15s !important;background:transparent !important;font-family:inherit !important;box-shadow:none !important;transform:none !important;}',
+        '.po-vel-cat:hover,.po-vel-cat.active{background:rgba(191,90,242,0.15) !important;border-color:rgba(191,90,242,0.4) !important;color:#bf5af2 !important;transform:none !important;box-shadow:none !important;}',
+        '#po-vel-list{flex:1 !important;overflow-y:auto !important;padding:4px 8px 8px !important;}',
+        '#po-vel-list::-webkit-scrollbar{width:3px !important;}',
+        '#po-vel-list::-webkit-scrollbar-thumb{background:rgba(191,90,242,0.3) !important;border-radius:3px !important;}',
+        '.po-vel-item{padding:7px 10px !important;border-radius:9px !important;border:1px solid rgba(255,255,255,0.06) !important;margin-bottom:4px !important;cursor:pointer !important;transition:all 0.15s !important;background:rgba(255,255,255,0.02) !important;}',
+        '.po-vel-item:hover{background:rgba(191,90,242,0.1) !important;border-color:rgba(191,90,242,0.3) !important;}',
+        '.po-vel-item-cat{font-size:8.5px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.5px !important;color:rgba(191,90,242,0.6) !important;margin-bottom:2px !important;}',
+        '.po-vel-item-label{font-size:11.5px !important;font-weight:500 !important;color:rgba(255,255,255,0.8) !important;}',
+        '[data-veil-overlay]{cursor:move !important;user-select:none !important;}',
+        '[data-veil-overlay]:hover{outline:1px dashed rgba(191,90,242,0.5) !important;outline-offset:2px !important;}',
+        '[data-veil-overlay] [contenteditable]{cursor:text !important;outline:none !important;}',
+        '#po-vel-toggle{position:absolute !important;left:-22px !important;top:50% !important;transform:translateY(-50%) !important;width:22px !important;height:44px !important;background:rgba(8,8,14,0.97) !important;border:1px solid rgba(191,90,242,0.18) !important;border-right:none !important;border-radius:8px 0 0 8px !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;color:rgba(191,90,242,0.7) !important;font-size:10px !important;padding:0 !important;margin:0 !important;box-shadow:none !important;transition:background 0.2s !important;}',
+        '#po-vel-toggle:hover{background:rgba(191,90,242,0.12) !important;color:#bf5af2 !important;transform:translateY(-50%) !important;box-shadow:none !important;}',
+    ].join('');
+    document.documentElement.appendChild(s);
+}
+
+// ---- RESTORE OVERLAY ELEMENTS FROM SAVED DATA ----
+function restoreVeilElements() {
+    chrome.storage.local.get(STORE_KEY, function(d) {
+        try {
+            var ch = JSON.parse(d[STORE_KEY] || '{}');
+            var overlays = ch['__veil_overlays__'];
+            if (!overlays || !overlays.length) return;
+            overlays.forEach(function(data) {
+                // Don't re-add if already on page
+                var existing = document.querySelector('[data-veil-type="' + data.type + '"][data-veil-restored]');
+                if (existing) return;
+                var def = VEIL_ELEMENTS.find(function(e) { return e.id === data.type; });
+                if (!def) return;
+                spawnVeilElement(def, data.x, data.y, true);
+            });
+        } catch(e) {}
+    });
+}
+
+// ---- SPAWN ELEMENT ONTO PAGE ----
+function spawnVeilElement(def, x, y, restored) {
+    injectVeilElementsCSS();
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-veil-overlay', '1');
+    wrap.setAttribute('data-veil-type', def.id);
+    if (restored) wrap.setAttribute('data-veil-restored', '1');
+    wrap.innerHTML = def.html;
+    wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '100px') + ';top:' + (y || '100px') + ';';
+
+    // Delete on double-click
+    wrap.addEventListener('dblclick', function(e) {
+        if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+        wrap.parentNode.removeChild(wrap);
+    });
+
+    // Drag to reposition
+    wrap.addEventListener('mousedown', function(e) {
+        if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+        e.preventDefault();
+        var startX = e.clientX - wrap.offsetLeft;
+        var startY = e.clientY - wrap.offsetTop;
+        function onMove(ev) {
+            wrap.style.left = (ev.clientX - startX) + 'px';
+            wrap.style.top  = (ev.clientY - startY) + 'px';
+        }
+        function onUp() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+
+    document.body.appendChild(wrap);
+    return wrap;
+}
+
+// ---- ELEMENTS PANEL ----
+function buildElementsPanel() {
+    if (document.getElementById('po-vel-panel')) return;
+    injectVeilElementsCSS();
+
+    var panel = document.createElement('div');
+    panel.id = 'po-vel-panel';
+    panel.classList.add('closed');
+
+    var toggle = document.createElement('button');
+    toggle.id = 'po-vel-toggle';
+    toggle.innerHTML = '&#9664;';
+    toggle.title = 'Elements Panel';
+    var open = false;
+    toggle.addEventListener('click', function() {
+        open = !open;
+        if (open) { panel.classList.remove('closed'); toggle.innerHTML = '&#9654;'; }
+        else       { panel.classList.add('closed');    toggle.innerHTML = '&#9664;'; }
+    });
+
+    var cats = ['All'].concat([...new Set(VEIL_ELEMENTS.map(function(e) { return e.cat; }))]);
+    var activeCat = 'All';
+
+    panel.innerHTML =
+        '<div id="po-vel-hdr">Add Elements</div>' +
+        '<input id="po-vel-search" placeholder="Search elements..." type="text">' +
+        '<div id="po-vel-cats">' +
+            cats.map(function(c) { return '<button class="po-vel-cat' + (c === 'All' ? ' active' : '') + '" data-cat="' + c + '">' + c + '</button>'; }).join('') +
+        '</div>' +
+        '<div id="po-vel-list"></div>';
+
+    panel.appendChild(toggle);
+    document.body.appendChild(panel);
+
+    function renderList(filter, cat) {
+        var list = document.getElementById('po-vel-list');
+        var items = VEIL_ELEMENTS.filter(function(e) {
+            var matchCat   = cat === 'All' || e.cat === cat;
+            var matchFilter = !filter || e.label.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+            return matchCat && matchFilter;
+        });
+        list.innerHTML = items.map(function(e) {
+            return '<div class="po-vel-item" data-id="' + e.id + '">' +
+                '<div class="po-vel-item-cat">' + e.cat + '</div>' +
+                '<div class="po-vel-item-label">' + e.label + '</div>' +
+            '</div>';
+        }).join('');
+        list.querySelectorAll('.po-vel-item').forEach(function(node) {
+            node.addEventListener('click', function() {
+                var id = node.getAttribute('data-id');
+                var def = VEIL_ELEMENTS.find(function(e) { return e.id === id; });
+                if (def) {
+                    spawnVeilElement(def, '120px', '120px', false);
+                    showPageNotif({ desc: def.label + ' added! drag it anywhere. double-click to remove.' });
+                }
+            });
+        });
+    }
+
+    renderList('', 'All');
+
+    document.getElementById('po-vel-search').addEventListener('input', function() {
+        renderList(this.value, activeCat);
+    });
+    panel.querySelectorAll('.po-vel-cat').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            panel.querySelectorAll('.po-vel-cat').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            activeCat = btn.getAttribute('data-cat');
+            renderList(document.getElementById('po-vel-search').value, activeCat);
+        });
+    });
+}
+
+// ---- WIRE ELEMENTS PANEL INTO EDITOR ----
+var _origStartEditor = startEditor;
+startEditor = function() {
+    _origStartEditor();
+    buildElementsPanel();
+    // Add "Add Elements" button to top bar
+    var bar = document.getElementById('po-edit-bar');
+    if (bar && !document.getElementById('peb-elements')) {
+        var btn = document.createElement('button');
+        btn.className = 'peb';
+        btn.id = 'peb-elements';
+        btn.textContent = 'Add Elements';
+        btn.style.cssText = 'background:rgba(0,176,255,0.12) !important;border:1px solid rgba(0,176,255,0.3) !important;color:#00b0ff !important;';
+        btn.addEventListener('click', function() {
+            var panel = document.getElementById('po-vel-panel');
+            if (panel) {
+                var isOpen = !panel.classList.contains('closed');
+                if (isOpen) { panel.classList.add('closed'); document.getElementById('po-vel-toggle').innerHTML = '&#9664;'; }
+                else        { panel.classList.remove('closed'); document.getElementById('po-vel-toggle').innerHTML = '&#9654;'; }
+            }
+        });
+        // Insert before Save Changes
+        var saveBtn = document.getElementById('peb-save');
+        bar.insertBefore(btn, saveBtn);
+    }
+};
+
+var _origEdStop = edStop;
+edStop = function() {
+    _origEdStop();
+    var velPanel = document.getElementById('po-vel-panel');
+    if (velPanel) velPanel.parentNode.removeChild(velPanel);
+};
+
+// =========================================================================
+// -- UPDATE NOTIFIER ------------------------------------------------------
+// =========================================================================
+var VEIL_CURRENT_VERSION = '2.3';
+var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json';
+
+function checkForUpdate() {
+    fetch(UPDATE_CHECK_URL)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data || !data.version) return;
+            chrome.storage.local.get('veil_last_seen_update', function(d) {
+                if (chrome.runtime.lastError) return;
+                var latestVersion = data.version;
+                var lastSeen = d['veil_last_seen_update'] || '';
+                if (latestVersion !== VEIL_CURRENT_VERSION && latestVersion !== lastSeen) {
+                    showPageNotif({
+                        title: 'pocket option config',
+                        desc: 'pocket option extension has been updated to version ' + latestVersion,
+                    });
+                    chrome.storage.local.set({ 'veil_last_seen_update': latestVersion });
+                }
+            });
+        })
+        .catch(function() { /* no server, no problem */ });
+}
+
+// Check on load (with delay so page settles)
+if (window.location.href.indexOf('pocketoption.com') !== -1) {
+    setTimeout(checkForUpdate, 5000);
+}
+
 
 // -- CHANGELOG ---------------------------------------------------------
 // ============================================================

@@ -314,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (tabs && tabs[0] && tabs[0].id) {
                         errors.forEach(err => chrome.tabs.sendMessage(tabs[0].id, {
                             type: 'PO_NOTIFY',
-                            title: 'pocket option extension',
+                            title: 'pocket option config',
                             desc: err,
                             isError: true
                         }));
