@@ -708,7 +708,7 @@ function injectEditorStyles() {
         '#po-code-area{width:100% !important;box-sizing:border-box !important;height:140px !important;padding:10px !important;font-size:12px !important;font-family:monospace !important;background:rgba(0,0,0,0.4) !important;border:1px solid rgba(255,193,7,0.2) !important;color:#ffd60a !important;border-radius:9px !important;outline:none !important;resize:vertical !important;margin-bottom:10px !important;}',
         '#po-code-area:focus{border-color:rgba(255,193,7,0.5) !important;}',
         // element highlight while hovering in edit mode
-        '.po-highlight{outline:2px solid rgba(191,90,242,0.6) !important;outline-offset:2px !important;cursor:context-menu !important;}',
+        '.po-highlight:not([data-veil-overlay]):not(#po-vel-panel):not(#po-vel-panel *){outline:2px solid rgba(191,90,242,0.6) !important;outline-offset:2px !important;cursor:context-menu !important;}',
     ].join('');
     document.documentElement.appendChild(s);
 }
@@ -1354,8 +1354,8 @@ var VEIL_ELEMENTS = [
     { cat: 'Text',   id: 'live-badge',    label: 'LIVE Badge',         html: '<div style="background:linear-gradient(135deg,#ff375f,#bf5af2);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:1px;font-family:-apple-system,sans-serif;box-shadow:0 0 16px rgba(255,55,95,0.6)">LIVE</div>' },
     { cat: 'Text',   id: 'not-financial', label: 'Not Financial Advice', html: '<div style="background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.6);padding:5px 12px;border-radius:8px;font-size:10px;font-family:-apple-system,sans-serif;border:1px solid rgba(255,255,255,0.1)">Not financial advice</div>' },
     { cat: 'Text',   id: 'custom-label',  label: 'Custom Text Label',  html: '<div style="color:#fff;font-size:14px;font-weight:600;font-family:-apple-system,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,0.8)" contenteditable="true">Your text here</div>' },
-    { cat: 'Text',   id: 'profit-display',label: 'Profit Display',     html: '<div style="background:rgba(36,177,91,0.15);border:1px solid rgba(36,177,91,0.4);border-radius:12px;padding:8px 16px;color:#24b15b;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">+$0.00</div>' },
-    { cat: 'Text',   id: 'loss-display',  label: 'Loss Display',       html: '<div style="background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.4);border-radius:12px;padding:8px 16px;color:#ff453a;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">-$0.00</div>' },
+    { cat: 'Text',   id: 'profit-display',label: 'Profit Display (live)', html: '<div data-veil-live="profit" style="background:rgba(36,177,91,0.15);border:1px solid rgba(36,177,91,0.4);border-radius:12px;padding:8px 16px;color:#24b15b;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">+$0.00</div>' },
+    { cat: 'Text',   id: 'loss-display',  label: 'Loss Display (live)',   html: '<div data-veil-live="loss" style="background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.4);border-radius:12px;padding:8px 16px;color:#ff453a;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">-$0.00</div>' },
     { cat: 'Text',   id: 'win-rate',      label: 'Win Rate Badge',     html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif;color:#fff"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Win Rate</div><div style="font-size:20px;font-weight:800;color:#24b15b">0%</div></div>' },
     { cat: 'Text',   id: 'streak',        label: 'Streak Counter',     html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,193,7,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Streak</div><div style="font-size:20px;font-weight:800;color:#ffd60a">0x</div></div>' },
     { cat: 'Text',   id: 'trades-today',  label: 'Trades Today',       html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(0,176,255,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Trades Today</div><div style="font-size:20px;font-weight:800;color:#00b0ff">0</div></div>' },
@@ -1474,7 +1474,51 @@ function spawnVeilElement(def, x, y, restored) {
     });
 
     document.body.appendChild(wrap);
+
+    // If this element has a live data attribute, start feeding it PO data
+    var liveType = wrap.querySelector('[data-veil-live]');
+    if (liveType) {
+        startVeilLiveUpdater(wrap, liveType.getAttribute('data-veil-live'));
+    }
+
     return wrap;
+}
+
+// Live data updater — pulls values from PO DOM and feeds into veil overlay elements
+function startVeilLiveUpdater(wrap, type) {
+    var interval = setInterval(function() {
+        // Stop if element removed from page
+        if (!document.body.contains(wrap)) { clearInterval(interval); return; }
+
+        var display = wrap.querySelector('[data-veil-live]');
+        if (!display) { clearInterval(interval); return; }
+
+        if (type === 'profit') {
+            // Try to get last closed trade profit from PO DOM
+            var profitEl = document.querySelector('.deals-list .deal:first-child .deal__profit') ||
+                           document.querySelector('.trade-history .profit:first-child') ||
+                           document.querySelector('[class*="profit"]:not([data-veil-live])');
+            if (profitEl) {
+                var val = profitEl.innerText.trim();
+                if (val && val !== display.innerText) {
+                    var isPos = !val.startsWith('-');
+                    display.style.color = isPos ? '#24b15b' : '#ff453a';
+                    display.style.setProperty('-webkit-text-fill-color', isPos ? '#24b15b' : '#ff453a', 'important');
+                    display.parentElement.style.background = isPos ? 'rgba(36,177,91,0.15)' : 'rgba(255,69,58,0.15)';
+                    display.parentElement.style.borderColor = isPos ? 'rgba(36,177,91,0.4)' : 'rgba(255,69,58,0.4)';
+                    display.innerText = val;
+                }
+            }
+        } else if (type === 'loss') {
+            var lossEl = document.querySelector('.deals-list .deal:first-child .deal__loss') ||
+                         document.querySelector('.trade-history .loss:first-child') ||
+                         document.querySelector('[class*="loss"]:not([data-veil-live])');
+            if (lossEl) {
+                var lv = lossEl.innerText.trim();
+                if (lv && lv !== display.innerText) display.innerText = lv;
+            }
+        }
+    }, 500);
 }
 
 // ---- ELEMENTS PANEL ----
@@ -1590,18 +1634,9 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-// ---- EDIT THIS to change the random messages shown when an update is found
-var UPDATE_MESSAGES = [
- ""
-];
-// -------------------------------------------------------------------------
-
 var VEIL_CURRENT_VERSION = '2.4.2';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
-function getRandomUpdateMsg() {
-    return UPDATE_MESSAGES[Math.floor(Math.random() * UPDATE_MESSAGES.length)];
-}
 
 // Full-screen update popup — replaces the old banner
 function getUpdateBrowserInfo() {
@@ -1639,7 +1674,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
             '#po-steps-view{display:none;flex-direction:column;gap:8px;margin-top:10px;animation:poSlideUp 0.28s cubic-bezier(0.22,1,0.36,1);}',
             '#po-steps-view.visible{display:flex !important;}',
             '.po-step-row{display:flex !important;align-items:flex-start !important;gap:10px !important;}',
-            '.po-step-num{width:20px !important;height:20px !important;border-radius:50% !important;background:rgba(0,176,255,0.15) !important;border:1px solid rgba(0,176,255,0.3) !important;color:#00b0ff !important;font-size:9px !important;font-weight:800 !important;display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;margin-top:1px !important;}',
+            '.po-step-num{width:20px !important;height:20px !important;border-radius:50% !important;background:rgba(191,90,242,0.12) !important;border:1px solid rgba(191,90,242,0.3) !important;color:#bf5af2 !important;font-size:9px !important;font-weight:800 !important;display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;margin-top:1px !important;}',
             '.po-step-txt{font-size:11.5px !important;color:rgba(255,255,255,0.7) !important;line-height:1.5 !important;}',
         ].join('');
         (document.head || document.documentElement).appendChild(us);
@@ -1669,11 +1704,11 @@ function showUpdateBanner(currentVersion, latestVersion) {
     card.style.cssText = [
         'position:relative !important',
         'width:340px !important',
-        'background:rgba(10,12,20,0.97) !important',
-        'border:1px solid rgba(255,255,255,0.1) !important',
+        'background:rgba(10,8,18,0.98) !important',
+        'border:1px solid rgba(191,90,242,0.2) !important',
         'border-radius:26px !important',
         'padding:24px 22px 20px !important',
-        'box-shadow:0 40px 80px rgba(0,0,0,0.8),0 0 0 0.5px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.08) !important',
+        'box-shadow:0 40px 80px rgba(0,0,0,0.8),0 0 0 0.5px rgba(191,90,242,0.12),inset 0 1px 0 rgba(191,90,242,0.1),0 0 40px rgba(191,90,242,0.08) !important',
         'animation:poUpIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards !important',
         'overflow:hidden !important',
     ].join(';');
@@ -1695,7 +1730,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
         '</div>' +
         '<div style="font-size:10.5px;color:rgba(255,255,255,0.35);font-weight:500;font-variant-numeric:tabular-nums;">' +
             '<span style="color:rgba(255,255,255,0.3);">v' + currentVersion + '</span>' +
-            '<span style="margin:0 5px;color:rgba(255,255,255,0.2);">→</span>' +
+            '<span style="margin:0 5px;color:rgba(255,255,255,0.25);">→</span>' +
             '<span style="color:#fff;font-weight:700;">v' + latestVersion + '</span>' +
         '</div>';
 
@@ -1718,11 +1753,11 @@ function showUpdateBanner(currentVersion, latestVersion) {
     mainBtns.style.cssText = 'display:flex !important;gap:8px !important;';
 
     var updateBtn = document.createElement('button');
-    updateBtn.textContent = 'Update Extension';
+    updateBtn.textContent = 'Update me';
     updateBtn.style.cssText = [
         'flex:1 !important',
         'padding:12px !important',
-        'background:linear-gradient(135deg,rgba(191,90,242,0.9),rgba(0,176,255,0.85)) !important',
+        'background:linear-gradient(135deg,#bf5af2,#ff375f) !important',
         'border:none !important',
         'border-radius:13px !important',
         'color:#fff !important',
@@ -1732,10 +1767,10 @@ function showUpdateBanner(currentVersion, latestVersion) {
         'cursor:pointer !important',
         'font-family:inherit !important',
         'letter-spacing:-0.2px !important',
-        'box-shadow:0 4px 20px rgba(191,90,242,0.35) !important',
+        'box-shadow:0 4px 20px rgba(191,90,242,0.4) !important',
         'transition:opacity 0.2s,transform 0.15s,box-shadow 0.2s !important',
     ].join(';');
-    updateBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; this.style.boxShadow = '0 8px 28px rgba(191,90,242,0.5)'; });
+    updateBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; this.style.boxShadow = '0 8px 28px rgba(191,90,242,0.55)'; });
     updateBtn.addEventListener('mouseout',  function() { this.style.opacity = '1'; this.style.transform = 'translateY(0)'; this.style.boxShadow = '0 4px 20px rgba(191,90,242,0.35)'; });
     updateBtn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.97)'; });
     updateBtn.addEventListener('mouseup',   function() { this.style.transform = 'translateY(-1px)'; });
@@ -1827,22 +1862,27 @@ function showUpdateBanner(currentVersion, latestVersion) {
     dlBtn.style.cssText = [
         'flex:1 !important',
         'padding:11px !important',
-        'background:rgba(0,176,255,0.15) !important',
-        'border:1px solid rgba(0,176,255,0.3) !important',
+        'background:linear-gradient(135deg,#bf5af2,#ff375f) !important',
+        'border:none !important',
         'border-radius:12px !important',
-        'color:#00b0ff !important',
-        '-webkit-text-fill-color:#00b0ff !important',
+        'color:#fff !important',
+        '-webkit-text-fill-color:#fff !important',
         'font-weight:700 !important',
         'font-size:12px !important',
         'text-decoration:none !important',
         'text-align:center !important',
         'display:block !important',
-        'transition:background 0.18s,transform 0.12s !important',
+        'box-shadow:0 4px 16px rgba(191,90,242,0.35) !important',
+        'transition:opacity 0.18s,transform 0.12s !important',
     ].join(';');
-    dlBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(0,176,255,0.26)'; this.style.transform = 'translateY(-1px)'; });
-    dlBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(0,176,255,0.15)'; this.style.transform = 'translateY(0)'; });
+    dlBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; });
+    dlBtn.addEventListener('mouseout',  function() { this.style.opacity = '1'; this.style.transform = 'translateY(0)'; });
     dlBtn.addEventListener('click', function() {
-        setTimeout(function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); }, 1800);
+        // Close popup after download starts, then open extensions page
+        setTimeout(function() {
+            closeUpdate(overlay);
+            setTimeout(function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); }, 300);
+        }, 800);
     });
 
     var extBtn = document.createElement('button');
@@ -1892,15 +1932,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
         snoozePicker.classList.add('visible');
     });
 
-    // --- CLOSE X ---
-    var closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/></svg>';
-    closeBtn.style.cssText = 'position:absolute !important;top:16px !important;right:16px !important;width:24px !important;height:24px !important;border-radius:50% !important;background:rgba(255,255,255,0.07) !important;border:1px solid rgba(255,255,255,0.1) !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;transition:background 0.15s,transform 0.12s !important;padding:0 !important;';
-    closeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.14)'; });
-    closeBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.07)'; });
-    closeBtn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.88)'; });
-    closeBtn.addEventListener('mouseup',   function() { this.style.transform = 'scale(1)'; });
-    closeBtn.addEventListener('click', function() { closeUpdate(overlay); });
+    // No X button — dismissed via Remind me later or Download
 
     function closeUpdate(el) {
         card.style.animation = 'poUpOut 0.3s cubic-bezier(0.22,1,0.36,1) forwards';
@@ -1909,7 +1941,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
         setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
     }
 
-    backdrop.addEventListener('click', function() { closeUpdate(overlay); });
+    // backdrop click intentionally disabled — use Remind me later or Download to dismiss
 
     // Assemble
     card.appendChild(shimmer);
@@ -1926,6 +1958,17 @@ function showUpdateBanner(currentVersion, latestVersion) {
     (document.body || document.documentElement).appendChild(overlay);
 }
 
+
+// ---- POPUP QUEUE ----
+// changelog shows first; if an update is pending it fires ~10s after changelog closes
+var _pendingUpdateVersions = null; // { current, latest } stored here until changelog dismissed
+
+function _maybeFireQueuedUpdate() {
+    if (!_pendingUpdateVersions) return;
+    var v = _pendingUpdateVersions;
+    _pendingUpdateVersions = null;
+    setTimeout(function() { showUpdateBanner(v.current, v.latest); }, 10000);
+}
 
 var _updateCheckCount = 0;
 
@@ -1949,14 +1992,12 @@ function checkForUpdate() {
                 if (latestVersion !== VEIL_CURRENT_VERSION && latestVersion !== lastSeen) {
                     chrome.storage.local.set({ 'veil_last_seen_update': latestVersion });
                     if (_updateCheckCount === 0) {
-                        // First check on page load — full popup
-                        showUpdateBanner(VEIL_CURRENT_VERSION, latestVersion);
-                    } else {
-                        // Every 20s after — small notification
-                        showPageNotif({
-                            title: 'pocket option config',
-                            desc: 'v' + latestVersion + ' is out — open the About tab to update',
-                        });
+                        // If changelog popup is showing, queue the update for after it closes
+                        if (document.getElementById('po-cl-overlay')) {
+                            _pendingUpdateVersions = { current: VEIL_CURRENT_VERSION, latest: latestVersion };
+                        } else {
+                            showUpdateBanner(VEIL_CURRENT_VERSION, latestVersion);
+                        }
                     }
                 }
                 _updateCheckCount++;
@@ -2149,6 +2190,8 @@ function showChangelog() {
             setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 250);
             var s = {}; s[CL_KEY] = CHANGELOG.version; chrome.storage.local.set(s);
             setTimeout(function() { showUpdateToast(CHANGELOG.version); }, 400);
+            // Fire queued update banner if one is waiting
+            _maybeFireQueuedUpdate();
         }
         document.getElementById('po-cl-dismiss').addEventListener('click', dismiss);
         document.getElementById('po-cl-blur').addEventListener('click', dismiss);

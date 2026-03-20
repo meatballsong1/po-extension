@@ -169,19 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     result.className = 'update-result has-update';
                     verEl.style.display = 'block';
                     verEl.textContent = 'v' + latest + ' available';
-                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + ". updating you now would be sick.";
+                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + "";
                     if (link) { link.style.display = 'inline-block'; link.textContent = 'how to update'; }
 
-                    // Fire changelog popup + update banner on the active tab
-                    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                        if (tabs && tabs[0] && tabs[0].id) {
-                            chrome.tabs.sendMessage(tabs[0].id, {
-                                type: 'PO_UPDATE_AVAILABLE',
-                                current: current,
-                                latest: latest,
-                            });
-                        }
-                    });
+
                 }
             })
             .catch(function(e) {
