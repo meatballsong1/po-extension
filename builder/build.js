@@ -76,7 +76,10 @@ function updateChangelogInContentJs(version, title, subtitle, items, mode, image
     let content = fs.readFileSync(p, 'utf8');
 
     // Find the CHANGELOG object block and replace it entirely — no risky field-by-field regexes
-    const itemsStr = (items || []).map(i => `        '${i.replace(/\\/g,'\\\\').replace(/'/g, "\\'")}',`).join('\n');
+    const itemsStr = (items || []).map(i => {
+        const s = typeof i === 'string' ? i : (i.text ? i.text + (i.url ? ' — ' + i.url : '') : JSON.stringify(i));
+        return `        '${s.replace(/\\/g,'\\\\').replace(/'/g, "\\'")}',`;
+    }).join('\n');
     const imageStr = (image || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
     const titleStr = (title || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
     const subStr   = (subtitle || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
