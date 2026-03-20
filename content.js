@@ -718,7 +718,12 @@ function inEditUI(el) {
         el.closest('#po-edit-bar') || el.closest('#po-explorer') ||
         el.closest('#po-float') || el.closest('#po-notif-root') ||
         el.closest('#po-ctx') || el.closest('#po-img-modal') ||
-        el.closest('#po-code-modal')
+        el.closest('#po-code-modal') ||
+        el.closest('[data-veil-overlay]') ||
+        el.closest('#po-vel-panel') ||
+        el.closest('#po-update-popup') ||
+        el.closest('#po-cl-overlay') ||
+        el.closest('#po-update-toast')
     ));
 }
 
@@ -1232,6 +1237,8 @@ function edStop() {
 function edContextMenu(e) {
     if (!editActive) return;
     if (inEditUI(e.target)) return;
+    // Let veil overlay elements handle their own events (drag/dblclick)
+    if (e.target.closest && e.target.closest('[data-veil-overlay]')) return;
     e.preventDefault();
     e.stopPropagation();
     showCtxMenu(e.clientX, e.clientY, e.target);
@@ -1239,6 +1246,9 @@ function edContextMenu(e) {
 
 function edHover(e) {
     if (!editActive || inEditUI(e.target)) return;
+    // Don't highlight our own injected UI
+    if (e.target.hasAttribute && e.target.hasAttribute('data-veil-overlay')) return;
+    if (e.target.closest && e.target.closest('[data-veil-overlay]')) return;
     e.target.classList.add('po-highlight');
 }
 function edHout(e) {
@@ -1592,7 +1602,7 @@ var UPDATE_MESSAGES = [
 ];
 // -------------------------------------------------------------------------
 
-var VEIL_CURRENT_VERSION = '2.5.4';
+var VEIL_CURRENT_VERSION = '2.4.2';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 function getRandomUpdateMsg() {
@@ -1632,7 +1642,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
     topBar.style.cssText = 'display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:14px !important;';
     topBar.innerHTML =
         '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(0,176,255,0.45);flex-shrink:0;" onerror="this.style.display='none'">' +
+            '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(0,176,255,0.45);flex-shrink:0;" onerror="this.style.display=none">' +
             '<div style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:rgba(0,176,255,0.12);border:1px solid rgba(0,176,255,0.3);border-radius:20px;">' +
                 '<div style="width:6px;height:6px;border-radius:50%;background:#00b0ff;box-shadow:0 0 8px rgba(0,176,255,0.9);flex-shrink:0;"></div>' +
                 '<span style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#00b0ff;">update available</span>' +
@@ -1710,6 +1720,8 @@ function showUpdateBanner(currentVersion, latestVersion) {
     (document.body || document.documentElement).appendChild(overlay);
 }
 
+var _updateCheckCount = 0;
+
 function checkForUpdate() {
     fetch(UPDATE_CHECK_URL + Date.now())
         .then(function(r) { return r.json(); })
@@ -1720,17 +1732,30 @@ function checkForUpdate() {
                 if (chrome.runtime.lastError) return;
                 var lastSeen = d['veil_last_seen_update'] || '';
                 if (latestVersion !== VEIL_CURRENT_VERSION && latestVersion !== lastSeen) {
-                    showUpdateBanner(VEIL_CURRENT_VERSION, latestVersion);
                     chrome.storage.local.set({ 'veil_last_seen_update': latestVersion });
+                    if (_updateCheckCount === 0) {
+                        // First check on page load — show the full popup
+                        showUpdateBanner(VEIL_CURRENT_VERSION, latestVersion);
+                    } else {
+                        // Subsequent 20s checks — show a small notification instead
+                        showPageNotif({
+                            title: 'pocket option config',
+                            desc: 'update available — v' + latestVersion + ' is out. check the About tab to download.',
+                        });
+                    }
                 }
+                _updateCheckCount++;
             });
         })
         .catch(function() {});
 }
 
-// Auto-check 5s after page load
+// First check 5s after page load, then every 20s
 if (window.location.href.indexOf('pocketoption.com') !== -1) {
-    setTimeout(checkForUpdate, 5000);
+    setTimeout(function() {
+        checkForUpdate();
+        setInterval(checkForUpdate, 20000);
+    }, 5000);
 }
 
 
@@ -1739,23 +1764,36 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.5.4',
+    version: '2.3',
 
-    title: 'anwjidep',
-    subtitle: 'djpiwjspi',
+    title: 'welcome to version 2.3!',
+    subtitle: 'this is a PRETTY big update',
 
-    image: '',
+    image: 'https://cdn.discordapp.com/attachments/1478916523820060834/1484004106786967572/image.png?ex=69bca606&is=69bb5486&hm=9910636aad93ba2a08f429dbee3814d84dfa03d74b6bff220fe9f1c28a9ed823&',
 
     // 'bullets' | 'text' | 'links' | 'none'
     mode: 'bullets',
 
     items: [
-
+        'icons are FULLY fixed so you can effortlessly swap',
+        'Stability and random crashes have been fixed',
+        'Diddy has been added to improve stability',
+        'FULL customization to your pocket option page so you can FAKE WHATEVER THE FUCK YOU WANT!',
+        'New stream mode so you can hide certain aspects of pocket option like your balance',
+        'An about tab that you probably dont give a shit about',
+        'This new changelog popup obviously',
     ],
 
     text: '',
 
-    buttonLabel: 'djsdjdihhhh',
+    // links mode example:
+    //   items: [
+    //     { text: 'View full changelog', url: 'https://github.com/you/repo' },
+    //     { text: 'Join the Discord',    url: 'https://discord.gg/xyz' },
+    //     'Or just a plain text row with no link',
+    //   ]
+
+    buttonLabel: 'Pretty tuff',
 };
 // ============================================================
 
