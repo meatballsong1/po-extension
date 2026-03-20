@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    :root { --bg: #0a0a0a; --card: #161616; --accent: #00b0ff; --accent-hover: #0091ea; --border: #2a2a2a; --text-dim: #888; }
+    body { width: 280px; margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', -apple-system, sans-serif; border-radius: 12px; overflow: hidden; }
+    .container { padding: 15px 20px 20px 20px; border: 1px solid var(--border); }
+    
+    /* Tabs Navigation */
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+    .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: var(--text-dim); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: color 0.2s; }
+    .tab:hover { color: #fff; }
+    .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+    .tab-content { display: none; animation: fadeIn 0.2s; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .title { font-size: 12px; color: var(--accent); font-weight: 800; margin-bottom: 15px; text-transform: lowercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+    
+    .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--card); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); }
+    .switch { position: relative; width: 38px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; }
+    input:checked + .slider { background-color: var(--accent); box-shadow: 0 0 10px rgba(0, 176, 255, 0.3); }
+    input:checked + .slider:before { transform: translateX(18px); }
+    
+    .field-group { margin-bottom: 12px; }
+    .field-group.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field-label { font-size: 9px; color: var(--text-dim); margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type="text"], input[type="number"] { width: 100%; box-sizing: border-box; padding: 10px; font-size: 12px; background: var(--card); border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; transition: all 0.2s; }
+    input:focus { border-color: var(--accent); background: #1a1a1a; }
+    
+    button { width: 100%; padding: 12px; margin-top: 10px; background: var(--accent); border: none; color: white; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+    button:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 176, 255, 0.2); }
+    button:active { transform: scale(0.97); }
+
+    .footer-note { margin-top: 20px; font-size: 11px; line-height: 1.4; color: #888; text-align: center; }
+    .footer-note b { color: #ffc107; font-size: 11px; }
+
+    /* Custom Watermark Styles */
+    .watermark-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; padding-top: 15px; border-top: 1px solid var(--border); }
+    .watermark-avatar { width: 26px; height: 26x; border-radius: 50%; border: 2px solid var(--border); object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+    .watermark-text { font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px;}
+  </style>
+</head>
+<body>
+  <div class="tabs">
+    <div class="tab active" data-tab="main">Main Swap</div>
+    <div class="tab" data-tab="spoof">Spoof Stats</div>
+  </div>
+
+  <div class="container">
+    <div id="main" class="tab-content active">
+      <div class="title">pocket options config</div>
+      <div class="row">
+        <span style="font-size: 13px; font-weight: 500;">Enable Swap Script</span>
+        <label class="switch"><input type="checkbox" id="masterToggle"><span class="slider"></span></label>
+      </div>
+      <div class="row">
+        <span style="font-size: 13px; font-weight: 500;">Add Guru Title</span>
+        <label class="switch"><input type="checkbox" id="guruToggle"><span class="slider"></span></label>
+      </div>
+      <div class="field-group">
+        <div class="field-label">DISPLAY ALIAS</div>
+        <input type="text" id="customName" placeholder="QT Real">
+      </div>
+    </div>
+
+    <div id="spoof" class="tab-content">
+      <div class="title">Stat Injector</div>
+      <div class="row">
+        <span style="font-size: 13px; font-weight: 500; color: #ffc107;">Enable Stat Spoof</span>
+        <label class="switch"><input type="checkbox" id="spoofToggle"><span class="slider" style="background-color: #444;"></span></label>
+      </div>
+      <div class="row">
+        <span style="font-size: 13px; font-weight: 500; color: #ffc107;">Spoof Verified</span>
+        <label class="switch"><input type="checkbox" id="verifiedToggle"><span class="slider" style="background-color: #444;"></span></label>
+      </div>
+      
+      <div class="field-group grid">
+        <div><div class="field-label">Branch Level</div><input type="number" id="spBranch" value="13"></div>
+        <div><div class="field-label">Disp Level</div><input type="number" id="spLevel" value="87"></div>
+      </div>
+      <div class="field-group grid">
+        <div><div class="field-label">Current XP</div><input type="text" id="spExp" value="14,530"></div>
+        <div><div class="field-label">Total Trades</div><input type="number" id="spTrades" value="113"></div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Turnover (String)</div>
+        <input type="text" id="spTurnover" value="$21,300.00">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Profit (String)</div>
+        <input type="text" id="spProfit" value="$4,225.00">
+      </div>
+    </div>
+
+    <button id="saveBtn">Apply Settings</button>
+
+    <div class="footer-note">
+     <b>HEY NIGGER! WARNING:</b>
+         <b></b> please only use this for the demo page.. if you click on anything other i CANT gurantee that itll work! this extension only works for /cabinet/ urls. 
+    </div>
+
+    <div class="watermark-container">
+        <img src="image.jpg" alt="Profile" class="watermark-avatar" onerror="this.style.display='none'">
+        <span class="watermark-text">created by oofbomb</span>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

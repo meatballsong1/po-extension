@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  :root {
+    --bg: #0c0c10;
+    --card: rgba(255,255,255,0.045);
+    --card-b: rgba(255,255,255,0.08);
+    --accent: #00b0ff;
+    --border: rgba(255,255,255,0.07);
+    --dim: rgba(255,255,255,0.38);
+    --mid: rgba(255,255,255,0.72);
+    --err: #ff453a;
+    --p: #bf5af2;
+    --pk: #ff375f;
+    --r: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    overflow: hidden;
+    /* Prevents Chrome from adding scrollbar to the popup window */
+  }
+
+  ::-webkit-scrollbar { display: none; }
+
+  body {
+    width: 300px;
+    background: var(--bg);
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    border-radius: 20px;
+    overflow: visible;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ------ HEADER ------ */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 14px 0;
+  }
+  .header-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, var(--p), var(--pk), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: lowercase;
+  }
+  /* Popout button */
+  #popoutBtn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--card-b);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+    margin: 0; margin-top: 0;
+    width: 28px;
+  }
+  #popoutBtn:hover {
+    background: rgba(191,90,242,0.15);
+    box-shadow: 0 0 10px rgba(191,90,242,0.3);
+    transform: none;
+  }
+  #popoutBtn svg { width: 13px; height: 13px; }
+
+  /* ------ TABS ------ */
+  .tabs {
+    display: flex;
+    padding: 10px 10px 0;
+    gap: 2px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 2px;
+    cursor: pointer;
+    color: var(--dim);
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    transition: color 0.2s;
+    z-index: 0;
+  }
+  /* glow layer */
+  .tab::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px 8px 0 0;
+    opacity: 0;
+    background: radial-gradient(ellipse at 50% 120%, rgba(191,90,242,0.22) 0%, rgba(255,55,95,0.1) 45%, transparent 70%);
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .tab:hover { color: #fff; }
+  .tab:hover::after { opacity: 1; }
+  .tab.active { color: #fff; }
+  .tab.active::after { opacity: 1; }
+  /* active underline */
+  .tab.active::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20%; right: 20%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--p), var(--pk));
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 0 8px rgba(191,90,242,0.7);
+  }
+
+  /* tab border-bottom line */
+  .tab-bar-line {
+    height: 1px;
+    background: var(--border);
+    margin: 0 10px;
+  }
+
+  /* ------ CONTAINER ------ */
+  .container { padding: 12px 14px 14px; }
+
+  /* ------ TAB PANELS ------ */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeUp 0.2s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ------ SECTION TITLE ------ */
+  .title {
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-transform: lowercase;
+    letter-spacing: 0.4px;
+    background: linear-gradient(90deg, var(--p), var(--pk) 50%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ------ GLASS ROW ------ */
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    background: var(--card);
+    padding: 10px 12px;
+    border-radius: var(--r);
+    border: 1px solid var(--card-b);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .row:hover {
+    background: rgba(255,255,255,0.065);
+    border-color: rgba(255,255,255,0.13);
+  }
+  .row span { font-size: 12.5px; font-weight: 500; color: var(--mid); }
+
+  /* ------ SWITCH ------ */
+  .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 22px;
+    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .slider:before {
+    position: absolute; content: "";
+    height: 16px; width: 16px;
+    left: 2px; bottom: 2px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  input:checked + .slider {
+    background: linear-gradient(135deg, var(--p), var(--accent));
+    border-color: transparent;
+    box-shadow: 0 0 10px rgba(191,90,242,0.3);
+  }
+  input:checked + .slider:before { transform: translateX(18px); }
+
+  /* ------ FIELDS ------ */
+  .field-group { margin-bottom: 7px; }
+  .field-group.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field-label { font-size: 9px; color: var(--dim); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  input[type="text"], input[type="number"] {
+    width: 100%; padding: 9px 11px; font-size: 12px; font-family: inherit;
+    background: var(--card); border: 1px solid var(--card-b); color: #fff;
+    border-radius: var(--r); outline: none; transition: all 0.2s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus {
+    border-color: rgba(191,90,242,0.45);
+    box-shadow: 0 0 0 3px rgba(191,90,242,0.1);
+    background: rgba(255,255,255,0.06);
+  }
+
+  /* ------ STREAM OPTIONS ------ */
+  #streamOptions {
+    overflow: hidden; max-height: 0; opacity: 0;
+    transform: translateY(-5px); pointer-events: none;
+    transition: max-height 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease, transform 0.3s ease;
+  }
+  .stream-info {
+    background: rgba(191,90,242,0.05);
+    border: 1px solid rgba(191,90,242,0.14);
+    border-radius: var(--r); padding: 9px 11px; margin-bottom: 9px;
+    font-size: 10px; color: var(--dim); line-height: 1.6;
+  }
+  .stream-info b { color: var(--p); -webkit-text-fill-color: var(--p); }
+
+  /* ------ SAVE BUTTON ------ */
+  #saveBtn {
+    width: 100%; padding: 11px; margin-top: 10px;
+    background: linear-gradient(135deg, var(--p), var(--pk));
+    border: none; color: #fff; font-weight: 700; font-size: 12px;
+    border-radius: var(--r); cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    letter-spacing: 0.4px; font-family: inherit;
+    box-shadow: 0 4px 16px rgba(191,90,242,0.25);
+  }
+  #saveBtn:hover { opacity: 0.88; box-shadow: 0 6px 22px rgba(191,90,242,0.4); transform: translateY(-1px); }
+  #saveBtn:active { transform: scale(0.97); }
+
+  /* ------ CUSTOMIZE TAB ------ */
+  .cust-desc {
+    font-size: 11px; color: var(--dim); line-height: 1.6;
+    margin-bottom: 16px; padding: 10px 12px;
+    background: var(--card); border: 1px solid var(--card-b);
+    border-radius: var(--r);
+  }
+  .cust-desc b { color: var(--mid); -webkit-text-fill-color: var(--mid); font-weight: 600; }
+
+  #enableEditingBtn {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, rgba(191,90,242,0.15), rgba(255,55,95,0.1));
+    border: 1px solid rgba(191,90,242,0.35);
+    color: #fff; font-weight: 700; font-size: 12.5px;
+    border-radius: var(--r); cursor: pointer;
+    transition: all 0.25s; font-family: inherit;
+    letter-spacing: 0.3px;
+    box-shadow: 0 0 20px rgba(191,90,242,0.12);
+    margin-top: 0;
+  }
+  #enableEditingBtn:hover {
+    background: linear-gradient(135deg, rgba(191,90,242,0.28), rgba(255,55,95,0.18));
+    border-color: rgba(191,90,242,0.6);
+    box-shadow: 0 0 28px rgba(191,90,242,0.3);
+    transform: translateY(-1px);
+  }
+  #enableEditingBtn:active { transform: scale(0.97); }
+
+  .cust-note {
+    margin-top: 10px; font-size: 10px; color: var(--dim);
+    text-align: center; line-height: 1.5;
+  }
+
+  /* ------ FOOTER ------ */
+  .footer-note { margin-top: 10px; font-size: 10px; line-height: 1.4; color: var(--dim); text-align: center; }
+  .footer-note b { color: #ffd60a; -webkit-text-fill-color: #ffd60a; }
+
+  .watermark-container {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-top: 8px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .watermark-avatar { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--card-b); object-fit: cover; }
+  .watermark-text { font-size: 10px; color: var(--dim); font-weight: 600; letter-spacing: 0.4px; }
+
+  /* ------ ABOUT TAB ------ */
+  .about-stat {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 12px; margin-bottom: 6px;
+    background: var(--card); border: 1px solid var(--card-b);
+    border-radius: var(--r); transition: border-color 0.2s;
+  }
+  .about-stat:hover { border-color: rgba(191,90,242,0.22); }
+  .about-stat .as-key {
+    font-size: 10px; font-weight: 600; color: var(--dim);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .about-stat .as-val {
+    font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.85);
+    font-variant-numeric: tabular-nums;
+  }
+  .about-stat .as-val.grad {
+    background: linear-gradient(90deg, var(--p), var(--pk));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .about-divider {
+    height: 1px; background: var(--border); margin: 10px 0;
+  }
+  .about-credit {
+    text-align: center; font-size: 10px; color: var(--dim);
+    line-height: 1.7; margin-top: 10px;
+  }
+  .about-credit b { color: rgba(255,255,255,0.6); -webkit-text-fill-color: rgba(255,255,255,0.6); }
+
+  /* ------ POPUP NOTIF (not used for page notifs, kept for structure) ------ */
+  #po-notif-stack { display: none; }
+</style>
+</head>
+<body>
+
+<div id="po-notif-stack"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">pocket option config script thingy</div>
+  <button id="popoutBtn" title="Pop out to page">
+    <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="4" width="8" height="8" rx="1.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+      <path d="M5.5 1H12M12 1V7.5M12 1L6.5 6.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="main">Main</div>
+  <div class="tab" data-tab="spoof">Stats</div>
+  <div class="tab" data-tab="stream">Stream</div>
+  <div class="tab" data-tab="customize">Customize</div>
+  <div class="tab" data-tab="about">About</div>
+</div>
+<div class="tab-bar-line"></div>
+
+<div class="container">
+
+  <!-- MAIN TAB -->
+  <div id="main" class="tab-content active">
+    <div class="title">main tab</div>
+    <div class="row">
+      <span>Enable Swap Script</span>
+      <label class="switch"><input type="checkbox" id="masterToggle"><span class="slider"></span></label>
+    </div>
+    <div class="row">
+      <span>Add Guru Title</span>
+      <label class="switch"><input type="checkbox" id="guruToggle"><span class="slider"></span></label>
+    </div>
+    <div class="field-group" style="margin-top:4px;">
+      <div class="field-label">Display Alias</div>
+      <input type="text" id="customName" placeholder="QT Real">
+    </div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div id="spoof" class="tab-content">
+    <div class="title">stat injector</div>
+    <div class="row">
+      <span style="color:#ffd60a;">Enable Stat Spoof</span>
+      <label class="switch"><input type="checkbox" id="spoofToggle"><span class="slider"></span></label>
+    </div>
+    <div class="row">
+      <span style="color:#ffd60a;">Spoof Verified</span>
+      <label class="switch"><input type="checkbox" id="verifiedToggle"><span class="slider"></span></label>
+    </div>
+    <div class="field-group grid" style="margin-top:4px;">
+      <div><div class="field-label">Branch Level</div><input type="number" id="spBranch" value="13"></div>
+      <div><div class="field-label">Disp Level</div><input type="number" id="spLevel" value="87"></div>
+    </div>
+    <div class="field-group grid">
+      <div><div class="field-label">Current XP</div><input type="text" id="spExp" value="14,530"></div>
+      <div><div class="field-label">Total Trades</div><input type="number" id="spTrades" value="113"></div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Turnover</div>
+      <input type="text" id="spTurnover" value="$21,300.00">
+    </div>
+    <div class="field-group">
+      <div class="field-label">Profit</div>
+      <input type="text" id="spProfit" value="$4,225.00">
+    </div>
+  </div>
+
+  <!-- STREAM TAB -->
+  <div id="stream" class="tab-content">
+    <div class="title">stream mode</div>
+    <div class="row">
+      <span>Stream Mode</span>
+      <label class="switch"><input type="checkbox" id="streamModeToggle"><span class="slider"></span></label>
+    </div>
+    <div id="streamOptions">
+      <div class="field-label" style="margin: 8px 0 6px; padding-left:2px;">Mask Options</div>
+      <div class="row" style="margin-bottom:6px;">
+        <span style="font-size:12px;">Hide Balance</span>
+        <label class="switch"><input type="checkbox" id="streamMaskBalance" checked><span class="slider"></span></label>
+      </div>
+      <div class="row" style="margin-bottom:6px;">
+        <span style="font-size:12px;">Mask Account ID</span>
+        <label class="switch"><input type="checkbox" id="streamMaskId" checked><span class="slider"></span></label>
+      </div>
+      <div class="row" style="margin-bottom:6px;">
+        <span style="font-size:12px;">Mask IP Address</span>
+        <label class="switch"><input type="checkbox" id="streamMaskIp" checked><span class="slider"></span></label>
+      </div>
+      <div class="row" style="margin-bottom:10px;">
+        <span style="font-size:12px;">Replace Email</span>
+        <label class="switch"><input type="checkbox" id="streamMaskEmail" checked><span class="slider"></span></label>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Email Alias</div>
+        <input type="text" id="streamEmailAlias" placeholder="diddy@rjktrades.com">
+      </div>
+      <div class="stream-info">
+        hello this is the new streamer mode <b>a lot of this is self explanatory lol</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMIZE TAB -->
+  <div id="customize" class="tab-content">
+    <div class="title">customize</div>
+    <div class="cust-desc">
+      <b>Edit Mode</b> lets you click any element on the Pocket Option page to edit its text, drag it to reposition, and save your layout. Your changes persist across sessions.
+    </div>
+    <button id="enableEditingBtn">Enable Editing Mode</button>
+    <div class="cust-note">closes the popup and injects the editor onto the page</div>
+  </div>
+
+  <!-- ABOUT TAB -->
+  <div id="about" class="tab-content">
+    <div class="title">about</div>
+    <div class="about-stat">
+      <span class="as-key">Extension Name</span>
+      <span class="as-val" id="ab-name">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Version</span>
+      <span class="as-val grad" id="ab-version">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Manifest Version</span>
+      <span class="as-val" id="ab-mv">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Browser</span>
+      <span class="as-val" id="ab-browser">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Active Tab</span>
+      <span class="as-val" id="ab-url">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Stream Mode</span>
+      <span class="as-val" id="ab-stream">-</span>
+    </div>
+    <div class="about-stat">
+      <span class="as-key">Swap Script</span>
+      <span class="as-val" id="ab-swap">-</span>
+    </div>
+    <div class="about-divider"></div>
+    <div class="about-credit">
+      
+    </div>
+  </div>
+
+  <button id="saveBtn">Apply Settings</button>
+
+  <div class="footer-note">
+    <b>warning:</b> this is an experimental extension developed by a retard. use at your own risk lol
+  </div>
+  <div class="watermark-container">
+    <img src="image.jpg" alt="" class="watermark-avatar" onerror="this.style.display='none'">
+    <span class="watermark-text">created by oofbomb</span>
+  </div>
+
+</div><!-- /container -->
+
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+// -- NOTIFICATION SYSTEM ----------------------------------------------
+const NOTIF_DURATION = 4000; // ms before auto-dismiss
+
+function showNotif({ title = 'pocket option config', desc = '', isError = false } = {}) {
+    const stack = document.getElementById('po-notif-stack');
+    if (!stack) return;
+
+    const notif = document.createElement('div');
+    notif.className = 'po-notif' + (isError ? ' error' : '');
+
+    const checkIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 5L4.2 7.5L8 3" stroke="${isError ? '#ff4444' : '#00b0ff'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+    const errorIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 2V5.5M5 7.5V8" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>`;
+
+    notif.innerHTML = `
+        <div class="po-notif-icon">${isError ? errorIcon : checkIcon}</div>
+        <div class="po-notif-body">
+            <div class="po-notif-title">${title}</div>
+            <div class="po-notif-desc">${desc}</div>
+        </div>
+        <button class="po-notif-close" aria-label="close">
+            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 2L8 8M8 2L2 8" stroke="#666" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </button>
+        <div class="po-notif-progress"><div class="po-notif-progress-bar"></div></div>
+    `;
+
+    stack.appendChild(notif);
+
+    // Animate in (next frame so transition fires)
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => notif.classList.add('show'));
+    });
+
+    // Auto-dismiss
+    const timer = setTimeout(() => dismissNotif(notif), NOTIF_DURATION);
+
+    // Manual close
+    notif.querySelector('.po-notif-close').addEventListener('click', () => {
+        clearTimeout(timer);
+        dismissNotif(notif);
+    });
+}
+
+function dismissNotif(notif) {
+    notif.classList.remove('show');
+    notif.classList.add('hide');
+    notif.addEventListener('transitionend', () => notif.remove(), { once: true });
+}
+
+// -- BUILD CHANGE LOG -------------------------------------------------
+// Returns a human-readable list of what changed between oldData and newData
+function buildChangeLog(oldData, newData) {
+    const lines = [];
+
+    const label = (key) => ({
+        isEnabled:          'swap script',
+        isGuruEnabled:      'guru title',
+        isSpoofEnabled:     'stat spoof',
+        isVerifiedEnabled:  'spoof verified',
+        isStreamModeEnabled:'stream mode',
+        streamMaskBalance:  'mask balance',
+        streamMaskId:       'mask account id',
+        streamMaskIp:       'mask ip',
+        streamMaskEmail:    'mask email',
+        customName:         'display alias',
+        streamEmailAlias:   'email alias',
+        spBranch:           'branch level',
+        spLevel:            'disp level',
+        spExp:              'current xp',
+        spTrades:           'total trades',
+        spTurnover:         'turnover',
+        spProfit:           'profit',
+    }[key] || key);
+
+    const boolKeys = ['isEnabled','isGuruEnabled','isSpoofEnabled','isVerifiedEnabled','isStreamModeEnabled',
+                      'streamMaskBalance','streamMaskId','streamMaskIp','streamMaskEmail'];
+    const valKeys  = ['customName','streamEmailAlias','spBranch','spLevel','spExp','spTrades','spTurnover','spProfit'];
+
+    boolKeys.forEach(k => {
+        if (oldData[k] !== newData[k]) {
+            lines.push(`${label(k)} -> ${newData[k] ? 'on' : 'off'}`);
+        }
+    });
+
+    valKeys.forEach(k => {
+        if (oldData[k] !== newData[k]) {
+            lines.push(`${label(k)} updated`);
+        }
+    });
+
+    return lines;
+}
+
+// -- MAIN POPUP LOGIC -------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Tab Logic
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            var tabId = tab.getAttribute('data-tab');
+            tab.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            updateSaveBtn(tabId);
+            if (tabId === 'about') populateAbout();
+        });
+    });
+    // Set initial save btn state
+    updateSaveBtn('main');
+
+    // Hide/show save button based on active tab
+    function updateSaveBtn(tabId) {
+        var btn = document.getElementById('saveBtn');
+        if (!btn) return;
+        var hide = (tabId === 'about' || tabId === 'customize');
+        btn.style.display = hide ? 'none' : 'block';
+    }
+
+    // Populate About tab stats
+    function set(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = val;
+    }
+
+    function populateAbout() {
+        // Manifest info --- always available synchronously
+        try {
+            var m = chrome.runtime.getManifest();
+            set('ab-name',    m.name || 'pocket option config');
+            set('ab-version', m.version || '-');
+            set('ab-mv',      'MV' + (m.manifest_version || '3'));
+        } catch(e) {
+            set('ab-name', 'pocket option config');
+            set('ab-version', '-');
+            set('ab-mv', 'MV3');
+        }
+
+        // Browser detection
+        var ua = navigator.userAgent;
+        var browser = 'Chrome';
+        if (ua.indexOf('Edg') !== -1)     browser = 'Edge';
+        else if (ua.indexOf('OPR') !== -1) browser = 'Opera';
+        else if (ua.indexOf('Brave') !== -1) browser = 'Brave';
+        set('ab-browser', browser);
+
+        // Active tab URL
+        try {
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                if (chrome.runtime.lastError) { set('ab-url', 'n/a'); return; }
+                if (tabs && tabs[0]) {
+                    if (tabs[0].url) {
+                        try { set('ab-url', new URL(tabs[0].url).hostname); }
+                        catch(e) { set('ab-url', tabs[0].url.slice(0, 30)); }
+                    } else if (tabs[0].title) {
+                        set('ab-url', tabs[0].title.slice(0, 25));
+                    } else {
+                        set('ab-url', 'active tab');
+                    }
+                }
+            });
+        } catch(e) { set('ab-url', 'n/a'); }
+
+        // Live storage values
+        chrome.storage.local.get({ isEnabled: true, isStreamModeEnabled: false }, function(data) {
+            if (chrome.runtime.lastError) return;
+            set('ab-stream', data.isStreamModeEnabled ? 'on' : 'off');
+            set('ab-swap',   data.isEnabled ? 'on' : 'off');
+        });
+    }
+
+    // Always populate on load so values show immediately when About tab is opened
+    populateAbout();
+
+    // Popout button -> sends message to content.js to show floating widget
+    document.getElementById('popoutBtn').addEventListener('click', function() {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs && tabs[0] && tabs[0].id) {
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'PO_POPOUT' });
+                window.close();
+            }
+        });
+    });
+
+    // Enable Editing Mode -> sends message then closes popup
+    document.getElementById('enableEditingBtn').addEventListener('click', function() {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs && tabs[0] && tabs[0].id) {
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'PO_EDIT_START' });
+                window.close();
+            }
+        });
+    });
+
+    // Stream mode toggle -> animate options panel in/out
+    const streamToggle = document.getElementById('streamModeToggle');
+    const streamOptions = document.getElementById('streamOptions');
+
+    function setStreamPanel(active, animate) {
+        if (active) {
+            // Set to actual scroll height so transition has a concrete target
+            streamOptions.style.maxHeight = streamOptions.scrollHeight + 'px';
+            streamOptions.style.opacity = '1';
+            streamOptions.style.transform = 'translateY(0)';
+            streamOptions.style.pointerEvents = 'all';
+            streamOptions.classList.add('stream-active');
+        } else {
+            // Collapse back to 0
+            streamOptions.style.maxHeight = '0';
+            streamOptions.style.opacity = '0';
+            streamOptions.style.transform = 'translateY(-6px)';
+            streamOptions.style.pointerEvents = 'none';
+            streamOptions.classList.remove('stream-active');
+        }
+    }
+
+    streamToggle.addEventListener('change', function() {
+        setStreamPanel(streamToggle.checked, true);
+    });
+
+    // Default values
+    const DEFAULTS = {
+        isEnabled: true,
+        isGuruEnabled: false,
+        isSpoofEnabled: false,
+        isVerifiedEnabled: false,
+        isStreamModeEnabled: false,
+        streamMaskBalance: true,
+        streamMaskId: true,
+        streamMaskIp: true,
+        streamMaskEmail: true,
+        streamEmailAlias: 'hidden@domain.com',
+        customName: 'QT Real',
+        spBranch: '13',
+        spLevel: '87',
+        spExp: '14,530',
+        spTrades: '113',
+        spTurnover: '$21,300.00',
+        spProfit: '$4,225.00'
+    };
+
+    // Load saved data
+    chrome.storage.local.get(DEFAULTS, (data) => {
+        document.getElementById('masterToggle').checked      = data.isEnabled;
+        document.getElementById('guruToggle').checked        = data.isGuruEnabled;
+        document.getElementById('spoofToggle').checked       = data.isSpoofEnabled;
+        document.getElementById('verifiedToggle').checked    = data.isVerifiedEnabled;
+        document.getElementById('streamModeToggle').checked  = data.isStreamModeEnabled;
+        document.getElementById('streamMaskBalance').checked = data.streamMaskBalance;
+        document.getElementById('streamMaskId').checked      = data.streamMaskId;
+        document.getElementById('streamMaskIp').checked      = data.streamMaskIp;
+        document.getElementById('streamMaskEmail').checked   = data.streamMaskEmail;
+        document.getElementById('streamEmailAlias').value    = data.streamEmailAlias;
+        document.getElementById('customName').value          = data.customName;
+        // Reflect saved state on load - show instantly without animation
+        if (data.isStreamModeEnabled) {
+            streamOptions.style.transition = 'none';
+            streamOptions.style.maxHeight = '999px';
+            streamOptions.style.opacity = '1';
+            streamOptions.style.transform = 'translateY(0)';
+            streamOptions.style.pointerEvents = 'all';
+            streamOptions.classList.add('stream-active');
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    streamOptions.style.transition = '';
+                });
+            });
+        }
+        document.getElementById('spBranch').value            = data.spBranch;
+        document.getElementById('spLevel').value             = data.spLevel;
+        document.getElementById('spExp').value               = data.spExp;
+        document.getElementById('spTrades').value            = data.spTrades;
+        document.getElementById('spTurnover').value          = data.spTurnover;
+        document.getElementById('spProfit').value            = data.spProfit;
+    });
+
+    // Save data + fire notifications
+    document.getElementById('saveBtn').addEventListener('click', () => {
+        // Snapshot what's currently saved before overwriting
+        chrome.storage.local.get(DEFAULTS, (oldData) => {
+
+            const newData = {
+                isEnabled:           document.getElementById('masterToggle').checked,
+                isGuruEnabled:       document.getElementById('guruToggle').checked,
+                isSpoofEnabled:      document.getElementById('spoofToggle').checked,
+                isVerifiedEnabled:   document.getElementById('verifiedToggle').checked,
+                isStreamModeEnabled: document.getElementById('streamModeToggle').checked,
+                streamMaskBalance:   document.getElementById('streamMaskBalance').checked,
+                streamMaskId:        document.getElementById('streamMaskId').checked,
+                streamMaskIp:        document.getElementById('streamMaskIp').checked,
+                streamMaskEmail:     document.getElementById('streamMaskEmail').checked,
+                streamEmailAlias:    document.getElementById('streamEmailAlias').value.trim(),
+                customName:          document.getElementById('customName').value.trim(),
+                spBranch:            document.getElementById('spBranch').value,
+                spLevel:             document.getElementById('spLevel').value,
+                spExp:               document.getElementById('spExp').value,
+                spTrades:            document.getElementById('spTrades').value,
+                spTurnover:          document.getElementById('spTurnover').value,
+                spProfit:            document.getElementById('spProfit').value,
+            };
+
+            // Basic validation
+            const errors = [];
+            if (!newData.customName) errors.push('display alias is empty');
+            if (newData.isStreamModeEnabled && !newData.streamEmailAlias) errors.push('email alias is empty');
+
+            if (errors.length) {
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs && tabs[0] && tabs[0].id) {
+                        errors.forEach(err => chrome.tabs.sendMessage(tabs[0].id, {
+                            type: 'PO_NOTIFY',
+                            title: 'pocket option extension',
+                            desc: err,
+                            isError: true
+                        }));
+                    }
+                });
+                return;
+            }
+
+            chrome.storage.local.set(newData, () => {
+                const changes = buildChangeLog(oldData, newData);
+                const desc = changes.length === 0
+                    ? 'settings applied!'
+                    : 'settings applied! - ' + changes.join(', ');
+
+                // In-page notification on the PocketOption tab
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs && tabs[0] && tabs[0].id) {
+                        chrome.tabs.sendMessage(tabs[0].id, {
+                            type: 'PO_NOTIFY',
+                            title: 'pocket option config',
+                            desc: desc,
+                            isError: false
+                        });
+                    }
+                });
+
+                // Button feedback
+                const btn = document.getElementById('saveBtn');
+                btn.innerText = 'Saved!';
+                btn.style.background = '#24B15B';
+                setTimeout(() => {
+                    btn.innerText = 'Apply Settings';
+                    btn.style.background = 'var(--accent)';
+                }, 1000);
+            });
+        });
+    });
+});

