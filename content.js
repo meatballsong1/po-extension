@@ -1634,7 +1634,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.5.4';
+var VEIL_CURRENT_VERSION = '2.5.5';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 
@@ -2020,36 +2020,23 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.3',
+    version: '2.5.5',
 
-    title: 'welcome to version 2.3!',
-    subtitle: 'this is a PRETTY big update',
+    title: 'minor update',
+    subtitle: 'autoupdater patch',
 
-    image: 'https://cdn.discordapp.com/attachments/1478916523820060834/1484004106786967572/image.png?ex=69bca606&is=69bb5486&hm=9910636aad93ba2a08f429dbee3814d84dfa03d74b6bff220fe9f1c28a9ed823&',
+    image: '',
 
     // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'bullets',
+    mode: 'links',
 
     items: [
-        'icons are FULLY fixed so you can effortlessly swap',
-        'Stability and random crashes have been fixed',
-        'Diddy has been added to improve stability',
-        'FULL customization to your pocket option page so you can FAKE WHATEVER THE FUCK YOU WANT!',
-        'New stream mode so you can hide certain aspects of pocket option like your balance',
-        'An about tab that you probably dont give a shit about',
-        'This new changelog popup obviously',
+        'click for free rjk trades products — https://www.youtube.com/watch?v=178Zb0D9xJ0',
     ],
 
     text: '',
 
-    // links mode example:
-    //   items: [
-    //     { text: 'View full changelog', url: 'https://github.com/you/repo' },
-    //     { text: 'Join the Discord',    url: 'https://discord.gg/xyz' },
-    //     'Or just a plain text row with no link',
-    //   ]
-
-    buttonLabel: 'Pretty tuff',
+    buttonLabel: 'tuff lol',
 };
 // ============================================================
 
