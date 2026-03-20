@@ -1741,7 +1741,7 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 var CHANGELOG = {
     version: '2.5.3',
 
-    title: '2.5.2',
+    title: 'wasabi',
     subtitle: 'diddy update',
 
     image: 'changelog-banner.jpg',
