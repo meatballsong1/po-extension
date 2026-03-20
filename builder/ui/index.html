@@ -456,6 +456,12 @@
           <div class="fl">Extension ID <span>from chrome://extensions (dev mode on)</span></div>
           <input type="text" id="ext-id" placeholder="khaegbogkpcodjifcepgloiiincfnopf" style="font-family:'Courier New',monospace;font-size:11px;">
         </div>
+        <div class="field">
+          <div class="fl">GitHub Token <span>needed to create releases — saved to builder/github-token.txt</span></div>
+          <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="font-family:'Courier New',monospace;font-size:11px;">
+          <button class="add-btn" id="save-token-btn" style="margin-top:5px;">Save Token</button>
+          <div id="token-status" style="font-size:10px;color:#555;margin-top:3px;"></div>
+        </div>
       </div>
     </div>
 
@@ -476,6 +482,31 @@ var S = { version: '1.0.0', bump: 'minor', mode: 'bullets', imageUrl: '', imageI
 
 async function init() {
   await loadStatus();
+  loadToken();
+}
+
+async function loadToken() {
+  try {
+    var r = await fetch('/api/get-token');
+    var d = await r.json();
+    if (d.token) {
+      document.getElementById('gh-token').value = d.token;
+      document.getElementById('token-status').textContent = 'token saved';
+      document.getElementById('token-status').style.color = '#24b15b';
+    }
+  } catch(e) {}
+}
+
+async function saveToken() {
+  var token = document.getElementById('gh-token').value.trim();
+  var status = document.getElementById('token-status');
+  if (!token) { status.textContent = 'enter a token first'; status.style.color = '#ff453a'; return; }
+  try {
+    var r = await fetch('/api/save-token', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ token }) });
+    var d = await r.json();
+    if (d.success) { status.textContent = 'saved!'; status.style.color = '#24b15b'; }
+    else { status.textContent = 'failed to save'; status.style.color = '#ff453a'; }
+  } catch(e) { status.textContent = 'error: ' + e.message; status.style.color = '#ff453a'; }
 }
 
 async function loadStatus() {
@@ -681,6 +712,7 @@ async function publish() {
 
 init();
 setInterval(loadStatus, 15000);
+document.getElementById('save-token-btn').addEventListener('click', saveToken);
 </script>
 </body>
 </html>

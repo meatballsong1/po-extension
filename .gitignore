@@ -1,4 +1,7 @@
-builder/node_modules/
-uploads/
-*.zip
-release-history.json
+node_modules/
+builder/uploads/
+builder/release-history.json
+builder/*.zip
+builder/github-token.txt
+*.crx
+*.pem

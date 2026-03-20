@@ -302,6 +302,88 @@ app.post('/api/publish', async (req, res) => {
             send('Push failed (check GitHub auth): ' + pushErr.message, 'warn');
         }
 
+        // 11. Create GitHub Release + upload zip
+        try {
+            const GITHUB_OWNER = 'meatballsong1';
+            const GITHUB_REPO  = 'po-extension';
+            const tokenPath    = path.join(BUILDER_DIR, 'github-token.txt');
+
+            if (!fs.existsSync(tokenPath)) {
+                send('No github-token.txt found — skipping GitHub Release. Create builder/github-token.txt with your PAT to enable this.', 'warn');
+            } else {
+                const GITHUB_TOKEN = fs.readFileSync(tokenPath, 'utf8').trim();
+
+                // Create the release
+                const releaseBody = JSON.stringify({
+                    tag_name:         `v${newVersion}`,
+                    target_commitish: 'main',
+                    name:             `v${newVersion} — ${title}`,
+                    body:             subtitle || '',
+                    draft:            false,
+                    prerelease:       false,
+                });
+
+                const releaseRes = await new Promise((resolve, reject) => {
+                    const opts = {
+                        hostname: 'api.github.com',
+                        path:     `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`,
+                        method:   'POST',
+                        headers:  {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Content-Type':  'application/json',
+                            'User-Agent':    'po-extension-builder',
+                            'Content-Length': Buffer.byteLength(releaseBody),
+                        },
+                    };
+                    const req = https.request(opts, (res) => {
+                        let data = '';
+                        res.on('data', c => data += c);
+                        res.on('end', () => resolve(JSON.parse(data)));
+                    });
+                    req.on('error', reject);
+                    req.write(releaseBody);
+                    req.end();
+                });
+
+                if (!releaseRes.upload_url) {
+                    send('GitHub Release failed: ' + (releaseRes.message || JSON.stringify(releaseRes)), 'warn');
+                } else {
+                    send(`GitHub Release v${newVersion} created!`, 'success');
+
+                    // Upload the zip to the release
+                    const uploadUrl  = releaseRes.upload_url.replace('{?name,label}', '');
+                    const zipName    = `extension-v${newVersion}.zip`;
+                    const zipContent = fs.readFileSync(zipPath);
+
+                    await new Promise((resolve, reject) => {
+                        const opts = {
+                            hostname: 'uploads.github.com',
+                            path:     new URL(uploadUrl).pathname + `?name=${zipName}`,
+                            method:   'POST',
+                            headers:  {
+                                'Authorization': `token ${GITHUB_TOKEN}`,
+                                'Content-Type':  'application/zip',
+                                'User-Agent':    'po-extension-builder',
+                                'Content-Length': zipContent.length,
+                            },
+                        };
+                        const req = https.request(opts, (res) => {
+                            let data = '';
+                            res.on('data', c => data += c);
+                            res.on('end', () => resolve(JSON.parse(data)));
+                        });
+                        req.on('error', reject);
+                        req.write(zipContent);
+                        req.end();
+                    });
+
+                    send(`ZIP uploaded to GitHub Release!`, 'success');
+                }
+            }
+        } catch(releaseErr) {
+            send('GitHub Release error: ' + releaseErr.message, 'warn');
+        }
+
         // 11. Save to history
         const history = readHistory();
         history.unshift({
@@ -325,6 +407,21 @@ app.post('/api/publish', async (req, res) => {
         res.write(`data: ${JSON.stringify({ type: 'error', msg: e.message })}\n\n`);
         res.end();
     }
+});
+
+// GET/POST github token
+app.get('/api/get-token', (req, res) => {
+    const p = path.join(BUILDER_DIR, 'github-token.txt');
+    if (!fs.existsSync(p)) return res.json({ token: null });
+    res.json({ token: fs.readFileSync(p, 'utf8').trim() });
+});
+app.post('/api/save-token', (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: 'no token' });
+        fs.writeFileSync(path.join(BUILDER_DIR, 'github-token.txt'), token.trim());
+        res.json({ success: true });
+    } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // GET download zip
