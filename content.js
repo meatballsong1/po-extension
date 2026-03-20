@@ -368,7 +368,8 @@ function injectStyles() {
         '#po-cl-card{position:relative !important;width:310px !important;background:rgba(12,12,20,0.98) !important;border:1px solid rgba(191,90,242,0.25) !important;border-radius:22px !important;padding:22px 20px 18px !important;box-shadow:0 0 50px rgba(191,90,242,0.15),0 24px 70px rgba(0,0,0,0.85) !important;animation:clIn 0.4s cubic-bezier(0.22,1,0.36,1) !important;overflow:visible !important;}',
         '@keyframes clIn{from{opacity:0;transform:scale(0.88) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}',
         '#po-cl-img{width:100% !important;border-radius:12px !important;margin-bottom:14px !important;display:block !important;object-fit:cover !important;max-height:130px !important;}',
-        '#po-cl-badge{display:inline-flex !important;align-items:center !important;gap:6px !important;padding:3px 10px !important;background:linear-gradient(135deg,rgba(191,90,242,0.18),rgba(255,55,95,0.1)) !important;border:1px solid rgba(191,90,242,0.3) !important;border-radius:20px !important;margin-bottom:12px !important;}',
+        '#po-cl-topbar{display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:14px !important;}',
+        '#po-cl-badge{display:inline-flex !important;align-items:center !important;gap:6px !important;padding:3px 10px !important;background:linear-gradient(135deg,rgba(191,90,242,0.18),rgba(255,55,95,0.1)) !important;border:1px solid rgba(191,90,242,0.3) !important;border-radius:20px !important;}',
         '#po-cl-badge-dot{width:6px !important;height:6px !important;border-radius:50% !important;background:linear-gradient(135deg,#bf5af2,#ff375f) !important;box-shadow:0 0 8px rgba(191,90,242,0.9) !important;animation:clDot 1.8s ease infinite !important;flex-shrink:0 !important;}',
         '@keyframes clDot{0%,100%{box-shadow:0 0 6px rgba(191,90,242,0.8)}50%{box-shadow:0 0 16px rgba(191,90,242,1),0 0 28px rgba(255,55,95,0.5)}}',
         '#po-cl-badge-txt{font-size:9.5px !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:0.8px !important;background:linear-gradient(90deg,#bf5af2,#ff375f) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;}',
@@ -1591,80 +1592,122 @@ var UPDATE_MESSAGES = [
 ];
 // -------------------------------------------------------------------------
 
-var VEIL_CURRENT_VERSION = '2.5.2';
+var VEIL_CURRENT_VERSION = '2.5.3';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 function getRandomUpdateMsg() {
     return UPDATE_MESSAGES[Math.floor(Math.random() * UPDATE_MESSAGES.length)];
 }
 
-// The styled blue in-page update box (not a notif — a persistent banner)
-function showUpdateBanner(currentVersion, latestVersion) {
-    if (document.getElementById('po-update-banner')) return;
+// Full-screen update popup — replaces the old banner
+function getUpdateBrowserInfo() {
+    var ua = navigator.userAgent;
+    if (ua.indexOf('Edg/') !== -1)    return { name: 'Edge',    url: 'edge://extensions' };
+    if (ua.indexOf('OPR/') !== -1)    return { name: 'Opera',   url: 'opera://extensions' };
+    if (ua.indexOf('Brave') !== -1)   return { name: 'Brave',   url: 'brave://extensions' };
+    if (ua.indexOf('Vivaldi') !== -1) return { name: 'Vivaldi', url: 'vivaldi://extensions' };
+    return { name: 'Chrome', url: 'chrome://extensions' };
+}
 
+function showUpdateBanner(currentVersion, latestVersion) {
+    if (document.getElementById('po-update-popup')) return;
     injectStyles();
 
-    var banner = document.createElement('div');
-    banner.id = 'po-update-banner';
-    banner.style.cssText = [
-        'position:fixed !important',
-        'bottom:20px !important',
-        'left:50% !important',
-        'transform:translateX(-50%) !important',
-        'z-index:2147483647 !important',
-        'background:rgba(8,24,40,0.97) !important',
-        'border:1px solid rgba(0,176,255,0.35) !important',
-        'border-radius:14px !important',
-        'padding:13px 16px 13px 14px !important',
-        'display:flex !important',
-        'align-items:flex-start !important',
-        'gap:10px !important',
-        'box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 0 1px rgba(0,176,255,0.08),0 0 30px rgba(0,176,255,0.1) !important',
-        'font-family:-apple-system,BlinkMacSystemFont,sans-serif !important',
-        'max-width:340px !important',
-        'min-width:280px !important',
-        'backdrop-filter:blur(20px) !important',
-        'animation:po-drain 0s !important',
-    ].join(';');
+    var browser    = getUpdateBrowserInfo();
+    var avatarSrc  = chrome.runtime.getURL('image.jpg');
 
-    var randomMsg = getRandomUpdateMsg();
-    var dl = document.createElement('a');
-    dl.href = 'https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip';
-    dl.textContent = 'Download ZIP';
-    dl.style.cssText = 'display:inline-block;padding:5px 12px;background:rgba(0,176,255,0.15);border:1px solid rgba(0,176,255,0.3);border-radius:8px;font-size:11px;font-weight:700;color:#00b0ff;text-decoration:none;margin-top:2px;';
-    dl.addEventListener('mouseover', function() { this.style.background = 'rgba(0,176,255,0.28)'; });
-    dl.addEventListener('mouseout',  function() { this.style.background = 'rgba(0,176,255,0.15)'; });
+    var overlay = document.createElement('div');
+    overlay.id  = 'po-update-popup';
+    overlay.style.cssText = 'position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;';
 
+    var backdrop = document.createElement('div');
+    backdrop.style.cssText = 'position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.6) !important;backdrop-filter:blur(20px) !important;-webkit-backdrop-filter:blur(20px) !important;';
+    backdrop.addEventListener('click', function() { overlay.parentNode && overlay.parentNode.removeChild(overlay); });
+
+    var card = document.createElement('div');
+    card.style.cssText = 'position:relative !important;width:320px !important;background:rgba(8,16,28,0.98) !important;border:1px solid rgba(0,176,255,0.3) !important;border-radius:22px !important;padding:22px 20px 18px !important;box-shadow:0 0 50px rgba(0,176,255,0.12),0 24px 70px rgba(0,0,0,0.85) !important;animation:clIn 0.4s cubic-bezier(0.22,1,0.36,1) !important;';
+
+    // Top bar: avatar + badge | version pill
+    var topBar = document.createElement('div');
+    topBar.style.cssText = 'display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:14px !important;';
+    topBar.innerHTML =
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(0,176,255,0.45);flex-shrink:0;" onerror="this.style.display='none'">' +
+            '<div style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:rgba(0,176,255,0.12);border:1px solid rgba(0,176,255,0.3);border-radius:20px;">' +
+                '<div style="width:6px;height:6px;border-radius:50%;background:#00b0ff;box-shadow:0 0 8px rgba(0,176,255,0.9);flex-shrink:0;"></div>' +
+                '<span style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#00b0ff;">update available</span>' +
+            '</div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:500;">' +
+            'v' + currentVersion + ' <span style="margin:0 4px;color:rgba(255,255,255,0.25);">→</span> <b style="color:#fff;-webkit-text-fill-color:#fff;">v' + latestVersion + '</b>' +
+        '</div>';
+
+    var heading = document.createElement('div');
+    heading.style.cssText = 'font-size:19px !important;font-weight:800 !important;color:#fff !important;-webkit-text-fill-color:#fff !important;margin-bottom:4px !important;letter-spacing:-0.3px !important;';
+    heading.textContent = "we've detected a new update";
+
+    var sub = document.createElement('div');
+    sub.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.38) !important;margin-bottom:14px !important;font-weight:500 !important;line-height:1.5 !important;';
+    sub.textContent = 'v' + latestVersion + ' is out — follow the steps below to update';
+
+    // Steps
+    var steps = document.createElement('ol');
+    steps.style.cssText = 'padding-left:16px !important;margin:0 0 14px !important;display:flex !important;flex-direction:column !important;gap:5px !important;';
+    [
+        'Click <b style="color:#00b0ff;-webkit-text-fill-color:#00b0ff;">Download ZIP</b> below',
+        'Unzip the downloaded file anywhere',
+        'Go to <b style="color:#fff;-webkit-text-fill-color:#fff;">' + browser.url + '</b>',
+        'Turn on <b style="color:#fff;-webkit-text-fill-color:#fff;">Developer Mode</b> (top right)',
+        'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Load unpacked</b> and pick the folder',
+        'Remove the old version — done!',
+    ].forEach(function(text) {
+        var li = document.createElement('li');
+        li.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.65) !important;line-height:1.5 !important;';
+        li.innerHTML = text;
+        steps.appendChild(li);
+    });
+
+    // Buttons
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex !important;gap:8px !important;';
+
+    var dlBtn = document.createElement('a');
+    dlBtn.href = 'https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip';
+    dlBtn.textContent = 'Download ZIP';
+    dlBtn.style.cssText = 'flex:1 !important;padding:10px !important;background:rgba(0,176,255,0.15) !important;border:1px solid rgba(0,176,255,0.35) !important;border-radius:10px !important;color:#00b0ff !important;-webkit-text-fill-color:#00b0ff !important;font-weight:700 !important;font-size:12px !important;text-decoration:none !important;text-align:center !important;display:block !important;transition:background 0.15s !important;';
+    dlBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(0,176,255,0.28)'; });
+    dlBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(0,176,255,0.15)'; });
+    dlBtn.addEventListener('click', function() {
+        setTimeout(function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); }, 2000);
+    });
+
+    var extBtn = document.createElement('button');
+    extBtn.textContent = 'Open ' + browser.name + ' Extensions';
+    extBtn.style.cssText = 'flex:1 !important;padding:10px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.1) !important;border-radius:10px !important;color:rgba(255,255,255,0.6) !important;font-weight:600 !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;transition:background 0.15s !important;';
+    extBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.1)'; });
+    extBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.05)'; });
+    extBtn.addEventListener('click', function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); });
+
+    btnRow.appendChild(dlBtn);
+    btnRow.appendChild(extBtn);
+
+    // Close X
     var closeBtn = document.createElement('button');
     closeBtn.textContent = 'x';
-    closeBtn.style.cssText = 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 6px;cursor:pointer;color:rgba(255,255,255,0.4);font-size:10px;flex-shrink:0;font-family:inherit;';
-    closeBtn.addEventListener('click', function() { banner.parentNode && banner.parentNode.removeChild(banner); });
-    closeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.12)'; this.style.color = '#fff'; });
+    closeBtn.style.cssText = 'position:absolute !important;top:14px !important;right:14px !important;background:rgba(255,255,255,0.06) !important;border:1px solid rgba(255,255,255,0.1) !important;border-radius:6px !important;padding:3px 7px !important;cursor:pointer !important;color:rgba(255,255,255,0.4) !important;font-size:11px !important;font-family:inherit !important;transition:all 0.15s !important;';
+    closeBtn.addEventListener('click', function() { overlay.parentNode && overlay.parentNode.removeChild(overlay); });
+    closeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.14)'; this.style.color = '#fff'; });
     closeBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.06)'; this.style.color = 'rgba(255,255,255,0.4)'; });
 
-    var icon = document.createElement('div');
-    icon.style.cssText = 'width:32px;height:32px;border-radius:50%;background:rgba(0,176,255,0.12);border:1px solid rgba(0,176,255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;';
-    icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v9M4 7l3 3 3-3" stroke="#00b0ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h10" stroke="#00b0ff" stroke-width="1.6" stroke-linecap="round"/></svg>';
-
-    var label = document.createElement('div');
-    label.style.cssText = 'font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#00b0ff;margin-bottom:4px;';
-    label.textContent = 'update available';
-
-    var msg = document.createElement('div');
-    msg.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.85);font-weight:500;line-height:1.5;margin-bottom:6px;';
-    msg.innerHTML = 'You’re on <b style="color:#fff;">v' + currentVersion + '</b> but there’s a newer version <b style="color:#00b0ff;">v' + latestVersion + '</b>. ' + randomMsg;
-
-    var body = document.createElement('div');
-    body.style.cssText = 'flex:1;min-width:0;';
-    body.appendChild(label);
-    body.appendChild(msg);
-    body.appendChild(dl);
-
-    banner.appendChild(icon);
-    banner.appendChild(body);
-    banner.appendChild(closeBtn);
-
-    (document.body || document.documentElement).appendChild(banner);
+    card.appendChild(closeBtn);
+    card.appendChild(topBar);
+    card.appendChild(heading);
+    card.appendChild(sub);
+    card.appendChild(steps);
+    card.appendChild(btnRow);
+    overlay.appendChild(backdrop);
+    overlay.appendChild(card);
+    (document.body || document.documentElement).appendChild(overlay);
 }
 
 function checkForUpdate() {
@@ -1696,18 +1739,18 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.5.2',
+    version: '2.5.3',
 
-    title: 'yes tuff',
-    subtitle: 'tuff update',
+    title: '2.5.2',
+    subtitle: 'diddy update',
 
-    image: '',
+    image: 'changelog-banner.jpg',
 
     // 'bullets' | 'text' | 'links' | 'none'
     mode: 'bullets',
 
     items: [
-
+        'testing banner',
     ],
 
     text: '',
@@ -1787,55 +1830,76 @@ function showChangelog() {
     if (!document.body) { document.addEventListener('DOMContentLoaded', showChangelog); return; }
     if (document.getElementById('po-cl-overlay')) return;
 
-    var bodyHTML = '';
-    if (CHANGELOG.mode === 'bullets' && CHANGELOG.items && CHANGELOG.items.length) {
-        var lis = CHANGELOG.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
-        bodyHTML = '<ul id="po-cl-list">' + lis + '</ul>';
-    } else if (CHANGELOG.mode === 'text' && CHANGELOG.text) {
-        bodyHTML = '<p id="po-cl-text">' + CHANGELOG.text + '</p>';
-    } else if (CHANGELOG.mode === 'links' && CHANGELOG.items && CHANGELOG.items.length) {
-        var rows = CHANGELOG.items.map(function(item) {
-            if (typeof item === 'string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">' + item + '</span></li>';
-            return '<li class="po-cl-link-row"><a class="po-cl-link" href="' + item.url + '" target="_blank" rel="noopener"><span class="po-cl-link-text">' + item.text + '</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>';
-        }).join('');
-        bodyHTML = '<ul id="po-cl-links">' + rows + '</ul>';
-    }
+    // Read old version from storage so we can show old → new in the header
+    chrome.storage.local.get(CL_KEY, function(stored) {
+        var oldVersion = stored[CL_KEY] || null;
 
-    var imgHTML = '';
-    if (CHANGELOG.image) {
-        var src = (CHANGELOG.image.indexOf('http') === 0 || CHANGELOG.image.indexOf('//') === 0)
-            ? CHANGELOG.image
-            : chrome.runtime.getURL(CHANGELOG.image);
-        imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">';
-    }
+        var bodyHTML = '';
+        if (CHANGELOG.mode === 'bullets' && CHANGELOG.items && CHANGELOG.items.length) {
+            var lis = CHANGELOG.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
+            bodyHTML = '<ul id="po-cl-list">' + lis + '</ul>';
+        } else if (CHANGELOG.mode === 'text' && CHANGELOG.text) {
+            bodyHTML = '<p id="po-cl-text">' + CHANGELOG.text + '</p>';
+        } else if (CHANGELOG.mode === 'links' && CHANGELOG.items && CHANGELOG.items.length) {
+            var rows = CHANGELOG.items.map(function(item) {
+                if (typeof item === 'string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">' + item + '</span></li>';
+                return '<li class="po-cl-link-row"><a class="po-cl-link" href="' + item.url + '" target="_blank" rel="noopener"><span class="po-cl-link-text">' + item.text + '</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>';
+            }).join('');
+            bodyHTML = '<ul id="po-cl-links">' + rows + '</ul>';
+        }
 
-    var overlay = document.createElement('div');
-    overlay.id = 'po-cl-overlay';
-    overlay.innerHTML =
-        '<div id="po-cl-blur"></div>' +
-        '<div id="po-cl-card">' +
-            imgHTML +
-            '<div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">New Update</span></div>' +
-            '<div id="po-cl-title">' + CHANGELOG.title + '</div>' +
-            '<div id="po-cl-sub">' + CHANGELOG.subtitle + '</div>' +
-            bodyHTML +
-            '<button id="po-cl-dismiss">' + (CHANGELOG.buttonLabel || 'Got it') + '</button>' +
-        '</div>';
+        // Banner image
+        var imgHTML = '';
+        if (CHANGELOG.image) {
+            var src = (CHANGELOG.image.indexOf('http') === 0 || CHANGELOG.image.indexOf('//') === 0)
+                ? CHANGELOG.image
+                : chrome.runtime.getURL(CHANGELOG.image);
+            imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">';
+        }
 
-    document.body.appendChild(overlay);
+        // Avatar: image.jpg from extension folder
+        var avatarSrc = chrome.runtime.getURL('image.jpg');
 
-    function dismiss() {
-        overlay.style.opacity = '0';
-        overlay.style.transition = 'opacity 0.25s ease';
-        setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 250);
-        var s = {}; s[CL_KEY] = CHANGELOG.version; chrome.storage.local.set(s);
-        // Fire the "updated to version x" blue notification
-        setTimeout(function() {
-            showUpdateToast(CHANGELOG.version);
-        }, 400);
-    }
-    document.getElementById('po-cl-dismiss').addEventListener('click', dismiss);
-    document.getElementById('po-cl-blur').addEventListener('click', dismiss);
+        // Version display: "v2.4 → v2.5" or just "v2.5" if first install
+        var verHTML = oldVersion
+            ? 'v' + oldVersion + ' <span style="-webkit-text-fill-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.3);margin:0 4px;">→</span> <b style="-webkit-text-fill-color:#fff;color:#fff;">v' + CHANGELOG.version + '</b>'
+            : '<b style="-webkit-text-fill-color:#fff;color:#fff;">v' + CHANGELOG.version + '</b>';
+
+        // Top bar: [avatar + "new update" pill] [version]
+        var topBar =
+            '<div id="po-cl-topbar">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                    '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.45);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
+                    '<div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">new update</span></div>' +
+                '</div>' +
+                '<div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:500;">' + verHTML + '</div>' +
+            '</div>';
+
+        var overlay = document.createElement('div');
+        overlay.id = 'po-cl-overlay';
+        overlay.innerHTML =
+            '<div id="po-cl-blur"></div>' +
+            '<div id="po-cl-card">' +
+                topBar +
+                imgHTML +
+                '<div id="po-cl-title">' + CHANGELOG.title + '</div>' +
+                '<div id="po-cl-sub">' + CHANGELOG.subtitle + '</div>' +
+                bodyHTML +
+                '<button id="po-cl-dismiss">' + (CHANGELOG.buttonLabel || 'Got it') + '</button>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+
+        function dismiss() {
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.25s ease';
+            setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 250);
+            var s = {}; s[CL_KEY] = CHANGELOG.version; chrome.storage.local.set(s);
+            setTimeout(function() { showUpdateToast(CHANGELOG.version); }, 400);
+        }
+        document.getElementById('po-cl-dismiss').addEventListener('click', dismiss);
+        document.getElementById('po-cl-blur').addEventListener('click', dismiss);
+    });
 }
 
 function maybeShowChangelog() {
