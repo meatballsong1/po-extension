@@ -1592,13 +1592,7 @@ edStop = function() {
 
 // ---- EDIT THIS to change the random messages shown when an update is found
 var UPDATE_MESSAGES = [
-    "bro update your extension fr",
-    "you're cooked on that old version ngl",
-    "new version just dropped, don't be slow",
-    "update is out, quit slacking",
-    "new shit just hit, go update",
-    "you're behind. fix that.",
-    "update available, don't be that guy",
+ ""
 ];
 // -------------------------------------------------------------------------
 
@@ -1623,102 +1617,315 @@ function showUpdateBanner(currentVersion, latestVersion) {
     if (document.getElementById('po-update-popup')) return;
     injectStyles();
 
-    var browser    = getUpdateBrowserInfo();
-    var avatarSrc  = chrome.runtime.getURL('image.jpg');
+    // Inject Apple Intelligence smooth animation styles
+    if (!document.getElementById('po-update-styles')) {
+        var us = document.createElement('style');
+        us.id = 'po-update-styles';
+        us.textContent = [
+            '@keyframes poUpIn{from{opacity:0;transform:scale(0.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}',
+            '@keyframes poUpOut{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(0.92) translateY(20px)}}',
+            '@keyframes poFadeIn{from{opacity:0}to{opacity:1}}',
+            '@keyframes poFadeOut{from{opacity:1}to{opacity:0}}',
+            '@keyframes poSlideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}',
+            '@keyframes poShimmer{0%{background-position:200% center}100%{background-position:-200% center}}',
+            '#po-update-popup *{box-sizing:border-box !important;}',
+            // Snooze picker
+            '#po-snooze-picker{display:none;flex-direction:column;gap:6px;margin-top:10px;animation:poSlideUp 0.25s cubic-bezier(0.22,1,0.36,1);}',
+            '#po-snooze-picker.visible{display:flex !important;}',
+            '.po-snooze-opt{padding:9px 14px !important;border-radius:10px !important;border:1px solid rgba(255,255,255,0.08) !important;background:rgba(255,255,255,0.04) !important;color:rgba(255,255,255,0.7) !important;font-size:12px !important;font-weight:500 !important;cursor:pointer !important;font-family:inherit !important;text-align:left !important;transition:background 0.18s,border-color 0.18s,transform 0.12s !important;display:flex !important;align-items:center !important;justify-content:space-between !important;}',
+            '.po-snooze-opt:hover{background:rgba(191,90,242,0.12) !important;border-color:rgba(191,90,242,0.3) !important;color:#fff !important;transform:translateX(3px) !important;}',
+            '.po-snooze-opt span{font-size:10px !important;color:rgba(255,255,255,0.3) !important;}',
+            // Steps view
+            '#po-steps-view{display:none;flex-direction:column;gap:8px;margin-top:10px;animation:poSlideUp 0.28s cubic-bezier(0.22,1,0.36,1);}',
+            '#po-steps-view.visible{display:flex !important;}',
+            '.po-step-row{display:flex !important;align-items:flex-start !important;gap:10px !important;}',
+            '.po-step-num{width:20px !important;height:20px !important;border-radius:50% !important;background:rgba(0,176,255,0.15) !important;border:1px solid rgba(0,176,255,0.3) !important;color:#00b0ff !important;font-size:9px !important;font-weight:800 !important;display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;margin-top:1px !important;}',
+            '.po-step-txt{font-size:11.5px !important;color:rgba(255,255,255,0.7) !important;line-height:1.5 !important;}',
+        ].join('');
+        (document.head || document.documentElement).appendChild(us);
+    }
 
+    var browser   = getUpdateBrowserInfo();
+    var avatarSrc = chrome.runtime.getURL('image.jpg');
+
+    // --- OVERLAY ---
     var overlay = document.createElement('div');
     overlay.id  = 'po-update-popup';
     overlay.style.cssText = 'position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;';
 
+    // Animated backdrop
     var backdrop = document.createElement('div');
-    backdrop.style.cssText = 'position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.6) !important;backdrop-filter:blur(20px) !important;-webkit-backdrop-filter:blur(20px) !important;';
-    backdrop.addEventListener('click', function() { overlay.parentNode && overlay.parentNode.removeChild(overlay); });
+    backdrop.style.cssText = 'position:absolute !important;inset:0 !important;background:rgba(0,0,0,0) !important;backdrop-filter:blur(0px) !important;-webkit-backdrop-filter:blur(0px) !important;animation:poFadeIn 0.4s ease forwards !important;';
+    // Animate backdrop separately so blur ramps in
+    setTimeout(function() {
+        backdrop.style.background   = 'rgba(0,0,0,0.55)';
+        backdrop.style.backdropFilter = 'blur(24px)';
+        backdrop.style.webkitBackdropFilter = 'blur(24px)';
+        backdrop.style.transition   = 'background 0.45s ease, backdrop-filter 0.45s ease';
+    }, 16);
 
+    // --- CARD ---
     var card = document.createElement('div');
-    card.style.cssText = 'position:relative !important;width:320px !important;background:rgba(8,16,28,0.98) !important;border:1px solid rgba(0,176,255,0.3) !important;border-radius:22px !important;padding:22px 20px 18px !important;box-shadow:0 0 50px rgba(0,176,255,0.12),0 24px 70px rgba(0,0,0,0.85) !important;animation:clIn 0.4s cubic-bezier(0.22,1,0.36,1) !important;';
+    card.style.cssText = [
+        'position:relative !important',
+        'width:340px !important',
+        'background:rgba(10,12,20,0.97) !important',
+        'border:1px solid rgba(255,255,255,0.1) !important',
+        'border-radius:26px !important',
+        'padding:24px 22px 20px !important',
+        'box-shadow:0 40px 80px rgba(0,0,0,0.8),0 0 0 0.5px rgba(255,255,255,0.06),inset 0 1px 0 rgba(255,255,255,0.08) !important',
+        'animation:poUpIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards !important',
+        'overflow:hidden !important',
+    ].join(';');
 
-    // Top bar: avatar + badge | version pill
+    // Top shimmer line
+    var shimmer = document.createElement('div');
+    shimmer.style.cssText = 'position:absolute !important;top:0 !important;left:0 !important;right:0 !important;height:1px !important;background:linear-gradient(90deg,transparent 0%,rgba(191,90,242,0.6) 30%,rgba(0,176,255,0.6) 60%,transparent 100%) !important;background-size:200% auto !important;animation:poShimmer 3s linear infinite !important;';
+
+    // --- TOPBAR ---
     var topBar = document.createElement('div');
-    topBar.style.cssText = 'display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:14px !important;';
+    topBar.style.cssText = 'display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:16px !important;';
     topBar.innerHTML =
-        '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(0,176,255,0.45);flex-shrink:0;" onerror="this.style.display=none">' +
-            '<div style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;background:rgba(0,176,255,0.12);border:1px solid rgba(0,176,255,0.3);border-radius:20px;">' +
-                '<div style="width:6px;height:6px;border-radius:50%;background:#00b0ff;box-shadow:0 0 8px rgba(0,176,255,0.9);flex-shrink:0;"></div>' +
-                '<span style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#00b0ff;">update available</span>' +
+        '<div style="display:flex;align-items:center;gap:9px;">' +
+            '<img src="' + avatarSrc + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.4);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
+            '<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:rgba(191,90,242,0.1);border:1px solid rgba(191,90,242,0.25);border-radius:20px;">' +
+                '<div style="width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,#bf5af2,#00b0ff);box-shadow:0 0 7px rgba(191,90,242,0.9);flex-shrink:0;"></div>' +
+                '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;background:linear-gradient(90deg,#bf5af2,#00b0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">update available</span>' +
             '</div>' +
         '</div>' +
-        '<div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:500;">' +
-            'v' + currentVersion + ' <span style="margin:0 4px;color:rgba(255,255,255,0.25);">→</span> <b style="color:#fff;-webkit-text-fill-color:#fff;">v' + latestVersion + '</b>' +
+        '<div style="font-size:10.5px;color:rgba(255,255,255,0.35);font-weight:500;font-variant-numeric:tabular-nums;">' +
+            '<span style="color:rgba(255,255,255,0.3);">v' + currentVersion + '</span>' +
+            '<span style="margin:0 5px;color:rgba(255,255,255,0.2);">→</span>' +
+            '<span style="color:#fff;font-weight:700;">v' + latestVersion + '</span>' +
         '</div>';
 
+    // --- HEADING ---
     var heading = document.createElement('div');
-    heading.style.cssText = 'font-size:19px !important;font-weight:800 !important;color:#fff !important;-webkit-text-fill-color:#fff !important;margin-bottom:4px !important;letter-spacing:-0.3px !important;';
-    heading.textContent = "we've detected a new update";
+    heading.style.cssText = 'font-size:21px !important;font-weight:700 !important;color:#fff !important;-webkit-text-fill-color:#fff !important;letter-spacing:-0.5px !important;line-height:1.2 !important;margin-bottom:5px !important;';
+    heading.textContent = "we\u2019ve detected a new update";
 
     var sub = document.createElement('div');
-    sub.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.38) !important;margin-bottom:14px !important;font-weight:500 !important;line-height:1.5 !important;';
-    sub.textContent = 'v' + latestVersion + ' is out — follow the steps below to update';
+    sub.style.cssText = 'font-size:12px !important;color:rgba(255,255,255,0.35) !important;margin-bottom:18px !important;font-weight:400 !important;line-height:1.5 !important;';
+    sub.textContent = 'version ' + latestVersion + ' is available for your extension';
 
-    // Steps
-    var steps = document.createElement('ol');
-    steps.style.cssText = 'padding-left:16px !important;margin:0 0 14px !important;display:flex !important;flex-direction:column !important;gap:5px !important;';
-    [
-        'Click <b style="color:#00b0ff;-webkit-text-fill-color:#00b0ff;">Download ZIP</b> below',
-        'Unzip the downloaded file anywhere',
-        'Go to <b style="color:#fff;-webkit-text-fill-color:#fff;">' + browser.url + '</b>',
-        'Turn on <b style="color:#fff;-webkit-text-fill-color:#fff;">Developer Mode</b> (top right)',
-        'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Load unpacked</b> and pick the folder',
-        'Remove the old version — done!',
-    ].forEach(function(text) {
-        var li = document.createElement('li');
-        li.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.65) !important;line-height:1.5 !important;';
-        li.innerHTML = text;
-        steps.appendChild(li);
+    // --- DIVIDER ---
+    var div1 = document.createElement('div');
+    div1.style.cssText = 'height:1px !important;background:rgba(255,255,255,0.06) !important;margin-bottom:16px !important;';
+
+    // --- MAIN BUTTONS (default view) ---
+    var mainBtns = document.createElement('div');
+    mainBtns.id  = 'po-main-btns';
+    mainBtns.style.cssText = 'display:flex !important;gap:8px !important;';
+
+    var updateBtn = document.createElement('button');
+    updateBtn.textContent = 'Update Extension';
+    updateBtn.style.cssText = [
+        'flex:1 !important',
+        'padding:12px !important',
+        'background:linear-gradient(135deg,rgba(191,90,242,0.9),rgba(0,176,255,0.85)) !important',
+        'border:none !important',
+        'border-radius:13px !important',
+        'color:#fff !important',
+        '-webkit-text-fill-color:#fff !important',
+        'font-weight:700 !important',
+        'font-size:13px !important',
+        'cursor:pointer !important',
+        'font-family:inherit !important',
+        'letter-spacing:-0.2px !important',
+        'box-shadow:0 4px 20px rgba(191,90,242,0.35) !important',
+        'transition:opacity 0.2s,transform 0.15s,box-shadow 0.2s !important',
+    ].join(';');
+    updateBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; this.style.boxShadow = '0 8px 28px rgba(191,90,242,0.5)'; });
+    updateBtn.addEventListener('mouseout',  function() { this.style.opacity = '1'; this.style.transform = 'translateY(0)'; this.style.boxShadow = '0 4px 20px rgba(191,90,242,0.35)'; });
+    updateBtn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.97)'; });
+    updateBtn.addEventListener('mouseup',   function() { this.style.transform = 'translateY(-1px)'; });
+
+    var snoozeBtn = document.createElement('button');
+    snoozeBtn.textContent = 'Remind me later';
+    snoozeBtn.style.cssText = [
+        'flex:1 !important',
+        'padding:12px !important',
+        'background:rgba(255,255,255,0.06) !important',
+        'border:1px solid rgba(255,255,255,0.1) !important',
+        'border-radius:13px !important',
+        'color:rgba(255,255,255,0.6) !important',
+        'font-weight:600 !important',
+        'font-size:13px !important',
+        'cursor:pointer !important',
+        'font-family:inherit !important',
+        'transition:background 0.2s,color 0.2s,transform 0.12s !important',
+    ].join(';');
+    snoozeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.1)'; this.style.color = '#fff'; });
+    snoozeBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.06)'; this.style.color = 'rgba(255,255,255,0.6)'; });
+    snoozeBtn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.97)'; });
+    snoozeBtn.addEventListener('mouseup',   function() { this.style.transform = 'scale(1)'; });
+
+    mainBtns.appendChild(updateBtn);
+    mainBtns.appendChild(snoozeBtn);
+
+    // --- SNOOZE PICKER ---
+    var snoozePicker = document.createElement('div');
+    snoozePicker.id = 'po-snooze-picker';
+    var snoozeLabel = document.createElement('div');
+    snoozeLabel.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.4) !important;margin-bottom:2px !important;font-weight:500 !important;';
+    snoozeLabel.textContent = 'Remind me in…';
+    var snoozeOpts = [
+        { label: '1 hour',  sub: 'remind you in an hour', ms: 3600000 },
+        { label: '1 day',   sub: 'tomorrow same time',    ms: 86400000 },
+        { label: '1 week',  sub: 'a week from now',       ms: 604800000 },
+    ];
+    snoozePicker.appendChild(snoozeLabel);
+    snoozeOpts.forEach(function(opt) {
+        var row = document.createElement('button');
+        row.className = 'po-snooze-opt';
+        row.innerHTML = '<span style="-webkit-text-fill-color:rgba(255,255,255,0.7);color:rgba(255,255,255,0.7);">' + opt.label + '</span><span>' + opt.sub + '</span>';
+        row.addEventListener('click', function() {
+            var snoozeUntil = Date.now() + opt.ms;
+            chrome.storage.local.set({ 'veil_snooze_until': snoozeUntil });
+            closeUpdate(overlay);
+            showPageNotif({ desc: "ok we'll remind you in " + opt.label });
+        });
+        snoozePicker.appendChild(row);
+    });
+    // Back button
+    var backBtn = document.createElement('button');
+    backBtn.textContent = '← back';
+    backBtn.style.cssText = 'background:none !important;border:none !important;color:rgba(255,255,255,0.3) !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;padding:4px 0 !important;text-align:left !important;transition:color 0.15s !important;';
+    backBtn.addEventListener('mouseover', function() { this.style.color = 'rgba(255,255,255,0.7)'; });
+    backBtn.addEventListener('mouseout',  function() { this.style.color = 'rgba(255,255,255,0.3)'; });
+    backBtn.addEventListener('click', function() {
+        snoozePicker.classList.remove('visible');
+        mainBtns.style.display = 'flex';
+    });
+    snoozePicker.appendChild(backBtn);
+
+    // --- STEPS VIEW ---
+    var stepsView = document.createElement('div');
+    stepsView.id = 'po-steps-view';
+    var stepsList = [
+        { n:'1', html:'Download the ZIP file using the button below' },
+        { n:'2', html:'Unzip it anywhere on your computer' },
+        { n:'3', html:'Go to <b style="color:#fff;-webkit-text-fill-color:#fff;">' + browser.url + '</b>' },
+        { n:'4', html:'Enable <b style="color:#fff;-webkit-text-fill-color:#fff;">Developer Mode</b> (toggle, top right)' },
+        { n:'5', html:'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Load unpacked</b> and select the folder' },
+        { n:'6', html:'Remove the old version — you\'re done' },
+    ];
+    stepsList.forEach(function(step) {
+        var row = document.createElement('div');
+        row.className = 'po-step-row';
+        row.innerHTML = '<div class="po-step-num">' + step.n + '</div><div class="po-step-txt">' + step.html + '</div>';
+        stepsView.appendChild(row);
     });
 
-    // Buttons
-    var btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex !important;gap:8px !important;';
+    // Download + open extensions buttons
+    var dlRow = document.createElement('div');
+    dlRow.style.cssText = 'display:flex !important;gap:8px !important;margin-top:4px !important;';
 
     var dlBtn = document.createElement('a');
     dlBtn.href = 'https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip';
     dlBtn.textContent = 'Download ZIP';
-    dlBtn.style.cssText = 'flex:1 !important;padding:10px !important;background:rgba(0,176,255,0.15) !important;border:1px solid rgba(0,176,255,0.35) !important;border-radius:10px !important;color:#00b0ff !important;-webkit-text-fill-color:#00b0ff !important;font-weight:700 !important;font-size:12px !important;text-decoration:none !important;text-align:center !important;display:block !important;transition:background 0.15s !important;';
-    dlBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(0,176,255,0.28)'; });
-    dlBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(0,176,255,0.15)'; });
+    dlBtn.style.cssText = [
+        'flex:1 !important',
+        'padding:11px !important',
+        'background:rgba(0,176,255,0.15) !important',
+        'border:1px solid rgba(0,176,255,0.3) !important',
+        'border-radius:12px !important',
+        'color:#00b0ff !important',
+        '-webkit-text-fill-color:#00b0ff !important',
+        'font-weight:700 !important',
+        'font-size:12px !important',
+        'text-decoration:none !important',
+        'text-align:center !important',
+        'display:block !important',
+        'transition:background 0.18s,transform 0.12s !important',
+    ].join(';');
+    dlBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(0,176,255,0.26)'; this.style.transform = 'translateY(-1px)'; });
+    dlBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(0,176,255,0.15)'; this.style.transform = 'translateY(0)'; });
     dlBtn.addEventListener('click', function() {
-        setTimeout(function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); }, 2000);
+        setTimeout(function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); }, 1800);
     });
 
     var extBtn = document.createElement('button');
-    extBtn.textContent = 'Open ' + browser.name + ' Extensions';
-    extBtn.style.cssText = 'flex:1 !important;padding:10px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.1) !important;border-radius:10px !important;color:rgba(255,255,255,0.6) !important;font-weight:600 !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;transition:background 0.15s !important;';
-    extBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.1)'; });
-    extBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.05)'; });
+    extBtn.textContent = browser.name + ' Extensions';
+    extBtn.style.cssText = [
+        'flex:0 0 auto !important',
+        'padding:11px 14px !important',
+        'background:rgba(255,255,255,0.05) !important',
+        'border:1px solid rgba(255,255,255,0.1) !important',
+        'border-radius:12px !important',
+        'color:rgba(255,255,255,0.55) !important',
+        'font-weight:600 !important',
+        'font-size:11px !important',
+        'cursor:pointer !important',
+        'font-family:inherit !important',
+        'white-space:nowrap !important',
+        'transition:background 0.18s,color 0.15s !important',
+    ].join(';');
+    extBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.1)'; this.style.color = '#fff'; });
+    extBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.05)'; this.style.color = 'rgba(255,255,255,0.55)'; });
     extBtn.addEventListener('click', function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); });
 
-    btnRow.appendChild(dlBtn);
-    btnRow.appendChild(extBtn);
+    dlRow.appendChild(dlBtn);
+    dlRow.appendChild(extBtn);
+    stepsView.appendChild(dlRow);
 
-    // Close X
+    // Back from steps
+    var stepsBackBtn = document.createElement('button');
+    stepsBackBtn.textContent = '← back';
+    stepsBackBtn.style.cssText = 'background:none !important;border:none !important;color:rgba(255,255,255,0.3) !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;padding:4px 0 !important;text-align:left !important;transition:color 0.15s !important;margin-top:2px !important;';
+    stepsBackBtn.addEventListener('mouseover', function() { this.style.color = 'rgba(255,255,255,0.7)'; });
+    stepsBackBtn.addEventListener('mouseout',  function() { this.style.color = 'rgba(255,255,255,0.3)'; });
+    stepsBackBtn.addEventListener('click', function() {
+        stepsView.classList.remove('visible');
+        mainBtns.style.display = 'flex';
+    });
+    stepsView.appendChild(stepsBackBtn);
+
+    // --- BUTTON LOGIC ---
+    updateBtn.addEventListener('click', function() {
+        mainBtns.style.display = 'none';
+        stepsView.classList.add('visible');
+    });
+
+    snoozeBtn.addEventListener('click', function() {
+        mainBtns.style.display = 'none';
+        snoozePicker.classList.add('visible');
+    });
+
+    // --- CLOSE X ---
     var closeBtn = document.createElement('button');
-    closeBtn.textContent = 'x';
-    closeBtn.style.cssText = 'position:absolute !important;top:14px !important;right:14px !important;background:rgba(255,255,255,0.06) !important;border:1px solid rgba(255,255,255,0.1) !important;border-radius:6px !important;padding:3px 7px !important;cursor:pointer !important;color:rgba(255,255,255,0.4) !important;font-size:11px !important;font-family:inherit !important;transition:all 0.15s !important;';
-    closeBtn.addEventListener('click', function() { overlay.parentNode && overlay.parentNode.removeChild(overlay); });
-    closeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.14)'; this.style.color = '#fff'; });
-    closeBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.06)'; this.style.color = 'rgba(255,255,255,0.4)'; });
+    closeBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    closeBtn.style.cssText = 'position:absolute !important;top:16px !important;right:16px !important;width:24px !important;height:24px !important;border-radius:50% !important;background:rgba(255,255,255,0.07) !important;border:1px solid rgba(255,255,255,0.1) !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;transition:background 0.15s,transform 0.12s !important;padding:0 !important;';
+    closeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.14)'; });
+    closeBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.07)'; });
+    closeBtn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.88)'; });
+    closeBtn.addEventListener('mouseup',   function() { this.style.transform = 'scale(1)'; });
+    closeBtn.addEventListener('click', function() { closeUpdate(overlay); });
 
+    function closeUpdate(el) {
+        card.style.animation = 'poUpOut 0.3s cubic-bezier(0.22,1,0.36,1) forwards';
+        backdrop.style.transition = 'opacity 0.3s ease';
+        backdrop.style.opacity = '0';
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+    }
+
+    backdrop.addEventListener('click', function() { closeUpdate(overlay); });
+
+    // Assemble
+    card.appendChild(shimmer);
     card.appendChild(closeBtn);
     card.appendChild(topBar);
     card.appendChild(heading);
     card.appendChild(sub);
-    card.appendChild(steps);
-    card.appendChild(btnRow);
+    card.appendChild(div1);
+    card.appendChild(mainBtns);
+    card.appendChild(snoozePicker);
+    card.appendChild(stepsView);
     overlay.appendChild(backdrop);
     overlay.appendChild(card);
     (document.body || document.documentElement).appendChild(overlay);
 }
+
 
 var _updateCheckCount = 0;
 
@@ -1728,19 +1935,27 @@ function checkForUpdate() {
         .then(function(data) {
             if (!data || !data.version) return;
             var latestVersion = data.version;
-            chrome.storage.local.get('veil_last_seen_update', function(d) {
+            chrome.storage.local.get(['veil_last_seen_update', 'veil_snooze_until'], function(d) {
                 if (chrome.runtime.lastError) return;
-                var lastSeen = d['veil_last_seen_update'] || '';
+                var lastSeen    = d['veil_last_seen_update'] || '';
+                var snoozeUntil = d['veil_snooze_until'] || 0;
+
+                // Respect snooze timer — skip entirely if snoozed
+                if (snoozeUntil && Date.now() < snoozeUntil) {
+                    _updateCheckCount++;
+                    return;
+                }
+
                 if (latestVersion !== VEIL_CURRENT_VERSION && latestVersion !== lastSeen) {
                     chrome.storage.local.set({ 'veil_last_seen_update': latestVersion });
                     if (_updateCheckCount === 0) {
-                        // First check on page load — show the full popup
+                        // First check on page load — full popup
                         showUpdateBanner(VEIL_CURRENT_VERSION, latestVersion);
                     } else {
-                        // Subsequent 20s checks — show a small notification instead
+                        // Every 20s after — small notification
                         showPageNotif({
                             title: 'pocket option config',
-                            desc: 'update available — v' + latestVersion + ' is out. check the About tab to download.',
+                            desc: 'v' + latestVersion + ' is out — open the About tab to update',
                         });
                     }
                 }
