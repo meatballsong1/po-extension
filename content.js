@@ -459,7 +459,7 @@ function getNotifRoot() {
 }
 
 // ------ PAGE NOTIFICATION ---------------------------------------------
-function showPageNotif(opts,d) {
+function showPageNotif(opts) {
     var title   = (opts && opts.title) || 'pocket option config';
     var desc    = (opts && opts.desc)  || '';
     var isError = !!(opts && opts.isError);
@@ -477,9 +477,7 @@ function showPageNotif(opts,d) {
         '<div class="po-n-drain"><div class="po-n-drain-fill"></div></div>';
     root.appendChild(n);
     requestAnimationFrame(function() { requestAnimationFrame(function() { n.classList.add('po-show'); }); });
-
-       var t = setTimeout(function() { dismissN(n); }, 4000);
-
+    var t = setTimeout(function() { dismissN(n); }, 4000);
     n.querySelector('.po-n-close').addEventListener('click', function() { clearTimeout(t); dismissN(n); });
 }
 
@@ -1577,33 +1575,105 @@ edStop = function() {
 };
 
 // =========================================================================
+// =========================================================================
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
-var VEIL_CURRENT_VERSION = '2.4.1';
-var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json';
+
+var UPDATE_MESSAGES = ['a'];
+// -------------------------------------------------------------------------
+
+var VEIL_CURRENT_VERSION = '2.4.2';
+var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
+
+
+// The styled blue in-page update box (not a notif — a persistent banner)
+function showUpdateBanner(currentVersion, latestVersion) {
+    if (document.getElementById('po-update-banner')) return;
+
+    injectStyles();
+
+    var banner = document.createElement('div');
+    banner.id = 'po-update-banner';
+    banner.style.cssText = [
+        'position:fixed !important',
+        'bottom:20px !important',
+        'left:50% !important',
+        'transform:translateX(-50%) !important',
+        'z-index:2147483647 !important',
+        'background:rgba(8,24,40,0.97) !important',
+        'border:1px solid rgba(0,176,255,0.35) !important',
+        'border-radius:14px !important',
+        'padding:13px 16px 13px 14px !important',
+        'display:flex !important',
+        'align-items:flex-start !important',
+        'gap:10px !important',
+        'box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 0 1px rgba(0,176,255,0.08),0 0 30px rgba(0,176,255,0.1) !important',
+        'font-family:-apple-system,BlinkMacSystemFont,sans-serif !important',
+        'max-width:340px !important',
+        'min-width:280px !important',
+        'backdrop-filter:blur(20px) !important',
+        'animation:po-drain 0s !important',
+    ].join(';');
+
+    
+    var dl = document.createElement('a');
+    dl.href = 'https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip';
+    dl.textContent = 'Download ZIP';
+    dl.style.cssText = 'display:inline-block;padding:5px 12px;background:rgba(0,176,255,0.15);border:1px solid rgba(0,176,255,0.3);border-radius:8px;font-size:11px;font-weight:700;color:#00b0ff;text-decoration:none;margin-top:2px;';
+    dl.addEventListener('mouseover', function() { this.style.background = 'rgba(0,176,255,0.28)'; });
+    dl.addEventListener('mouseout',  function() { this.style.background = 'rgba(0,176,255,0.15)'; });
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = 'x';
+    closeBtn.style.cssText = 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 6px;cursor:pointer;color:rgba(255,255,255,0.4);font-size:10px;flex-shrink:0;font-family:inherit;';
+    closeBtn.addEventListener('click', function() { banner.parentNode && banner.parentNode.removeChild(banner); });
+    closeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.12)'; this.style.color = '#fff'; });
+    closeBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.06)'; this.style.color = 'rgba(255,255,255,0.4)'; });
+
+    var icon = document.createElement('div');
+    icon.style.cssText = 'width:32px;height:32px;border-radius:50%;background:rgba(0,176,255,0.12);border:1px solid rgba(0,176,255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;';
+    icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v9M4 7l3 3 3-3" stroke="#00b0ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h10" stroke="#00b0ff" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+    var label = document.createElement('div');
+    label.style.cssText = 'font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#00b0ff;margin-bottom:4px;';
+    label.textContent = 'update available';
+
+    var msg = document.createElement('div');
+    msg.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.85);font-weight:500;line-height:1.5;margin-bottom:6px;';
+    msg.innerHTML = 'You’re on <b style="color:#fff;">v' + currentVersion + '</b> but there’s a newer version <b style="color:#00b0ff;">v' + latestVersion + '</b>. ' ;
+
+    var body = document.createElement('div');
+    body.style.cssText = 'flex:1;min-width:0;';
+    body.appendChild(label);
+    body.appendChild(msg);
+    body.appendChild(dl);
+
+    banner.appendChild(icon);
+    banner.appendChild(body);
+    banner.appendChild(closeBtn);
+
+    (document.body || document.documentElement).appendChild(banner);
+}
 
 function checkForUpdate() {
-    fetch(UPDATE_CHECK_URL)
+    fetch(UPDATE_CHECK_URL + Date.now())
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (!data || !data.version) return;
+            var latestVersion = data.version;
             chrome.storage.local.get('veil_last_seen_update', function(d) {
                 if (chrome.runtime.lastError) return;
-                var latestVersion = data.version;
                 var lastSeen = d['veil_last_seen_update'] || '';
                 if (latestVersion !== VEIL_CURRENT_VERSION && latestVersion !== lastSeen) {
-                    showPageNotif({
-                        title: 'version 2.4.1',
-                        desc: 'pocket option extension has been updated to version ' + latestVersion,
-                    });
+                    showUpdateBanner(VEIL_CURRENT_VERSION, latestVersion);
                     chrome.storage.local.set({ 'veil_last_seen_update': latestVersion });
                 }
             });
         })
-        .catch(function() { /* no server, no problem */ });
+        .catch(function() {});
 }
 
-// Check on load (with delay so page settles)
+// Auto-check 5s after page load
 if (window.location.href.indexOf('pocketoption.com') !== -1) {
     setTimeout(checkForUpdate, 5000);
 }
@@ -1614,15 +1684,15 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.4.1',
+    version: '2.4.2',
 
-    title: 'welcome to version 2.3!',
-    subtitle: 'auto updater',
+    title: 'version 2.4.2',
+    subtitle: 'auto updater fix and stability',
 
-    image: '',
+    image: 'changelog-banner.jpg',
 
     // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'text',
+    mode: 'bullets',
 
     items: [
         'icons are FULLY fixed so you can effortlessly swap',
@@ -1715,9 +1785,10 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 
 chrome.runtime.onMessage.addListener(function(msg) {
     if (!msg) return;
-    if (msg.type === 'PO_NOTIFY')     showPageNotif({ title: msg.title, desc: msg.desc, isError: !!msg.isError });
-    if (msg.type === 'PO_POPOUT')     buildPopoutWidget();
-    if (msg.type === 'PO_EDIT_START') startEditor();
+    if (msg.type === 'PO_NOTIFY')          showPageNotif({ title: msg.title, desc: msg.desc, isError: !!msg.isError });
+    if (msg.type === 'PO_POPOUT')          buildPopoutWidget();
+    if (msg.type === 'PO_EDIT_START')      startEditor();
+    if (msg.type === 'PO_UPDATE_AVAILABLE') showUpdateBanner(msg.current, msg.latest);
 });
 
 })();

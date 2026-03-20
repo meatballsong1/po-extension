@@ -1,583 +1,434 @@
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-  :root {
-    --bg: #0c0c10;
-    --card: rgba(255,255,255,0.045);
-    --card-b: rgba(255,255,255,0.08);
-    --accent: #00b0ff;
-    --border: rgba(255,255,255,0.07);
-    --dim: rgba(255,255,255,0.38);
-    --mid: rgba(255,255,255,0.72);
-    --err: #ff453a;
-    --p: #bf5af2;
-    --pk: #ff375f;
-    --r: 12px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+// -- NOTIFICATION SYSTEM ----------------------------------------------
+const NOTIF_DURATION = 4000; // ms before auto-dismiss
 
-  html {
-    overflow: hidden;
-    /* Prevents Chrome from adding scrollbar to the popup window */
-  }
+function showNotif({ title = 'pocket option config', desc = '', isError = false } = {}) {
+    const stack = document.getElementById('po-notif-stack');
+    if (!stack) return;
 
-  ::-webkit-scrollbar { display: none; }
+    const notif = document.createElement('div');
+    notif.className = 'po-notif' + (isError ? ' error' : '');
 
-  body {
-    width: 300px;
-    background: var(--bg);
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-    border-radius: 20px;
-    overflow: visible;
-    border: 1px solid rgba(255,255,255,0.06);
-  }
+    const checkIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 5L4.2 7.5L8 3" stroke="${isError ? '#ff4444' : '#00b0ff'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+    const errorIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 2V5.5M5 7.5V8" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>`;
 
-  /* ------ HEADER ------ */
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 13px 14px 0;
-  }
-  .header-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    background: linear-gradient(90deg, var(--p), var(--pk), var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-transform: lowercase;
-  }
-  /* Popout button */
-  #popoutBtn {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    background: var(--card);
-    border: 1px solid var(--card-b);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    padding: 0;
-    transition: background 0.2s, box-shadow 0.2s;
-    flex-shrink: 0;
-    margin: 0; margin-top: 0;
-    width: 28px;
-  }
-  #popoutBtn:hover {
-    background: rgba(191,90,242,0.15);
-    box-shadow: 0 0 10px rgba(191,90,242,0.3);
-    transform: none;
-  }
-  #popoutBtn svg { width: 13px; height: 13px; }
+    notif.innerHTML = `
+        <div class="po-notif-icon">${isError ? errorIcon : checkIcon}</div>
+        <div class="po-notif-body">
+            <div class="po-notif-title">${title}</div>
+            <div class="po-notif-desc">${desc}</div>
+        </div>
+        <button class="po-notif-close" aria-label="close">
+            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 2L8 8M8 2L2 8" stroke="#666" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </button>
+        <div class="po-notif-progress"><div class="po-notif-progress-bar"></div></div>
+    `;
 
-  /* ------ TABS ------ */
-  .tabs {
-    display: flex;
-    padding: 10px 10px 0;
-    gap: 2px;
-  }
-  .tab {
-    flex: 1;
-    text-align: center;
-    padding: 8px 2px;
-    cursor: pointer;
-    color: var(--dim);
-    font-size: 9px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    border-radius: 8px 8px 0 0;
-    position: relative;
-    transition: color 0.2s;
-    z-index: 0;
-  }
-  /* glow layer */
-  .tab::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 8px 8px 0 0;
-    opacity: 0;
-    background: radial-gradient(ellipse at 50% 120%, rgba(191,90,242,0.22) 0%, rgba(255,55,95,0.1) 45%, transparent 70%);
-    transition: opacity 0.25s ease;
-    pointer-events: none;
-  }
-  .tab:hover { color: #fff; }
-  .tab:hover::after { opacity: 1; }
-  .tab.active { color: #fff; }
-  .tab.active::after { opacity: 1; }
-  /* active underline */
-  .tab.active::before {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 20%; right: 20%;
-    height: 2px;
-    background: linear-gradient(90deg, var(--p), var(--pk));
-    border-radius: 2px 2px 0 0;
-    box-shadow: 0 0 8px rgba(191,90,242,0.7);
-  }
+    stack.appendChild(notif);
 
-  /* tab border-bottom line */
-  .tab-bar-line {
-    height: 1px;
-    background: var(--border);
-    margin: 0 10px;
-  }
+    // Animate in (next frame so transition fires)
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => notif.classList.add('show'));
+    });
 
-  /* ------ CONTAINER ------ */
-  .container { padding: 12px 14px 14px; }
+    // Auto-dismiss
+    const timer = setTimeout(() => dismissNotif(notif), NOTIF_DURATION);
 
-  /* ------ TAB PANELS ------ */
-  .tab-content { display: none; }
-  .tab-content.active { display: block; animation: fadeUp 0.2s ease; }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(5px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+    // Manual close
+    notif.querySelector('.po-notif-close').addEventListener('click', () => {
+        clearTimeout(timer);
+        dismissNotif(notif);
+    });
+}
 
-  /* ------ SECTION TITLE ------ */
-  .title {
-    font-size: 10.5px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    text-transform: lowercase;
-    letter-spacing: 0.4px;
-    background: linear-gradient(90deg, var(--p), var(--pk) 50%, var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+function dismissNotif(notif) {
+    notif.classList.remove('show');
+    notif.classList.add('hide');
+    notif.addEventListener('transitionend', () => notif.remove(), { once: true });
+}
 
-  /* ------ GLASS ROW ------ */
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-    background: var(--card);
-    padding: 10px 12px;
-    border-radius: var(--r);
-    border: 1px solid var(--card-b);
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .row:hover {
-    background: rgba(255,255,255,0.065);
-    border-color: rgba(255,255,255,0.13);
-  }
-  .row span { font-size: 12.5px; font-weight: 500; color: var(--mid); }
+// -- BUILD CHANGE LOG -------------------------------------------------
+// Returns a human-readable list of what changed between oldData and newData
+function buildChangeLog(oldData, newData) {
+    const lines = [];
 
-  /* ------ SWITCH ------ */
-  .switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .slider {
-    position: absolute; cursor: pointer; inset: 0;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 22px;
-    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
-  }
-  .slider:before {
-    position: absolute; content: "";
-    height: 16px; width: 16px;
-    left: 2px; bottom: 2px;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
-    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
-  }
-  input:checked + .slider {
-    background: linear-gradient(135deg, var(--p), var(--accent));
-    border-color: transparent;
-    box-shadow: 0 0 10px rgba(191,90,242,0.3);
-  }
-  input:checked + .slider:before { transform: translateX(18px); }
+    const label = (key) => ({
+        isEnabled:          'swap script',
+        isGuruEnabled:      'guru title',
+        isSpoofEnabled:     'stat spoof',
+        isVerifiedEnabled:  'spoof verified',
+        isStreamModeEnabled:'stream mode',
+        streamMaskBalance:  'mask balance',
+        streamMaskId:       'mask account id',
+        streamMaskIp:       'mask ip',
+        streamMaskEmail:    'mask email',
+        customName:         'display alias',
+        streamEmailAlias:   'email alias',
+        spBranch:           'branch level',
+        spLevel:            'disp level',
+        spExp:              'current xp',
+        spTrades:           'total trades',
+        spTurnover:         'turnover',
+        spProfit:           'profit',
+    }[key] || key);
 
-  /* ------ FIELDS ------ */
-  .field-group { margin-bottom: 7px; }
-  .field-group.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .field-label { font-size: 9px; color: var(--dim); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-  input[type="text"], input[type="number"] {
-    width: 100%; padding: 9px 11px; font-size: 12px; font-family: inherit;
-    background: var(--card); border: 1px solid var(--card-b); color: #fff;
-    border-radius: var(--r); outline: none; transition: all 0.2s;
-  }
-  input[type="text"]:focus, input[type="number"]:focus {
-    border-color: rgba(191,90,242,0.45);
-    box-shadow: 0 0 0 3px rgba(191,90,242,0.1);
-    background: rgba(255,255,255,0.06);
-  }
+    const boolKeys = ['isEnabled','isGuruEnabled','isSpoofEnabled','isVerifiedEnabled','isStreamModeEnabled',
+                      'streamMaskBalance','streamMaskId','streamMaskIp','streamMaskEmail'];
+    const valKeys  = ['customName','streamEmailAlias','spBranch','spLevel','spExp','spTrades','spTurnover','spProfit'];
 
-  /* ------ STREAM OPTIONS ------ */
-  #streamOptions {
-    overflow: hidden; max-height: 0; opacity: 0;
-    transform: translateY(-5px); pointer-events: none;
-    transition: max-height 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease, transform 0.3s ease;
-  }
-  .stream-info {
-    background: rgba(191,90,242,0.05);
-    border: 1px solid rgba(191,90,242,0.14);
-    border-radius: var(--r); padding: 9px 11px; margin-bottom: 9px;
-    font-size: 10px; color: var(--dim); line-height: 1.6;
-  }
-  .stream-info b { color: var(--p); -webkit-text-fill-color: var(--p); }
+    boolKeys.forEach(k => {
+        if (oldData[k] !== newData[k]) {
+            lines.push(`${label(k)} -> ${newData[k] ? 'on' : 'off'}`);
+        }
+    });
 
-  /* ------ SAVE BUTTON ------ */
-  #saveBtn {
-    width: 100%; padding: 11px; margin-top: 10px;
-    background: linear-gradient(135deg, var(--p), var(--pk));
-    border: none; color: #fff; font-weight: 700; font-size: 12px;
-    border-radius: var(--r); cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-    letter-spacing: 0.4px; font-family: inherit;
-    box-shadow: 0 4px 16px rgba(191,90,242,0.25);
-  }
-  #saveBtn:hover { opacity: 0.88; box-shadow: 0 6px 22px rgba(191,90,242,0.4); transform: translateY(-1px); }
-  #saveBtn:active { transform: scale(0.97); }
+    valKeys.forEach(k => {
+        if (oldData[k] !== newData[k]) {
+            lines.push(`${label(k)} updated`);
+        }
+    });
 
-  /* ------ CUSTOMIZE TAB ------ */
-  .cust-desc {
-    font-size: 11px; color: var(--dim); line-height: 1.6;
-    margin-bottom: 16px; padding: 10px 12px;
-    background: var(--card); border: 1px solid var(--card-b);
-    border-radius: var(--r);
-  }
-  .cust-desc b { color: var(--mid); -webkit-text-fill-color: var(--mid); font-weight: 600; }
+    return lines;
+}
 
-  #enableEditingBtn {
-    width: 100%; padding: 13px;
-    background: linear-gradient(135deg, rgba(191,90,242,0.15), rgba(255,55,95,0.1));
-    border: 1px solid rgba(191,90,242,0.35);
-    color: #fff; font-weight: 700; font-size: 12.5px;
-    border-radius: var(--r); cursor: pointer;
-    transition: all 0.25s; font-family: inherit;
-    letter-spacing: 0.3px;
-    box-shadow: 0 0 20px rgba(191,90,242,0.12);
-    margin-top: 0;
-  }
-  #enableEditingBtn:hover {
-    background: linear-gradient(135deg, rgba(191,90,242,0.28), rgba(255,55,95,0.18));
-    border-color: rgba(191,90,242,0.6);
-    box-shadow: 0 0 28px rgba(191,90,242,0.3);
-    transform: translateY(-1px);
-  }
-  #enableEditingBtn:active { transform: scale(0.97); }
+// -- MAIN POPUP LOGIC -------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
 
-  .cust-note {
-    margin-top: 10px; font-size: 10px; color: var(--dim);
-    text-align: center; line-height: 1.5;
-  }
+    // Tab Logic
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            var tabId = tab.getAttribute('data-tab');
+            tab.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            updateSaveBtn(tabId);
+            if (tabId === 'about') populateAbout();
+        });
+    });
+    // Set initial save btn state
+    updateSaveBtn('main');
 
-  /* ------ FOOTER ------ */
-  .footer-note { margin-top: 10px; font-size: 10px; line-height: 1.4; color: var(--dim); text-align: center; }
-  .footer-note b { color: #ffd60a; -webkit-text-fill-color: #ffd60a; }
+    // Hide/show save button based on active tab
+    function updateSaveBtn(tabId) {
+        var btn = document.getElementById('saveBtn');
+        if (!btn) return;
+        var hide = (tabId === 'about' || tabId === 'customize');
+        btn.style.display = hide ? 'none' : 'block';
+    }
 
-  .watermark-container {
-    display: flex; align-items: center; justify-content: center;
-    gap: 8px; margin-top: 8px; padding-top: 10px;
-    border-top: 1px solid var(--border);
-  }
-  .watermark-avatar { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--card-b); object-fit: cover; }
-  .watermark-text { font-size: 10px; color: var(--dim); font-weight: 600; letter-spacing: 0.4px; }
+    // Populate About tab stats
+    function set(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = val;
+    }
 
-  /* ------ ABOUT TAB ------ */
-  .about-stat {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 12px; margin-bottom: 6px;
-    background: var(--card); border: 1px solid var(--card-b);
-    border-radius: var(--r); transition: border-color 0.2s;
-  }
-  .about-stat:hover { border-color: rgba(191,90,242,0.22); }
-  .about-stat .as-key {
-    font-size: 10px; font-weight: 600; color: var(--dim);
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .about-stat .as-val {
-    font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.85);
-    font-variant-numeric: tabular-nums;
-  }
-  .about-stat .as-val.grad {
-    background: linear-gradient(90deg, var(--p), var(--pk));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  }
-  .about-divider {
-    height: 1px; background: var(--border); margin: 10px 0;
-  }
-  .about-credit {
-    text-align: center; font-size: 10px; color: var(--dim);
-    line-height: 1.7; margin-top: 10px;
-  }
-  .about-credit b { color: rgba(255,255,255,0.6); -webkit-text-fill-color: rgba(255,255,255,0.6); }
+    function populateAbout() {
+        // Manifest info --- always available synchronously
+        try {
+            var m = chrome.runtime.getManifest();
+            set('ab-name',    m.name || 'pocket option config');
+            set('ab-version', m.version || '-');
+            set('ab-mv',      'MV' + (m.manifest_version || '3'));
+        } catch(e) {
+            set('ab-name', 'pocket option config');
+            set('ab-version', '-');
+            set('ab-mv', 'MV3');
+        }
 
-  /* ------ UPDATE CHECK ------ */
-  #update-btn {
-    width: 100%; padding: 10px; margin-top: 10px;
-    background: rgba(0,176,255,0.1);
-    border: 1px solid rgba(0,176,255,0.25);
-    color: #00b0ff; font-weight: 700; font-size: 11.5px;
-    border-radius: var(--r); cursor: pointer;
-    transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
-  }
-  #update-btn:hover {
-    background: rgba(0,176,255,0.2);
-    border-color: rgba(0,176,255,0.5);
-    box-shadow: 0 0 14px rgba(0,176,255,0.2);
-  }
-  #update-btn:active { transform: scale(0.97); }
-  #update-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        // Browser detection
+        var ua = navigator.userAgent;
+        var browser = 'Edge';
+        if (ua.indexOf('Edg') !== -1)     browser = 'Edge';
+        else if (ua.indexOf('OPR') !== -1) browser = 'Opera';
+        else if (ua.indexOf('Brave') !== -1) browser = 'Brave';
+        set('ab-browser', browser);
 
-  #update-result {
-    margin-top: 10px; border-radius: var(--r);
-    padding: 10px 12px; font-size: 11px; line-height: 1.5;
-    display: none;
-  }
-  #update-result.up-to-date {
-    background: rgba(36,177,91,0.08);
-    border: 1px solid rgba(36,177,91,0.2);
-    color: rgba(36,177,91,0.9);
-  }
-  #update-result.has-update {
-    background: rgba(191,90,242,0.08);
-    border: 1px solid rgba(191,90,242,0.25);
-    color: rgba(255,255,255,0.85);
-  }
-  #update-result.update-error {
-    background: rgba(255,69,58,0.08);
-    border: 1px solid rgba(255,69,58,0.2);
-    color: rgba(255,69,58,0.85);
-  }
-  #update-result-ver {
-    font-weight: 800; font-size: 13px;
-    background: linear-gradient(90deg, var(--p), var(--pk));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; margin-bottom: 4px;
-  }
-  #refresh-link {
-    display: inline-block; margin-top: 8px; padding: 6px 14px;
-    background: linear-gradient(135deg, var(--p), var(--pk));
-    border-radius: 8px; color: #fff; font-weight: 700;
-    font-size: 11px; cursor: pointer; border: none;
-    font-family: inherit; transition: opacity 0.15s;
-  }
-  #refresh-link:hover { opacity: 0.85; }
+        // Active tab URL
+        try {
+            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                if (chrome.runtime.lastError) { set('ab-url', 'n/a'); return; }
+                if (tabs && tabs[0]) {
+                    if (tabs[0].url) {
+                        try { set('ab-url', new URL(tabs[0].url).hostname); }
+                        catch(e) { set('ab-url', tabs[0].url.slice(0, 30)); }
+                    } else if (tabs[0].title) {
+                        set('ab-url', tabs[0].title.slice(0, 25));
+                    } else {
+                        set('ab-url', 'active tab');
+                    }
+                }
+            });
+        } catch(e) { set('ab-url', 'n/a'); }
 
-  #download-btn {
-    width: 100%; padding: 10px; margin-top: 8px;
-    background: rgba(36,177,91,0.1);
-    border: 1px solid rgba(36,177,91,0.25);
-    color: #24b15b; font-weight: 700; font-size: 11.5px;
-    border-radius: var(--r); cursor: pointer;
-    transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
-    display: none;
-  }
-  #download-btn:hover {
-    background: rgba(36,177,91,0.2);
-    border-color: rgba(36,177,91,0.5);
-    box-shadow: 0 0 14px rgba(36,177,91,0.2);
-  }
-  #download-btn:active { transform: scale(0.97); }
-  .install-steps {
-    margin-top: 10px; padding: 10px 12px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: var(--r); font-size: 10.5px;
-    color: var(--dim); line-height: 1.8; display: none;
-  }
-  .install-steps b { color: var(--mid); -webkit-text-fill-color: var(--mid); }
-  .install-steps ol { padding-left: 16px; }
+        // Live storage values
+        chrome.storage.local.get({ isEnabled: true, isStreamModeEnabled: false }, function(data) {
+            if (chrome.runtime.lastError) return;
+            set('ab-stream', data.isStreamModeEnabled ? 'on' : 'off');
+            set('ab-swap',   data.isEnabled ? 'on' : 'off');
+        });
+    }
 
-  /* ------ POPUP NOTIF (not used for page notifs, kept for structure) ------ */
-  #po-notif-stack { display: none; }
-</style>
-</head>
-<body>
+    // Always populate on load so values show immediately when About tab is opened
+    populateAbout();
 
-<div id="po-notif-stack"></div>
+    // Check for updates
+    function checkUpdate() {
+        var btn    = document.getElementById('update-btn');
+        var result = document.getElementById('update-result');
+        var verEl  = document.getElementById('update-result-ver');
+        var msgEl  = document.getElementById('update-result-msg');
+        var dlBtn  = document.getElementById('download-btn');
+        var steps  = document.getElementById('install-steps');
+        var link   = document.getElementById('refresh-link');
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-title">pocket option config</div>
-  <button id="popoutBtn" title="Pop out to page">
-    <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="4" width="8" height="8" rx="1.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
-      <path d="M5.5 1H12M12 1V7.5M12 1L6.5 6.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  </button>
-</div>
+        btn.disabled = true;
+        btn.textContent = 'Checking...';
+        result.style.display = 'none';
+        if (dlBtn)  dlBtn.style.display  = 'none';
+        if (steps)  steps.style.display  = 'none';
+        if (link)   link.style.display   = 'none';
 
-<!-- TABS -->
-<div class="tabs">
-  <div class="tab active" data-tab="main">Main</div>
-  <div class="tab" data-tab="spoof">Stats</div>
-  <div class="tab" data-tab="stream">Stream</div>
-  <div class="tab" data-tab="customize">Customize</div>
-  <div class="tab" data-tab="about">About</div>
-</div>
-<div class="tab-bar-line"></div>
+        var m = chrome.runtime.getManifest();
+        var current = m.version;
 
-<div class="container">
+        fetch('https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now())
+            .then(function(r) {
+                if (!r.ok) throw new Error('Could not reach GitHub');
+                return r.json();
+            })
+            .then(function(data) {
+                var latest = data.version;
+                result.style.display = 'block';
 
-  <!-- MAIN TAB -->
-  <div id="main" class="tab-content active">
-    <div class="title">pocket option config</div>
-    <div class="row">
-      <span>Enable Swap Script</span>
-      <label class="switch"><input type="checkbox" id="masterToggle"><span class="slider"></span></label>
-    </div>
-    <div class="row">
-      <span>Add Guru Title</span>
-      <label class="switch"><input type="checkbox" id="guruToggle"><span class="slider"></span></label>
-    </div>
-    <div class="field-group" style="margin-top:4px;">
-      <div class="field-label">Display Alias</div>
-      <input type="text" id="customName" placeholder="QT Real">
-    </div>
-  </div>
+                if (latest === current) {
+                    result.className = 'update-result up-to-date';
+                    verEl.style.display = 'none';
+                    msgEl.textContent = "you're on v" + current + ", that's the latest. you're good.";
+                } else {
+                    result.className = 'update-result has-update';
+                    verEl.style.display = 'block';
+                    verEl.textContent = 'v' + latest + ' available';
+                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + ". updating you now would be sick.";
+                    if (link) { link.style.display = 'inline-block'; link.textContent = 'how to update'; }
+                    // fire the in-page banner on the active tab
+                    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                        if (tabs && tabs[0] && tabs[0].id) {
+                            chrome.tabs.sendMessage(tabs[0].id, {
+                                type: 'PO_UPDATE_AVAILABLE',
+                                current: current,
+                                latest: latest,
+                            });
+                        }
+                    });
+                }
+            })
+            .catch(function(e) {
+                result.style.display = 'block';
+                result.className = 'update-result update-error';
+                verEl.style.display = 'none';
+                msgEl.textContent = 'could not check: ' + e.message;
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.textContent = 'Check for Updates';
+            });
+    }
 
-  <!-- STATS TAB -->
-  <div id="spoof" class="tab-content">
-    <div class="title">stat injector</div>
-    <div class="row">
-      <span style="color:#ffd60a;">Enable Stat Spoof</span>
-      <label class="switch"><input type="checkbox" id="spoofToggle"><span class="slider"></span></label>
-    </div>
-    <div class="row">
-      <span style="color:#ffd60a;">Spoof Verified</span>
-      <label class="switch"><input type="checkbox" id="verifiedToggle"><span class="slider"></span></label>
-    </div>
-    <div class="field-group grid" style="margin-top:4px;">
-      <div><div class="field-label">Branch Level</div><input type="number" id="spBranch" value="13"></div>
-      <div><div class="field-label">Disp Level</div><input type="number" id="spLevel" value="87"></div>
-    </div>
-    <div class="field-group grid">
-      <div><div class="field-label">Current XP</div><input type="text" id="spExp" value="14,530"></div>
-      <div><div class="field-label">Total Trades</div><input type="number" id="spTrades" value="113"></div>
-    </div>
-    <div class="field-group">
-      <div class="field-label">Turnover</div>
-      <input type="text" id="spTurnover" value="$21,300.00">
-    </div>
-    <div class="field-group">
-      <div class="field-label">Profit</div>
-      <input type="text" id="spProfit" value="$4,225.00">
-    </div>
-  </div>
+    function showDownloadOption() {
+        var dlBtn = document.getElementById('download-btn');
+        var steps = document.getElementById('install-steps');
+        var link  = document.getElementById('refresh-link');
+        if (dlBtn)  dlBtn.style.display  = 'block';
+        if (steps)  steps.style.display  = 'block';
+        if (link)   link.style.display   = 'none';
+    }
 
-  <!-- STREAM TAB -->
-  <div id="stream" class="tab-content">
-    <div class="title">stream mode</div>
-    <div class="row">
-      <span>Stream Mode</span>
-      <label class="switch"><input type="checkbox" id="streamModeToggle"><span class="slider"></span></label>
-    </div>
-    <div id="streamOptions">
-      <div class="field-label" style="margin: 8px 0 6px; padding-left:2px;">Mask Options</div>
-      <div class="row" style="margin-bottom:6px;">
-        <span style="font-size:12px;">Hide Balance</span>
-        <label class="switch"><input type="checkbox" id="streamMaskBalance" checked><span class="slider"></span></label>
-      </div>
-      <div class="row" style="margin-bottom:6px;">
-        <span style="font-size:12px;">Mask Account ID</span>
-        <label class="switch"><input type="checkbox" id="streamMaskId" checked><span class="slider"></span></label>
-      </div>
-      <div class="row" style="margin-bottom:6px;">
-        <span style="font-size:12px;">Mask IP Address</span>
-        <label class="switch"><input type="checkbox" id="streamMaskIp" checked><span class="slider"></span></label>
-      </div>
-      <div class="row" style="margin-bottom:10px;">
-        <span style="font-size:12px;">Replace Email</span>
-        <label class="switch"><input type="checkbox" id="streamMaskEmail" checked><span class="slider"></span></label>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Email Alias</div>
-        <input type="text" id="streamEmailAlias" placeholder="hidden@domain.com">
-      </div>
-      <div class="stream-info">
-        <b>balance</b> masked to *******&nbsp;&nbsp;<b>id/ip/email</b> replaced
-      </div>
-    </div>
-  </div>
+    // Update check button
+    var updateBtn = document.getElementById('update-btn');
+    if (updateBtn) updateBtn.addEventListener('click', checkUpdate);
 
-  <!-- CUSTOMIZE TAB -->
-  <div id="customize" class="tab-content">
-    <div class="title">customize</div>
-    <div class="cust-desc">
-      <b>Edit Mode</b> lets you click any element on the Pocket Option page to edit its text, drag it to reposition, and save your layout. Your changes persist across sessions.
-    </div>
-    <button id="enableEditingBtn">Enable Editing Mode</button>
-    <div class="cust-note">closes the popup and injects the editor onto the page</div>
-  </div>
+    var refreshLink = document.getElementById('refresh-link');
+    if (refreshLink) refreshLink.addEventListener('click', showDownloadOption);
 
-  <!-- ABOUT TAB -->
-  <div id="about" class="tab-content">
-    <div class="title">about</div>
-    <div class="about-stat">
-      <span class="as-key">Extension Name</span>
-      <span class="as-val" id="ab-name">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Version</span>
-      <span class="as-val grad" id="ab-version">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Manifest Version</span>
-      <span class="as-val" id="ab-mv">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Browser</span>
-      <span class="as-val" id="ab-browser">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Active Tab</span>
-      <span class="as-val" id="ab-url">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Stream Mode</span>
-      <span class="as-val" id="ab-stream">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Swap Script</span>
-      <span class="as-val" id="ab-swap">-</span>
-    </div>
-    <div class="about-divider"></div>
-    <div class="about-credit">
-      built for <b>pocket option</b> streaming<br>
-      made with care by <b>oofbomb</b>
-    </div>
-  <button id="check-update-btn">Check for Updates</button>
-    <div id="update-result">
-      <div id="update-result-ver"></div>
-      <div id="update-result-msg"></div>
-      <button id="refresh-link" style="display:none;" onclick="showDownloadOption()">How to update</button>
-    </div>
-    <a id="download-btn" href="https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip" target="_blank">
-      Download Latest ZIP
-    </a>
-    <div class="install-steps" id="install-steps">
-      <ol>
-        <li>Click <b>Download Latest ZIP</b> above</li>
-        <li>Unzip the downloaded file anywhere</li>
-        <li>Go to <b>chrome://extensions</b></li>
-        <li>Turn on <b>Developer Mode</b> (top right)</li>
-        <li>Click <b>Load unpacked</b> and select the unzipped folder</li>
-        <li>Done — remove the old version</li>
-      </ol>
-    </div>
-  </div>
+    // Popout button -> sends message to content.js to show floating widget
+    document.getElementById('popoutBtn').addEventListener('click', function() {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs && tabs[0] && tabs[0].id) {
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'PO_POPOUT' });
+                window.close();
+            }
+        });
+    });
 
-  <button id="saveBtn">Apply Settings</button>
+    // Enable Editing Mode -> sends message then closes popup
+    document.getElementById('enableEditingBtn').addEventListener('click', function() {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs && tabs[0] && tabs[0].id) {
+                chrome.tabs.sendMessage(tabs[0].id, { type: 'PO_EDIT_START' });
+                window.close();
+            }
+        });
+    });
 
-  <div class="footer-note">
-    <b>Note:</b> only use on demo /cabinet/ pages.
-  </div>
-  <div class="watermark-container">
-    <img src="image.jpg" alt="" class="watermark-avatar" onerror="this.style.display='none'">
-    <span class="watermark-text">created by oofbomb</span>
-  </div>
+    // Stream mode toggle -> animate options panel in/out
+    const streamToggle = document.getElementById('streamModeToggle');
+    const streamOptions = document.getElementById('streamOptions');
 
-</div><!-- /container -->
+    function setStreamPanel(active, animate) {
+        if (active) {
+            // Set to actual scroll height so transition has a concrete target
+            streamOptions.style.maxHeight = streamOptions.scrollHeight + 'px';
+            streamOptions.style.opacity = '1';
+            streamOptions.style.transform = 'translateY(0)';
+            streamOptions.style.pointerEvents = 'all';
+            streamOptions.classList.add('stream-active');
+        } else {
+            // Collapse back to 0
+            streamOptions.style.maxHeight = '0';
+            streamOptions.style.opacity = '0';
+            streamOptions.style.transform = 'translateY(-6px)';
+            streamOptions.style.pointerEvents = 'none';
+            streamOptions.classList.remove('stream-active');
+        }
+    }
 
-<script src="popup.js"></script>
-</body>
-</html>
+    streamToggle.addEventListener('change', function() {
+        setStreamPanel(streamToggle.checked, true);
+    });
+
+    // Default values
+    const DEFAULTS = {
+        isEnabled: true,
+        isGuruEnabled: false,
+        isSpoofEnabled: false,
+        isVerifiedEnabled: false,
+        isStreamModeEnabled: false,
+        streamMaskBalance: true,
+        streamMaskId: true,
+        streamMaskIp: true,
+        streamMaskEmail: true,
+        streamEmailAlias: 'hidden@domain.com',
+        customName: 'QT Real',
+        spBranch: '13',
+        spLevel: '87',
+        spExp: '14,530',
+        spTrades: '113',
+        spTurnover: '$21,300.00',
+        spProfit: '$4,225.00'
+    };
+
+    // Load saved data
+    chrome.storage.local.get(DEFAULTS, (data) => {
+        document.getElementById('masterToggle').checked      = data.isEnabled;
+        document.getElementById('guruToggle').checked        = data.isGuruEnabled;
+        document.getElementById('spoofToggle').checked       = data.isSpoofEnabled;
+        document.getElementById('verifiedToggle').checked    = data.isVerifiedEnabled;
+        document.getElementById('streamModeToggle').checked  = data.isStreamModeEnabled;
+        document.getElementById('streamMaskBalance').checked = data.streamMaskBalance;
+        document.getElementById('streamMaskId').checked      = data.streamMaskId;
+        document.getElementById('streamMaskIp').checked      = data.streamMaskIp;
+        document.getElementById('streamMaskEmail').checked   = data.streamMaskEmail;
+        document.getElementById('streamEmailAlias').value    = data.streamEmailAlias;
+        document.getElementById('customName').value          = data.customName;
+        // Reflect saved state on load - show instantly without animation
+        if (data.isStreamModeEnabled) {
+            streamOptions.style.transition = 'none';
+            streamOptions.style.maxHeight = '999px';
+            streamOptions.style.opacity = '1';
+            streamOptions.style.transform = 'translateY(0)';
+            streamOptions.style.pointerEvents = 'all';
+            streamOptions.classList.add('stream-active');
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    streamOptions.style.transition = '';
+                });
+            });
+        }
+        document.getElementById('spBranch').value            = data.spBranch;
+        document.getElementById('spLevel').value             = data.spLevel;
+        document.getElementById('spExp').value               = data.spExp;
+        document.getElementById('spTrades').value            = data.spTrades;
+        document.getElementById('spTurnover').value          = data.spTurnover;
+        document.getElementById('spProfit').value            = data.spProfit;
+    });
+
+    // Save data + fire notifications
+    document.getElementById('saveBtn').addEventListener('click', () => {
+        // Snapshot what's currently saved before overwriting
+        chrome.storage.local.get(DEFAULTS, (oldData) => {
+
+            const newData = {
+                isEnabled:           document.getElementById('masterToggle').checked,
+                isGuruEnabled:       document.getElementById('guruToggle').checked,
+                isSpoofEnabled:      document.getElementById('spoofToggle').checked,
+                isVerifiedEnabled:   document.getElementById('verifiedToggle').checked,
+                isStreamModeEnabled: document.getElementById('streamModeToggle').checked,
+                streamMaskBalance:   document.getElementById('streamMaskBalance').checked,
+                streamMaskId:        document.getElementById('streamMaskId').checked,
+                streamMaskIp:        document.getElementById('streamMaskIp').checked,
+                streamMaskEmail:     document.getElementById('streamMaskEmail').checked,
+                streamEmailAlias:    document.getElementById('streamEmailAlias').value.trim(),
+                customName:          document.getElementById('customName').value.trim(),
+                spBranch:            document.getElementById('spBranch').value,
+                spLevel:             document.getElementById('spLevel').value,
+                spExp:               document.getElementById('spExp').value,
+                spTrades:            document.getElementById('spTrades').value,
+                spTurnover:          document.getElementById('spTurnover').value,
+                spProfit:            document.getElementById('spProfit').value,
+            };
+
+            // Basic validation
+            const errors = [];
+            if (!newData.customName) errors.push('display alias is empty');
+            if (newData.isStreamModeEnabled && !newData.streamEmailAlias) errors.push('email alias is empty');
+
+            if (errors.length) {
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs && tabs[0] && tabs[0].id) {
+                        errors.forEach(err => chrome.tabs.sendMessage(tabs[0].id, {
+                            type: 'PO_NOTIFY',
+                            title: 'pocket option config',
+                            desc: err,
+                            isError: true
+                        }));
+                    }
+                });
+                return;
+            }
+
+            chrome.storage.local.set(newData, () => {
+                const changes = buildChangeLog(oldData, newData);
+                const desc = changes.length === 0
+                    ? 'settings applied!'
+                    : 'settings applied! - ' + changes.join(', ');
+
+                // In-page notification on the PocketOption tab
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs && tabs[0] && tabs[0].id) {
+                        chrome.tabs.sendMessage(tabs[0].id, {
+                            type: 'PO_NOTIFY',
+                            title: 'pocket option config',
+                            desc: desc,
+                            isError: false
+                        });
+                    }
+                });
+
+                // Button feedback
+                const btn = document.getElementById('saveBtn');
+                btn.innerText = 'Saved!';
+                btn.style.background = '#24B15B';
+                setTimeout(() => {
+                    btn.innerText = 'Apply Settings';
+                    btn.style.background = 'var(--accent)';
+                }, 1000);
+            });
+        });
+    });
+});

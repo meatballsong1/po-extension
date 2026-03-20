@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Browser detection
         var ua = navigator.userAgent;
-        var browser = 'Chrome';
+        var browser = 'Edge';
         if (ua.indexOf('Edg') !== -1)     browser = 'Edge';
         else if (ua.indexOf('OPR') !== -1) browser = 'Opera';
         else if (ua.indexOf('Brave') !== -1) browser = 'Brave';
@@ -232,6 +232,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('install-steps').style.display = 'block';
         document.getElementById('refresh-link').style.display = 'none';
     }
+
+    // Update check button
+    var updateBtn = document.getElementById('update-btn');
+    if (updateBtn) updateBtn.addEventListener('click', checkUpdate);
+
+    var refreshLink = document.getElementById('refresh-link');
+    if (refreshLink) refreshLink.addEventListener('click', showDownloadOption);
 
     // Popout button -> sends message to content.js to show floating widget
     document.getElementById('popoutBtn').addEventListener('click', function() {
@@ -409,4 +416,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-document.getElementById('check-update-btn').addEventListener('click', checkUpdate);
