@@ -122,6 +122,22 @@ function updateChangelogInContentJs(version, title, subtitle, items, mode, image
 
 // ── API ROUTES ────────────────────────────────────────────────────────────
 
+const https = require('https');
+
+function fetchGithubVersion() {
+    return new Promise((resolve) => {
+        const url = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now();
+        https.get(url, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try { resolve(JSON.parse(data).version || null); }
+                catch(e) { resolve(null); }
+            });
+        }).on('error', () => resolve(null));
+    });
+}
+
 // GET current state
 app.get('/api/status', async (req, res) => {
     try {
@@ -129,16 +145,62 @@ app.get('/api/status', async (req, res) => {
         const history    = readHistory();
         const gitStatus  = await git.status();
         const commits    = await git.log(['--oneline', '-20']).catch(() => ({ all: [] }));
+        const githubVer  = await fetchGithubVersion();
+
+        // Auto-sync all local version references to GitHub if they differ
+        if (githubVer && githubVer !== manifest.version) {
+            manifest.version = githubVer;
+            writeManifest(manifest);
+            updateVersionJson(githubVer);
+            const contentPath = path.join(EXT_PATH, 'content.js');
+            if (fs.existsSync(contentPath)) {
+                let c = fs.readFileSync(contentPath, 'utf8');
+                c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
+                fs.writeFileSync(contentPath, c);
+            }
+        }
+
+        const finalVersion = githubVer || manifest.version;
 
         res.json({
-            version:        manifest.version,
+            version:        finalVersion,
+            githubVersion:  githubVer,
             name:           manifest.name,
             extPath:        EXT_PATH,
+            isClean:        gitStatus.isClean(),
             uncommitted:    gitStatus.files.length,
-            changedFiles:   gitStatus.files.map(f => f.path),
+            modifiedFiles:  gitStatus.files.map(f => f.path),
             history,
             recentCommits:  commits.all || [],
         });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST sync-version — pulls version from GitHub and updates all local files
+app.post('/api/sync-version', async (req, res) => {
+    try {
+        const version = req.body.version;
+        if (!version) return res.status(400).json({ error: 'no version' });
+
+        // Update manifest.json
+        const manifest = readManifest();
+        manifest.version = version;
+        writeManifest(manifest);
+
+        // Update version.json
+        updateVersionJson(version);
+
+        // Update VEIL_CURRENT_VERSION in content.js
+        const contentPath = path.join(EXT_PATH, 'content.js');
+        if (fs.existsSync(contentPath)) {
+            let c = fs.readFileSync(contentPath, 'utf8');
+            c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${version}';`);
+            fs.writeFileSync(contentPath, c);
+        }
+
+        res.json({ success: true, version });
     } catch(e) {
         res.status(500).json({ error: e.message });
     }

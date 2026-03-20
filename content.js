@@ -1582,7 +1582,7 @@ edStop = function() {
 var UPDATE_MESSAGES = ['a'];
 // -------------------------------------------------------------------------
 
-var VEIL_CURRENT_VERSION = '2.4.4';
+var VEIL_CURRENT_VERSION = '2.5.0';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 
@@ -1684,10 +1684,10 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.4.4',
+    version: '2.5.0',
 
-    title: 'odwjidwqjiejdoweioqdejoi',
-    subtitle: 'aaAAAAAAAAAAA',
+    title: 'version 2.4.5',
+    subtitle: 'diddy',
 
     image: '',
 

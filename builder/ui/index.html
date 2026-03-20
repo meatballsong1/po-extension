@@ -330,6 +330,10 @@
     <div class="ver-block">
       <div class="ver-n" id="ver-num">—</div>
       <div class="ver-sub" id="ver-name">loading...</div>
+      <div id="github-ver-row" style="margin-top:7px;padding-top:7px;border-top:1px solid #2a1a40;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:10px;color:#555;">GitHub</span>
+        <span id="github-ver" style="font-size:11px;font-family:'Courier New',monospace;color:#555;">checking...</span>
+      </div>
     </div>
 
     <div class="s-label">Changed Files</div>
@@ -470,6 +474,23 @@ async function loadStatus() {
 
     document.getElementById('ver-num').textContent  = d.version;
     document.getElementById('ver-name').textContent = d.name;
+
+    var ghEl = document.getElementById('github-ver');
+    if (ghEl) {
+      if (!d.githubVersion) {
+        ghEl.textContent = 'offline';
+        ghEl.style.color = '#555';
+      } else if (d.githubVersion === d.version) {
+        ghEl.textContent = 'v' + d.githubVersion + ' — in sync';
+        ghEl.style.color = '#24b15b';
+      } else {
+        ghEl.textContent = 'synced to v' + d.githubVersion;
+        ghEl.style.color = '#ffd60a';
+        S.version = d.githubVersion;
+        document.getElementById('ver-num').textContent = d.githubVersion;
+        updateBumps(d.githubVersion);
+      }
+    }
 
     var dot  = document.getElementById('git-dot');
     var txt  = document.getElementById('git-text');
