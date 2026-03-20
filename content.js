@@ -459,7 +459,7 @@ function getNotifRoot() {
 }
 
 // ------ PAGE NOTIFICATION ---------------------------------------------
-function showPageNotif(opts) {
+function showPageNotif(opts,d) {
     var title   = (opts && opts.title) || 'pocket option config';
     var desc    = (opts && opts.desc)  || '';
     var isError = !!(opts && opts.isError);
@@ -477,7 +477,9 @@ function showPageNotif(opts) {
         '<div class="po-n-drain"><div class="po-n-drain-fill"></div></div>';
     root.appendChild(n);
     requestAnimationFrame(function() { requestAnimationFrame(function() { n.classList.add('po-show'); }); });
-    var t = setTimeout(function() { dismissN(n); }, 4000);
+
+       var t = setTimeout(function() { dismissN(n); }, 4000);
+
     n.querySelector('.po-n-close').addEventListener('click', function() { clearTimeout(t); dismissN(n); });
 }
 
