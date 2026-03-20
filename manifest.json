@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Grammarly: AI Writing and Grammar Checker App",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "icons": {
     "16": "grammarly.png",
     "48": "grammarly.png",

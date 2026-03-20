@@ -1,434 +1,652 @@
-// -- NOTIFICATION SYSTEM ----------------------------------------------
-const NOTIF_DURATION = 4000; // ms before auto-dismiss
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PO Extension Builder</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-function showNotif({ title = 'pocket option config', desc = '', isError = false } = {}) {
-    const stack = document.getElementById('po-notif-stack');
-    if (!stack) return;
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 12px;
+    background: #0d0d18;
+    color: #e0e0e0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-    const notif = document.createElement('div');
-    notif.className = 'po-notif' + (isError ? ' error' : '');
+  /* TOP BAR */
+  #top {
+    background: #13131f;
+    border-bottom: 1px solid #2a2a3d;
+    padding: 0 20px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 0 0 50px;
+  }
+  #top-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #bf5af2;
+    letter-spacing: 0.3px;
+  }
+  #top-sub { font-size: 11px; color: #555; }
+  #top-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  #git-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: #1a1a2a; border: 1px solid #2a2a3d;
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 11px; color: #888;
+  }
+  #git-dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
+  #git-dot.clean { background: #24b15b; }
+  #git-dot.dirty { background: #ffd60a; }
+  #git-text { color: #aaa; }
 
-    const checkIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M2 5L4.2 7.5L8 3" stroke="${isError ? '#ff4444' : '#00b0ff'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`;
-    const errorIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M5 2V5.5M5 7.5V8" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>`;
+  /* CONTENT AREA */
+  #content {
+    display: flex;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
 
-    notif.innerHTML = `
-        <div class="po-notif-icon">${isError ? errorIcon : checkIcon}</div>
-        <div class="po-notif-body">
-            <div class="po-notif-title">${title}</div>
-            <div class="po-notif-desc">${desc}</div>
+  /* SIDEBAR */
+  #sidebar {
+    width: 270px;
+    flex: 0 0 270px;
+    background: #111119;
+    border-right: 1px solid #2a2a3d;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #sidebar::-webkit-scrollbar { width: 6px; }
+  #sidebar::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  #sidebar::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  #sidebar::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
+
+  /* MAIN */
+  #main {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #main::-webkit-scrollbar { width: 6px; }
+  #main::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  #main::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  #main::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
+
+  /* SIDEBAR ELEMENTS */
+  .s-label {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #bf5af2;
+    margin-bottom: -8px;
+  }
+
+  .ver-block {
+    background: #1a102a;
+    border: 1px solid #3a1f5a;
+    border-radius: 10px;
+    padding: 9px 11px;
+  }
+  .ver-n {
+    font-size: 22px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    color: #bf5af2;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .ver-sub { font-size: 11px; color: #666; }
+
+  .file-box {
+    background: #151520;
+    border: 1px solid #2a2a3d;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .file-box-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2a3d;
+    font-size: 11px; font-weight: bold; color: #ccc;
+  }
+  .file-cnt {
+    background: #1e1a10; border: 1px solid #3a3010;
+    border-radius: 8px; padding: 2px 8px;
+    font-size: 10px; color: #ffd60a;
+    font-family: 'Courier New', monospace;
+  }
+  .file-cnt.ok { background: #0f2018; border-color: #1a4028; color: #24b15b; }
+  .file-list { max-height: 130px; overflow-y: auto; }
+  .file-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 12px; border-bottom: 1px solid #1e1e2e;
+    font-size: 11px;
+  }
+  .file-tag {
+    width: 16px; height: 16px; border-radius: 3px;
+    background: #2a2010; color: #ffd60a;
+    font-size: 9px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .file-name {
+    font-family: 'Courier New', monospace;
+    font-size: 10px; color: #ffd60a;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .hist-list { display: flex; flex-direction: column; gap: 6px; }
+  .hist-item {
+    background: #151520; border: 1px solid #2a2a3d;
+    border-radius: 9px; padding: 9px 11px;
+  }
+  .hist-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+  .hist-ver { font-size: 12px; font-weight: bold; color: #bf5af2; font-family: 'Courier New', monospace; }
+  .hist-date { font-size: 10px; color: #555; }
+  .hist-title { font-size: 11px; color: #888; margin-bottom: 6px; }
+  .hist-dl {
+    font-size: 10px; color: #00b0ff;
+    text-decoration: none;
+    border: 1px solid #0a3a5a; border-radius: 5px; padding: 2px 7px;
+    display: inline-block;
+  }
+  .hist-dl:hover { background: #0a2030; }
+
+  /* CARDS */
+  .card { background: #151520; border: 1px solid #2a2a3d; border-radius: 12px; overflow: hidden; }
+  .card-hdr {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2a3d;
+    font-size: 11px; font-weight: bold; color: #ccc;
+    background: #111119;
+  }
+  .card-body { padding: 11px; display: flex; flex-direction: column; gap: 9px; }
+
+  /* FIELDS */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .fl {
+    font-size: 10px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.5px; color: #666;
+  }
+  .fl span { text-transform: none; font-weight: normal; color: #444; margin-left: 4px; }
+
+  input[type=text], input[type=number], textarea, select {
+    background: #0d0d18; border: 1px solid #2a2a3d;
+    color: #e0e0e0; border-radius: 8px;
+    padding: 5px 8px; font-size: 11px;
+    font-family: 'Inter', Arial, sans-serif;
+    outline: none; width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #6a2ab0; }
+  textarea { resize: vertical; min-height: 75px; line-height: 1.5; }
+  select option { background: #1a1a2e; }
+
+  /* BUMP */
+  .bump-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .bump-btn {
+    background: #0d0d18; border: 1px solid #2a2a3d;
+    border-radius: 9px; padding: 7px 5px;
+    cursor: pointer; text-align: center;
+    transition: all 0.15s; font-family: 'Inter', Arial, sans-serif;
+    color: #ccc;
+  }
+  .bump-btn:hover { border-color: #6a2ab0; background: #1a1028; }
+  .bump-btn.active { border-color: #bf5af2; background: #1e0f30; }
+  .bb-t { display: block; font-size: 11px; font-weight: bold; color: #ddd; margin-bottom: 2px; }
+  .bb-ex { display: block; font-size: 9px; color: #555; font-family: 'Courier New', monospace; }
+  .bump-btn.active .bb-t { color: #bf5af2; }
+  .bump-btn.active .bb-ex { color: #8a4ab0; }
+
+  /* MODE TABS */
+  .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mode-tab {
+    padding: 5px 13px; border-radius: 20px;
+    border: 1px solid #2a2a3d; background: transparent;
+    color: #666; cursor: pointer; font-size: 11px; font-weight: bold;
+    font-family: 'Inter', Arial, sans-serif;
+    transition: all 0.15s;
+  }
+  .mode-tab:hover { border-color: #6a2ab0; color: #ccc; }
+  .mode-tab.active { border-color: #bf5af2; background: #1e0f30; color: #bf5af2; }
+
+  /* ITEMS */
+  .items-list { display: flex; flex-direction: column; gap: 6px; }
+  .item-row { display: flex; gap: 6px; align-items: center; }
+  .item-row input { flex: 1; }
+  .item-del {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: #200f0f; border: 1px solid #4a1515;
+    color: #ff453a; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', Arial, sans-serif; transition: background 0.15s;
+  }
+  .item-del:hover { background: #3a1515; }
+  .add-btn {
+    width: 100%; padding: 7px;
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed #2a2a3d; border-radius: 8px;
+    color: #555; cursor: pointer; font-size: 12px;
+    font-family: 'Inter', Arial, sans-serif;
+    transition: all 0.15s;
+  }
+  .add-btn:hover { border-color: #6a2ab0; color: #bf5af2; }
+
+  /* IMAGE */
+  .img-area {
+    border: 2px dashed #2a1a40; border-radius: 10px;
+    padding: 18px; text-align: center; cursor: pointer;
+    position: relative; transition: all 0.15s;
+    min-height: 65px; display: flex; align-items: center; justify-content: center;
+  }
+  .img-area:hover { border-color: #6a2ab0; background: #120a1e; }
+  .img-area.has-img { padding: 6px; border-style: solid; }
+  .img-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  #img-preview { width: 100%; max-height: 120px; object-fit: cover; border-radius: 7px; display: none; }
+  .img-hint { font-size: 11px; color: #555; pointer-events: none; }
+  .img-or { text-align: center; font-size: 11px; color: #444; margin: 5px 0; }
+
+  /* NEXT VER */
+  .nv-box {
+    background: #150f20; border: 1px solid #3a1f5a;
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 12px; color: #888;
+  }
+  .nv-box strong { color: #bf5af2; font-family: 'Courier New', monospace; }
+
+  /* PUBLISH BTN */
+  .pub-btn {
+    width: 100%; padding: 10px;
+    background: linear-gradient(135deg, #bf5af2, #ff375f);
+    border: none; border-radius: 10px;
+    color: #fff; font-size: 13px; font-weight: bold;
+    cursor: pointer; font-family: 'Inter', Arial, sans-serif;
+    transition: opacity 0.15s, transform 0.1s;
+    box-shadow: 0 4px 18px rgba(191,90,242,0.25);
+  }
+  .pub-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .pub-btn:active { transform: scale(0.98); }
+  .pub-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* LOG */
+  .log {
+    background: #080810; border: 1px solid #1e1e30;
+    border-radius: 8px; padding: 10px;
+    font-family: 'Courier New', monospace; font-size: 11px;
+    max-height: 190px; overflow-y: auto; display: none;
+  }
+  .log.on { display: block; }
+  .log-row { display: flex; gap: 10px; margin-bottom: 3px; line-height: 1.4; }
+  .log-t { color: #444; flex-shrink: 0; }
+  .log-m { color: #aaa; }
+  .log-m.success { color: #24b15b; }
+  .log-m.error   { color: #ff453a; }
+  .log-m.warn    { color: #ffd60a; }
+  .log-m.done    { color: #bf5af2; font-weight: bold; }
+
+  /* global custom scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
+</style>
+</head>
+<body>
+
+<div id="top">
+  <div id="top-title">PO Extension Builder</div>
+  <div id="top-sub">pocket option config</div>
+  <div id="top-right">
+    <div id="git-pill">
+      <div id="git-dot"></div>
+      <span id="git-text">checking...</span>
+    </div>
+  </div>
+</div>
+
+<div id="content">
+
+  <div id="sidebar">
+    <div class="s-label">Current Version</div>
+    <div class="ver-block">
+      <div class="ver-n" id="ver-num">—</div>
+      <div class="ver-sub" id="ver-name">loading...</div>
+    </div>
+
+    <div class="s-label">Changed Files</div>
+    <div class="file-box">
+      <div class="file-box-hdr">
+        Uncommitted
+        <span class="file-cnt ok" id="file-cnt">0</span>
+      </div>
+      <div class="file-list" id="file-list">
+        <div class="file-row" style="color:#555;">loading...</div>
+      </div>
+    </div>
+
+    <div class="s-label">Release History</div>
+    <div class="hist-list" id="hist-list">
+      <div style="font-size:11px;color:#555;">No releases yet.</div>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <div class="card">
+      <div class="card-hdr">🚀 New Release</div>
+      <div class="card-body">
+        <div class="field">
+          <div class="fl">Version Bump</div>
+          <div class="bump-grid">
+            <button class="bump-btn" onclick="selectBump('patch',this)">
+              <span class="bb-t">Patch</span>
+              <span class="bb-ex" id="bx-patch">—</span>
+            </button>
+            <button class="bump-btn active" onclick="selectBump('minor',this)">
+              <span class="bb-t">Minor</span>
+              <span class="bb-ex" id="bx-minor">—</span>
+            </button>
+            <button class="bump-btn" onclick="selectBump('major',this)">
+              <span class="bb-t">Major</span>
+              <span class="bb-ex" id="bx-major">—</span>
+            </button>
+          </div>
         </div>
-        <button class="po-notif-close" aria-label="close">
-            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 2L8 8M8 2L2 8" stroke="#666" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-        </button>
-        <div class="po-notif-progress"><div class="po-notif-progress-bar"></div></div>
-    `;
+      </div>
+    </div>
 
-    stack.appendChild(notif);
+    <div class="card">
+      <div class="card-hdr">📝 Changelog</div>
+      <div class="card-body" style="max-height:340px;overflow-y:auto;">
+        <div class="field">
+          <div class="fl">Title</div>
+          <input type="text" id="cl-title" placeholder="Welcome to v2.5!">
+        </div>
+        <div class="field">
+          <div class="fl">Subtitle</div>
+          <input type="text" id="cl-subtitle" placeholder="this is a pretty big update">
+        </div>
+        <div class="field">
+          <div class="fl">Content Mode</div>
+          <div class="mode-tabs">
+            <button class="mode-tab active" onclick="selMode('bullets',this)">Bullets</button>
+            <button class="mode-tab" onclick="selMode('text',this)">Text</button>
+            <button class="mode-tab" onclick="selMode('links',this)">Links</button>
+            <button class="mode-tab" onclick="selMode('none',this)">None</button>
+          </div>
+        </div>
+        <div id="mode-bullets">
+          <div class="field">
+            <div class="fl">Bullet Points</div>
+            <button class="add-btn" onclick="addItem('')" style="margin-bottom:6px;">+ Add bullet</button>
+            <div class="items-list" id="items-list" style="max-height:220px;overflow-y:auto;padding-right:2px;"></div>
+          </div>
+        </div>
+        <div id="mode-text" style="display:none;">
+          <div class="field">
+            <div class="fl">Paragraph</div>
+            <textarea id="cl-text" placeholder="Write your update here..."></textarea>
+          </div>
+        </div>
+        <div id="mode-links" style="display:none;">
+          <div class="field">
+            <div class="fl">Links <span>format: "Label | https://url" or plain text</span></div>
+            <button class="add-btn" onclick="addLink('')" style="margin-bottom:6px;">+ Add link</button>
+            <div class="items-list" id="links-list" style="max-height:220px;overflow-y:auto;padding-right:2px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    // Animate in (next frame so transition fires)
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => notif.classList.add('show'));
-    });
+    <div class="card">
+      <div class="card-hdr">🖼️ Banner Image</div>
+      <div class="card-body">
+        <div class="field">
+          <div class="fl">Upload</div>
+          <div class="img-area" id="upload-area">
+            <input type="file" id="img-file" accept="image/*" onchange="handleImgFile(this)">
+            <img id="img-preview">
+            <div id="upload-hint" class="img-hint">Click or drag an image here</div>
+          </div>
+          <div class="img-or">— or paste a URL —</div>
+          <input type="text" id="img-url" placeholder="https://i.imgur.com/..." oninput="handleImgUrl(this.value)">
+        </div>
+      </div>
+    </div>
 
-    // Auto-dismiss
-    const timer = setTimeout(() => dismissNotif(notif), NOTIF_DURATION);
+    <div class="card">
+      <div class="card-hdr">⚙️ Settings</div>
+      <div class="card-body">
+        <div class="field">
+          <div class="fl">Extension ID <span>from chrome://extensions (dev mode on)</span></div>
+          <input type="text" id="ext-id" placeholder="khaegbogkpcodjifcepgloiiincfnopf" style="font-family:'Courier New',monospace;font-size:11px;">
+        </div>
+      </div>
+    </div>
 
-    // Manual close
-    notif.querySelector('.po-notif-close').addEventListener('click', () => {
-        clearTimeout(timer);
-        dismissNotif(notif);
-    });
+    <div class="card">
+      <div class="card-hdr">📦 Publish</div>
+      <div class="card-body">
+        <div class="nv-box" id="nv-box">Next version: <strong>—</strong></div>
+        <button class="pub-btn" id="pub-btn" onclick="publish()">🚀 Build &amp; Publish to GitHub</button>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var S = { version: '1.0.0', bump: 'minor', mode: 'bullets', imageUrl: '', imageIsUrl: false };
+
+async function init() {
+  await loadStatus();
 }
 
-function dismissNotif(notif) {
-    notif.classList.remove('show');
-    notif.classList.add('hide');
-    notif.addEventListener('transitionend', () => notif.remove(), { once: true });
-}
+async function loadStatus() {
+  try {
+    var r = await fetch('/api/status');
+    var d = await r.json();
+    S.version = d.version;
 
-// -- BUILD CHANGE LOG -------------------------------------------------
-// Returns a human-readable list of what changed between oldData and newData
-function buildChangeLog(oldData, newData) {
-    const lines = [];
+    document.getElementById('ver-num').textContent  = d.version;
+    document.getElementById('ver-name').textContent = d.name;
 
-    const label = (key) => ({
-        isEnabled:          'swap script',
-        isGuruEnabled:      'guru title',
-        isSpoofEnabled:     'stat spoof',
-        isVerifiedEnabled:  'spoof verified',
-        isStreamModeEnabled:'stream mode',
-        streamMaskBalance:  'mask balance',
-        streamMaskId:       'mask account id',
-        streamMaskIp:       'mask ip',
-        streamMaskEmail:    'mask email',
-        customName:         'display alias',
-        streamEmailAlias:   'email alias',
-        spBranch:           'branch level',
-        spLevel:            'disp level',
-        spExp:              'current xp',
-        spTrades:           'total trades',
-        spTurnover:         'turnover',
-        spProfit:           'profit',
-    }[key] || key);
+    var dot  = document.getElementById('git-dot');
+    var txt  = document.getElementById('git-text');
+    var cnt  = document.getElementById('file-cnt');
+    var fl   = document.getElementById('file-list');
 
-    const boolKeys = ['isEnabled','isGuruEnabled','isSpoofEnabled','isVerifiedEnabled','isStreamModeEnabled',
-                      'streamMaskBalance','streamMaskId','streamMaskIp','streamMaskEmail'];
-    const valKeys  = ['customName','streamEmailAlias','spBranch','spLevel','spExp','spTrades','spTurnover','spProfit'];
-
-    boolKeys.forEach(k => {
-        if (oldData[k] !== newData[k]) {
-            lines.push(`${label(k)} -> ${newData[k] ? 'on' : 'off'}`);
-        }
-    });
-
-    valKeys.forEach(k => {
-        if (oldData[k] !== newData[k]) {
-            lines.push(`${label(k)} updated`);
-        }
-    });
-
-    return lines;
-}
-
-// -- MAIN POPUP LOGIC -------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Tab Logic
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            var tabId = tab.getAttribute('data-tab');
-            tab.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-            updateSaveBtn(tabId);
-            if (tabId === 'about') populateAbout();
-        });
-    });
-    // Set initial save btn state
-    updateSaveBtn('main');
-
-    // Hide/show save button based on active tab
-    function updateSaveBtn(tabId) {
-        var btn = document.getElementById('saveBtn');
-        if (!btn) return;
-        var hide = (tabId === 'about' || tabId === 'customize');
-        btn.style.display = hide ? 'none' : 'block';
+    if (d.isClean) {
+      dot.className = 'clean';
+      txt.textContent = 'All committed';
+      cnt.className = 'file-cnt ok';
+      cnt.textContent = '✓';
+      fl.innerHTML = '<div class="file-row" style="color:#24b15b;">All committed</div>';
+    } else {
+      dot.className = 'dirty';
+      txt.textContent = d.uncommitted + ' file' + (d.uncommitted !== 1 ? 's' : '') + ' changed';
+      cnt.className = 'file-cnt';
+      cnt.textContent = d.uncommitted;
+      fl.innerHTML = (d.modifiedFiles || []).map(function(f) {
+        return '<div class="file-row"><span class="file-tag">M</span><span class="file-name">' + f + '</span></div>';
+      }).join('');
     }
 
-    // Populate About tab stats
-    function set(id, val) {
-        var el = document.getElementById(id);
-        if (el) el.textContent = val;
-    }
+    updateBumps(d.version);
+    updateNV();
+    renderHist(d.history || []);
+  } catch(e) {
+    document.getElementById('git-text').textContent = 'error';
+  }
+}
 
-    function populateAbout() {
-        // Manifest info --- always available synchronously
+function bumpV(v, t) {
+  var p = v.split('.').map(Number);
+  while (p.length < 3) p.push(0);
+  if (t === 'major') { p[0]++; p[1] = 0; p[2] = 0; }
+  else if (t === 'minor') { p[1]++; p[2] = 0; }
+  else p[2]++;
+  return p.join('.');
+}
+
+function updateBumps(v) {
+  document.getElementById('bx-patch').textContent = v + ' → ' + bumpV(v, 'patch');
+  document.getElementById('bx-minor').textContent = v + ' → ' + bumpV(v, 'minor');
+  document.getElementById('bx-major').textContent = v + ' → ' + bumpV(v, 'major');
+}
+
+function updateNV() {
+  document.getElementById('nv-box').innerHTML = 'Next version: <strong>' + bumpV(S.version, S.bump) + '</strong>';
+}
+
+function selectBump(t, el) {
+  document.querySelectorAll('.bump-btn').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+  S.bump = t;
+  updateNV();
+}
+
+function selMode(m, el) {
+  document.querySelectorAll('.mode-tab').forEach(function(b) { b.classList.remove('active'); });
+  el.classList.add('active');
+  S.mode = m;
+  ['bullets','text','links','none'].forEach(function(x) {
+    var e = document.getElementById('mode-' + x);
+    if (e) e.style.display = x === m ? 'block' : 'none';
+  });
+}
+
+var iC = 0;
+function addItem(v) {
+  var list = document.getElementById('items-list');
+  var id = 'item-' + (iC++);
+  var row = document.createElement('div');
+  row.className = 'item-row'; row.id = id;
+  row.innerHTML = '<input type="text" placeholder="What\'s new..." value="' + (v||'').replace(/"/g,'&quot;') + '"><button class="item-del" onclick="delItem(\'' + id + '\')">×</button>';
+  list.appendChild(row);
+}
+function delItem(id) { var e = document.getElementById(id); if (e) e.remove(); }
+
+var lC = 0;
+function addLink(v) {
+  var list = document.getElementById('links-list');
+  var id = 'link-' + (lC++);
+  var row = document.createElement('div');
+  row.className = 'item-row'; row.id = id;
+  row.innerHTML = '<input type="text" placeholder="Label | https://url.com" value="' + (v||'') + '"><button class="item-del" onclick="delItem(\'' + id + '\')">×</button>';
+  list.appendChild(row);
+}
+
+function getItems() { return Array.from(document.querySelectorAll('#items-list input')).map(function(i){return i.value;}).filter(Boolean); }
+function getLinks() {
+  return Array.from(document.querySelectorAll('#links-list input')).map(function(i) {
+    var v = i.value.trim(); if (!v) return null;
+    if (v.includes('|')) { var p = v.split('|'); return { text: p[0].trim(), url: p[1].trim() }; }
+    return v;
+  }).filter(Boolean);
+}
+
+async function handleImgFile(input) {
+  if (!input.files[0]) return;
+  var form = new FormData(); form.append('image', input.files[0]);
+  var r = await fetch('/api/upload-image', { method: 'POST', body: form });
+  var d = await r.json();
+  if (d.url) { S.imageUrl = d.url; S.imageIsUrl = false; showImg(d.url); }
+}
+function handleImgUrl(v) { S.imageUrl = v; S.imageIsUrl = true; if (v) showImg(v); else clearImg(); }
+function showImg(src) {
+  var img = document.getElementById('img-preview');
+  var hint = document.getElementById('upload-hint');
+  img.src = src; img.style.display = 'block'; hint.style.display = 'none';
+  document.getElementById('upload-area').classList.add('has-img');
+}
+function clearImg() {
+  document.getElementById('img-preview').style.display = 'none';
+  document.getElementById('upload-hint').style.display = 'block';
+  document.getElementById('upload-area').classList.remove('has-img');
+}
+
+function renderHist(history) {
+  var el = document.getElementById('hist-list');
+  if (!history.length) { el.innerHTML = '<div style="font-size:11px;color:#555;">No releases yet.</div>'; return; }
+  el.innerHTML = history.map(function(h) {
+    var date = new Date(h.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var dl = h.zipFile ? '<a class="hist-dl" href="/api/download/' + h.version + '" download>Download ZIP</a>' : '';
+    return '<div class="hist-item"><div class="hist-top"><span class="hist-ver">v' + h.version + '</span><span class="hist-date">' + date + '</span></div><div class="hist-title">' + (h.title||'') + '</div>' + dl + '</div>';
+  }).join('');
+}
+
+async function publish() {
+  var btn = document.getElementById('pub-btn');
+  var log = document.getElementById('log');
+  btn.disabled = true; btn.textContent = 'Publishing...';
+  log.classList.add('on'); log.innerHTML = '';
+
+  function addLog(msg, type) {
+    var t = new Date().toLocaleTimeString('en-US',{hour12:false});
+    var row = document.createElement('div'); row.className = 'log-row';
+    row.innerHTML = '<span class="log-t">' + t + '</span><span class="log-m ' + (type||'') + '">' + msg + '</span>';
+    log.appendChild(row); log.scrollTop = log.scrollHeight;
+  }
+
+  var items = S.mode === 'bullets' ? getItems() : S.mode === 'links' ? getLinks() : [];
+  var payload = {
+    bumpType: S.bump,
+    title: document.getElementById('cl-title').value,
+    subtitle: document.getElementById('cl-subtitle').value,
+    mode: S.mode, items: items,
+    imageUrl: S.imageUrl, imageIsUrl: S.imageIsUrl,
+    extId: document.getElementById('ext-id').value.trim(),
+  };
+
+  try {
+    var r = await fetch('/api/publish', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    var reader = r.body.getReader(); var dec = new TextDecoder();
+    while (true) {
+      var res = await reader.read(); if (res.done) break;
+      res.decoder = dec;
+      var text = dec.decode(res.value);
+      text.split('\n').filter(function(l){return l.startsWith('data:');}).forEach(function(line) {
         try {
-            var m = chrome.runtime.getManifest();
-            set('ab-name',    m.name || 'pocket option config');
-            set('ab-version', m.version || '-');
-            set('ab-mv',      'MV' + (m.manifest_version || '3'));
-        } catch(e) {
-            set('ab-name', 'pocket option config');
-            set('ab-version', '-');
-            set('ab-mv', 'MV3');
-        }
-
-        // Browser detection
-        var ua = navigator.userAgent;
-        var browser = 'Edge';
-        if (ua.indexOf('Edg') !== -1)     browser = 'Edge';
-        else if (ua.indexOf('OPR') !== -1) browser = 'Opera';
-        else if (ua.indexOf('Brave') !== -1) browser = 'Brave';
-        set('ab-browser', browser);
-
-        // Active tab URL
-        try {
-            chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                if (chrome.runtime.lastError) { set('ab-url', 'n/a'); return; }
-                if (tabs && tabs[0]) {
-                    if (tabs[0].url) {
-                        try { set('ab-url', new URL(tabs[0].url).hostname); }
-                        catch(e) { set('ab-url', tabs[0].url.slice(0, 30)); }
-                    } else if (tabs[0].title) {
-                        set('ab-url', tabs[0].title.slice(0, 25));
-                    } else {
-                        set('ab-url', 'active tab');
-                    }
-                }
-            });
-        } catch(e) { set('ab-url', 'n/a'); }
-
-        // Live storage values
-        chrome.storage.local.get({ isEnabled: true, isStreamModeEnabled: false }, function(data) {
-            if (chrome.runtime.lastError) return;
-            set('ab-stream', data.isStreamModeEnabled ? 'on' : 'off');
-            set('ab-swap',   data.isEnabled ? 'on' : 'off');
-        });
+          var d = JSON.parse(line.slice(5));
+          addLog(d.msg, d.type);
+          if (d.type === 'done') {
+            btn.textContent = 'Published!';
+            btn.style.background = 'linear-gradient(135deg,#24b15b,#00b0ff)';
+            setTimeout(function() { btn.disabled=false; btn.textContent='🚀 Build & Publish to GitHub'; btn.style.background=''; loadStatus(); }, 3000);
+          }
+          if (d.type === 'error') { btn.disabled=false; btn.textContent='🚀 Build & Publish to GitHub'; }
+        } catch(e){}
+      });
     }
+  } catch(e) {
+    addLog('Network error: ' + e.message, 'error');
+    btn.disabled = false; btn.textContent = '🚀 Build & Publish to GitHub';
+  }
+}
 
-    // Always populate on load so values show immediately when About tab is opened
-    populateAbout();
-
-    // Check for updates
-    function checkUpdate() {
-        var btn    = document.getElementById('update-btn');
-        var result = document.getElementById('update-result');
-        var verEl  = document.getElementById('update-result-ver');
-        var msgEl  = document.getElementById('update-result-msg');
-        var dlBtn  = document.getElementById('download-btn');
-        var steps  = document.getElementById('install-steps');
-        var link   = document.getElementById('refresh-link');
-
-        btn.disabled = true;
-        btn.textContent = 'Checking...';
-        result.style.display = 'none';
-        if (dlBtn)  dlBtn.style.display  = 'none';
-        if (steps)  steps.style.display  = 'none';
-        if (link)   link.style.display   = 'none';
-
-        var m = chrome.runtime.getManifest();
-        var current = m.version;
-
-        fetch('https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now())
-            .then(function(r) {
-                if (!r.ok) throw new Error('Could not reach GitHub');
-                return r.json();
-            })
-            .then(function(data) {
-                var latest = data.version;
-                result.style.display = 'block';
-
-                if (latest === current) {
-                    result.className = 'update-result up-to-date';
-                    verEl.style.display = 'none';
-                    msgEl.textContent = "you're on v" + current + ", that's the latest. you're good.";
-                } else {
-                    result.className = 'update-result has-update';
-                    verEl.style.display = 'block';
-                    verEl.textContent = 'v' + latest + ' available';
-                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + ". updating you now would be sick.";
-                    if (link) { link.style.display = 'inline-block'; link.textContent = 'how to update'; }
-                    // fire the in-page banner on the active tab
-                    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                        if (tabs && tabs[0] && tabs[0].id) {
-                            chrome.tabs.sendMessage(tabs[0].id, {
-                                type: 'PO_UPDATE_AVAILABLE',
-                                current: current,
-                                latest: latest,
-                            });
-                        }
-                    });
-                }
-            })
-            .catch(function(e) {
-                result.style.display = 'block';
-                result.className = 'update-result update-error';
-                verEl.style.display = 'none';
-                msgEl.textContent = 'could not check: ' + e.message;
-            })
-            .finally(function() {
-                btn.disabled = false;
-                btn.textContent = 'Check for Updates';
-            });
-    }
-
-    function showDownloadOption() {
-        var dlBtn = document.getElementById('download-btn');
-        var steps = document.getElementById('install-steps');
-        var link  = document.getElementById('refresh-link');
-        if (dlBtn)  dlBtn.style.display  = 'block';
-        if (steps)  steps.style.display  = 'block';
-        if (link)   link.style.display   = 'none';
-    }
-
-    // Update check button
-    var updateBtn = document.getElementById('update-btn');
-    if (updateBtn) updateBtn.addEventListener('click', checkUpdate);
-
-    var refreshLink = document.getElementById('refresh-link');
-    if (refreshLink) refreshLink.addEventListener('click', showDownloadOption);
-
-    // Popout button -> sends message to content.js to show floating widget
-    document.getElementById('popoutBtn').addEventListener('click', function() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (tabs && tabs[0] && tabs[0].id) {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'PO_POPOUT' });
-                window.close();
-            }
-        });
-    });
-
-    // Enable Editing Mode -> sends message then closes popup
-    document.getElementById('enableEditingBtn').addEventListener('click', function() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-            if (tabs && tabs[0] && tabs[0].id) {
-                chrome.tabs.sendMessage(tabs[0].id, { type: 'PO_EDIT_START' });
-                window.close();
-            }
-        });
-    });
-
-    // Stream mode toggle -> animate options panel in/out
-    const streamToggle = document.getElementById('streamModeToggle');
-    const streamOptions = document.getElementById('streamOptions');
-
-    function setStreamPanel(active, animate) {
-        if (active) {
-            // Set to actual scroll height so transition has a concrete target
-            streamOptions.style.maxHeight = streamOptions.scrollHeight + 'px';
-            streamOptions.style.opacity = '1';
-            streamOptions.style.transform = 'translateY(0)';
-            streamOptions.style.pointerEvents = 'all';
-            streamOptions.classList.add('stream-active');
-        } else {
-            // Collapse back to 0
-            streamOptions.style.maxHeight = '0';
-            streamOptions.style.opacity = '0';
-            streamOptions.style.transform = 'translateY(-6px)';
-            streamOptions.style.pointerEvents = 'none';
-            streamOptions.classList.remove('stream-active');
-        }
-    }
-
-    streamToggle.addEventListener('change', function() {
-        setStreamPanel(streamToggle.checked, true);
-    });
-
-    // Default values
-    const DEFAULTS = {
-        isEnabled: true,
-        isGuruEnabled: false,
-        isSpoofEnabled: false,
-        isVerifiedEnabled: false,
-        isStreamModeEnabled: false,
-        streamMaskBalance: true,
-        streamMaskId: true,
-        streamMaskIp: true,
-        streamMaskEmail: true,
-        streamEmailAlias: 'hidden@domain.com',
-        customName: 'QT Real',
-        spBranch: '13',
-        spLevel: '87',
-        spExp: '14,530',
-        spTrades: '113',
-        spTurnover: '$21,300.00',
-        spProfit: '$4,225.00'
-    };
-
-    // Load saved data
-    chrome.storage.local.get(DEFAULTS, (data) => {
-        document.getElementById('masterToggle').checked      = data.isEnabled;
-        document.getElementById('guruToggle').checked        = data.isGuruEnabled;
-        document.getElementById('spoofToggle').checked       = data.isSpoofEnabled;
-        document.getElementById('verifiedToggle').checked    = data.isVerifiedEnabled;
-        document.getElementById('streamModeToggle').checked  = data.isStreamModeEnabled;
-        document.getElementById('streamMaskBalance').checked = data.streamMaskBalance;
-        document.getElementById('streamMaskId').checked      = data.streamMaskId;
-        document.getElementById('streamMaskIp').checked      = data.streamMaskIp;
-        document.getElementById('streamMaskEmail').checked   = data.streamMaskEmail;
-        document.getElementById('streamEmailAlias').value    = data.streamEmailAlias;
-        document.getElementById('customName').value          = data.customName;
-        // Reflect saved state on load - show instantly without animation
-        if (data.isStreamModeEnabled) {
-            streamOptions.style.transition = 'none';
-            streamOptions.style.maxHeight = '999px';
-            streamOptions.style.opacity = '1';
-            streamOptions.style.transform = 'translateY(0)';
-            streamOptions.style.pointerEvents = 'all';
-            streamOptions.classList.add('stream-active');
-            requestAnimationFrame(function() {
-                requestAnimationFrame(function() {
-                    streamOptions.style.transition = '';
-                });
-            });
-        }
-        document.getElementById('spBranch').value            = data.spBranch;
-        document.getElementById('spLevel').value             = data.spLevel;
-        document.getElementById('spExp').value               = data.spExp;
-        document.getElementById('spTrades').value            = data.spTrades;
-        document.getElementById('spTurnover').value          = data.spTurnover;
-        document.getElementById('spProfit').value            = data.spProfit;
-    });
-
-    // Save data + fire notifications
-    document.getElementById('saveBtn').addEventListener('click', () => {
-        // Snapshot what's currently saved before overwriting
-        chrome.storage.local.get(DEFAULTS, (oldData) => {
-
-            const newData = {
-                isEnabled:           document.getElementById('masterToggle').checked,
-                isGuruEnabled:       document.getElementById('guruToggle').checked,
-                isSpoofEnabled:      document.getElementById('spoofToggle').checked,
-                isVerifiedEnabled:   document.getElementById('verifiedToggle').checked,
-                isStreamModeEnabled: document.getElementById('streamModeToggle').checked,
-                streamMaskBalance:   document.getElementById('streamMaskBalance').checked,
-                streamMaskId:        document.getElementById('streamMaskId').checked,
-                streamMaskIp:        document.getElementById('streamMaskIp').checked,
-                streamMaskEmail:     document.getElementById('streamMaskEmail').checked,
-                streamEmailAlias:    document.getElementById('streamEmailAlias').value.trim(),
-                customName:          document.getElementById('customName').value.trim(),
-                spBranch:            document.getElementById('spBranch').value,
-                spLevel:             document.getElementById('spLevel').value,
-                spExp:               document.getElementById('spExp').value,
-                spTrades:            document.getElementById('spTrades').value,
-                spTurnover:          document.getElementById('spTurnover').value,
-                spProfit:            document.getElementById('spProfit').value,
-            };
-
-            // Basic validation
-            const errors = [];
-            if (!newData.customName) errors.push('display alias is empty');
-            if (newData.isStreamModeEnabled && !newData.streamEmailAlias) errors.push('email alias is empty');
-
-            if (errors.length) {
-                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                    if (tabs && tabs[0] && tabs[0].id) {
-                        errors.forEach(err => chrome.tabs.sendMessage(tabs[0].id, {
-                            type: 'PO_NOTIFY',
-                            title: 'pocket option config',
-                            desc: err,
-                            isError: true
-                        }));
-                    }
-                });
-                return;
-            }
-
-            chrome.storage.local.set(newData, () => {
-                const changes = buildChangeLog(oldData, newData);
-                const desc = changes.length === 0
-                    ? 'settings applied!'
-                    : 'settings applied! - ' + changes.join(', ');
-
-                // In-page notification on the PocketOption tab
-                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                    if (tabs && tabs[0] && tabs[0].id) {
-                        chrome.tabs.sendMessage(tabs[0].id, {
-                            type: 'PO_NOTIFY',
-                            title: 'pocket option config',
-                            desc: desc,
-                            isError: false
-                        });
-                    }
-                });
-
-                // Button feedback
-                const btn = document.getElementById('saveBtn');
-                btn.innerText = 'Saved!';
-                btn.style.background = '#24B15B';
-                setTimeout(() => {
-                    btn.innerText = 'Apply Settings';
-                    btn.style.background = 'var(--accent)';
-                }, 1000);
-            });
-        });
-    });
-});
+init();
+setInterval(loadStatus, 15000);
+</script>
+</body>
+</html>
