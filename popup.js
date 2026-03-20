@@ -177,6 +177,62 @@ document.addEventListener('DOMContentLoaded', () => {
     // Always populate on load so values show immediately when About tab is opened
     populateAbout();
 
+    // Check for updates
+    function checkUpdate() {
+        var btn = document.getElementById('update-btn');
+        var result = document.getElementById('update-result');
+        var verEl  = document.getElementById('update-result-ver');
+        var msgEl  = document.getElementById('update-result-msg');
+        var link   = document.getElementById('refresh-link');
+
+        btn.disabled = true;
+        btn.textContent = 'Checking...';
+        result.style.display = 'none';
+
+        var m = chrome.runtime.getManifest();
+        var current = m.version;
+
+        fetch('https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now())
+            .then(function(r) {
+                if (!r.ok) throw new Error('Could not reach GitHub');
+                return r.json();
+            })
+            .then(function(data) {
+                var latest = data.version;
+                result.style.display = 'block';
+                link.style.display = 'none';
+
+                if (latest === current) {
+                    result.className = 'update-result up-to-date';
+                    verEl.style.display = 'none';
+                    msgEl.textContent = 'You are on the latest version (' + current + ')';
+                } else {
+                    result.className = 'update-result has-update';
+                    verEl.style.display = 'block';
+                    verEl.textContent = 'v' + latest + ' available';
+                    msgEl.textContent = 'You have v' + current + '. Download the latest and load it.';
+                    link.style.display = 'inline-block';
+                    link.textContent = 'Show install steps';
+                }
+            })
+            .catch(function(e) {
+                result.style.display = 'block';
+                result.className = 'update-result update-error';
+                verEl.style.display = 'none';
+                msgEl.textContent = 'Could not check: ' + e.message;
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.textContent = 'Check for Updates';
+            });
+    }
+
+    function showDownloadOption() {
+        document.getElementById('download-btn').style.display = 'block';
+        document.getElementById('install-steps').style.display = 'block';
+        document.getElementById('refresh-link').style.display = 'none';
+    }
+
     // Popout button -> sends message to content.js to show floating widget
     document.getElementById('popoutBtn').addEventListener('click', function() {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {

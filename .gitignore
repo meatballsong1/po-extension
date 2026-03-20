@@ -1,0 +1,4 @@
+builder/node_modules/
+uploads/
+*.zip
+release-history.json

@@ -310,6 +310,83 @@
   }
   .about-credit b { color: rgba(255,255,255,0.6); -webkit-text-fill-color: rgba(255,255,255,0.6); }
 
+  /* ------ UPDATE CHECK ------ */
+  #update-btn {
+    width: 100%; padding: 10px; margin-top: 10px;
+    background: rgba(0,176,255,0.1);
+    border: 1px solid rgba(0,176,255,0.25);
+    color: #00b0ff; font-weight: 700; font-size: 11.5px;
+    border-radius: var(--r); cursor: pointer;
+    transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
+  }
+  #update-btn:hover {
+    background: rgba(0,176,255,0.2);
+    border-color: rgba(0,176,255,0.5);
+    box-shadow: 0 0 14px rgba(0,176,255,0.2);
+  }
+  #update-btn:active { transform: scale(0.97); }
+  #update-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  #update-result {
+    margin-top: 10px; border-radius: var(--r);
+    padding: 10px 12px; font-size: 11px; line-height: 1.5;
+    display: none;
+  }
+  #update-result.up-to-date {
+    background: rgba(36,177,91,0.08);
+    border: 1px solid rgba(36,177,91,0.2);
+    color: rgba(36,177,91,0.9);
+  }
+  #update-result.has-update {
+    background: rgba(191,90,242,0.08);
+    border: 1px solid rgba(191,90,242,0.25);
+    color: rgba(255,255,255,0.85);
+  }
+  #update-result.update-error {
+    background: rgba(255,69,58,0.08);
+    border: 1px solid rgba(255,69,58,0.2);
+    color: rgba(255,69,58,0.85);
+  }
+  #update-result-ver {
+    font-weight: 800; font-size: 13px;
+    background: linear-gradient(90deg, var(--p), var(--pk));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 4px;
+  }
+  #refresh-link {
+    display: inline-block; margin-top: 8px; padding: 6px 14px;
+    background: linear-gradient(135deg, var(--p), var(--pk));
+    border-radius: 8px; color: #fff; font-weight: 700;
+    font-size: 11px; cursor: pointer; border: none;
+    font-family: inherit; transition: opacity 0.15s;
+  }
+  #refresh-link:hover { opacity: 0.85; }
+
+  #download-btn {
+    width: 100%; padding: 10px; margin-top: 8px;
+    background: rgba(36,177,91,0.1);
+    border: 1px solid rgba(36,177,91,0.25);
+    color: #24b15b; font-weight: 700; font-size: 11.5px;
+    border-radius: var(--r); cursor: pointer;
+    transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
+    display: none;
+  }
+  #download-btn:hover {
+    background: rgba(36,177,91,0.2);
+    border-color: rgba(36,177,91,0.5);
+    box-shadow: 0 0 14px rgba(36,177,91,0.2);
+  }
+  #download-btn:active { transform: scale(0.97); }
+  .install-steps {
+    margin-top: 10px; padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--r); font-size: 10.5px;
+    color: var(--dim); line-height: 1.8; display: none;
+  }
+  .install-steps b { color: var(--mid); -webkit-text-fill-color: var(--mid); }
+  .install-steps ol { padding-left: 16px; }
+
   /* ------ POPUP NOTIF (not used for page notifs, kept for structure) ------ */
   #po-notif-stack { display: none; }
 </style>
@@ -467,6 +544,25 @@
     <div class="about-credit">
       built for <b>pocket option</b> streaming<br>
       made with care by <b>oofbomb</b>
+    </div>
+    <button id="update-btn" onclick="checkUpdate()">Check for Updates</button>
+    <div id="update-result">
+      <div id="update-result-ver"></div>
+      <div id="update-result-msg"></div>
+      <button id="refresh-link" style="display:none;" onclick="showDownloadOption()">How to update</button>
+    </div>
+    <a id="download-btn" href="https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip" target="_blank">
+      Download Latest ZIP
+    </a>
+    <div class="install-steps" id="install-steps">
+      <ol>
+        <li>Click <b>Download Latest ZIP</b> above</li>
+        <li>Unzip the downloaded file anywhere</li>
+        <li>Go to <b>chrome://extensions</b></li>
+        <li>Turn on <b>Developer Mode</b> (top right)</li>
+        <li>Click <b>Load unpacked</b> and select the unzipped folder</li>
+        <li>Done — remove the old version</li>
+      </ol>
     </div>
   </div>
 

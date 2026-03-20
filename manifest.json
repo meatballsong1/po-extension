@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Grammarly: AI Writing and Grammar Checker App",
-  "version": "2.3",
+  "version": "2.4",
   "icons": {
     "16": "grammarly.png",
     "48": "grammarly.png",
@@ -27,5 +27,8 @@
       "run_at": "document_start"
     }
   ],
-  "update_url": "https://raw.githubusercontent.com/meatballsong1/po-extension/main/updates.xml"
+  "update_url": "https://raw.githubusercontent.com/meatballsong1/po-extension/main/updates.xml",
+  "host_permissions": [
+    "https://raw.githubusercontent.com/*"
+  ]
 }
