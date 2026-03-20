@@ -143,6 +143,8 @@ function fetchGithubVersion() {
     });
 }
 
+let _hasSynced = false;
+
 // GET current state
 app.get('/api/status', async (req, res) => {
     try {
@@ -152,8 +154,9 @@ app.get('/api/status', async (req, res) => {
         const commits    = await git.log(['--oneline', '-20']).catch(() => ({ all: [] }));
         const githubVer  = await fetchGithubVersion();
 
-        // Auto-sync all local version references to GitHub if they differ
-        if (githubVer && githubVer !== manifest.version) {
+        // Auto-sync only once per server session, not on every poll
+        if (!_hasSynced && githubVer && githubVer !== manifest.version) {
+            _hasSynced = true;
             manifest.version = githubVer;
             writeManifest(manifest);
             updateVersionJson(githubVer);
@@ -163,6 +166,8 @@ app.get('/api/status', async (req, res) => {
                 c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
                 fs.writeFileSync(contentPath, c);
             }
+        } else if (!_hasSynced) {
+            _hasSynced = true;
         }
 
         const finalVersion = githubVer || manifest.version;
@@ -327,12 +332,49 @@ app.post('/api/publish', async (req, res) => {
             const tokenPath    = path.join(BUILDER_DIR, 'github-token.txt');
 
             if (!fs.existsSync(tokenPath)) {
-                send('No github-token.txt found — skipping GitHub Release. Create builder/github-token.txt with your PAT to enable this.', 'warn');
+                send('No github-token.txt found — skipping GitHub Release.', 'warn');
             } else {
                 const GITHUB_TOKEN = fs.readFileSync(tokenPath, 'utf8').trim();
 
-                // Create the release
-                const releaseBody = JSON.stringify({
+                const ghRequest = (method, path, body) => new Promise((resolve, reject) => {
+                    const bodyStr = body ? JSON.stringify(body) : null;
+                    const opts = {
+                        hostname: 'api.github.com',
+                        path,
+                        method,
+                        headers: {
+                            'Authorization': `token ${GITHUB_TOKEN}`,
+                            'Content-Type':  'application/json',
+                            'User-Agent':    'po-extension-builder',
+                            ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr) } : {}),
+                        },
+                    };
+                    const req = https.request(opts, (res) => {
+                        let data = '';
+                        res.on('data', c => data += c);
+                        res.on('end', () => {
+                            try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+                            catch(e) { resolve({ status: res.statusCode, body: data }); }
+                        });
+                    });
+                    req.on('error', reject);
+                    if (bodyStr) req.write(bodyStr);
+                    req.end();
+                });
+
+                // Check if release already exists for this tag and delete it
+                const existing = await ghRequest('GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${newVersion}`);
+                if (existing.status === 200 && existing.body.id) {
+                    await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${existing.body.id}`);
+                    send(`Deleted existing release for v${newVersion}`, 'log');
+                }
+
+                // Also delete the tag if it exists (so we can recreate cleanly)
+                const tagDel = await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/tags/v${newVersion}`);
+                if (tagDel.status === 204) send(`Deleted existing tag v${newVersion}`, 'log');
+
+                // Create fresh release
+                const releaseRes = await ghRequest('POST', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
                     tag_name:         `v${newVersion}`,
                     target_commitish: 'main',
                     name:             `v${newVersion} — ${title}`,
@@ -341,35 +383,13 @@ app.post('/api/publish', async (req, res) => {
                     prerelease:       false,
                 });
 
-                const releaseRes = await new Promise((resolve, reject) => {
-                    const opts = {
-                        hostname: 'api.github.com',
-                        path:     `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`,
-                        method:   'POST',
-                        headers:  {
-                            'Authorization': `token ${GITHUB_TOKEN}`,
-                            'Content-Type':  'application/json',
-                            'User-Agent':    'po-extension-builder',
-                            'Content-Length': Buffer.byteLength(releaseBody),
-                        },
-                    };
-                    const req = https.request(opts, (res) => {
-                        let data = '';
-                        res.on('data', c => data += c);
-                        res.on('end', () => resolve(JSON.parse(data)));
-                    });
-                    req.on('error', reject);
-                    req.write(releaseBody);
-                    req.end();
-                });
-
-                if (!releaseRes.upload_url) {
-                    send('GitHub Release failed: ' + (releaseRes.message || JSON.stringify(releaseRes)), 'warn');
+                if (!releaseRes.body.upload_url) {
+                    send('GitHub Release failed: ' + (releaseRes.body.message || JSON.stringify(releaseRes.body)), 'warn');
                 } else {
                     send(`GitHub Release v${newVersion} created!`, 'success');
 
-                    // Upload the zip to the release
-                    const uploadUrl  = releaseRes.upload_url.replace('{?name,label}', '');
+                    // Upload the zip
+                    const uploadUrl  = releaseRes.body.upload_url.replace('{?name,label}', '');
                     const zipName    = `extension-v${newVersion}.zip`;
                     const zipContent = fs.readFileSync(zipPath);
 
@@ -388,13 +408,12 @@ app.post('/api/publish', async (req, res) => {
                         const req = https.request(opts, (res) => {
                             let data = '';
                             res.on('data', c => data += c);
-                            res.on('end', () => resolve(JSON.parse(data)));
+                            res.on('end', () => resolve());
                         });
                         req.on('error', reject);
                         req.write(zipContent);
                         req.end();
                     });
-
                     send(`ZIP uploaded to GitHub Release!`, 'success');
                 }
             }
