@@ -1634,7 +1634,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.5.4';
+var VEIL_CURRENT_VERSION = '2.5.5';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 
@@ -2022,21 +2022,21 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 var CHANGELOG = {
     version: '2.5.5',
 
-    title: 'minor update',
-    subtitle: 'autoupdater patch',
+    title: 'version 2.5.5',
+    subtitle: 'chill update',
 
     image: '',
 
     // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'links',
+    mode: 'none',
 
     items: [
-        'click for free rjk trades products — https://www.youtube.com/watch?v=178Zb0D9xJ0',
+
     ],
 
     text: '',
 
-    buttonLabel: 'tuff lol',
+    buttonLabel: 'h',
 };
 // ============================================================
 
