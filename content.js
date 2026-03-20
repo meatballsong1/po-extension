@@ -1579,7 +1579,7 @@ edStop = function() {
 // =========================================================================
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
-var VEIL_CURRENT_VERSION = '2.3';
+var VEIL_CURRENT_VERSION = '2.4.1';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json';
 
 function checkForUpdate() {
@@ -1593,7 +1593,7 @@ function checkForUpdate() {
                 var lastSeen = d['veil_last_seen_update'] || '';
                 if (latestVersion !== VEIL_CURRENT_VERSION && latestVersion !== lastSeen) {
                     showPageNotif({
-                        title: 'pocket option config',
+                        title: 'version 2.4.1',
                         desc: 'pocket option extension has been updated to version ' + latestVersion,
                     });
                     chrome.storage.local.set({ 'veil_last_seen_update': latestVersion });
@@ -1614,15 +1614,15 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.3',
+    version: '2.4.1',
 
     title: 'welcome to version 2.3!',
-    subtitle: 'this is a PRETTY big update',
+    subtitle: 'auto updater',
 
-    image: 'https://cdn.discordapp.com/attachments/1478916523820060834/1484004106786967572/image.png?ex=69bca606&is=69bb5486&hm=9910636aad93ba2a08f429dbee3814d84dfa03d74b6bff220fe9f1c28a9ed823&',
+    image: '',
 
     // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'bullets',
+    mode: 'text',
 
     items: [
         'icons are FULLY fixed so you can effortlessly swap',
