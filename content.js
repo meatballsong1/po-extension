@@ -1591,7 +1591,7 @@ var UPDATE_MESSAGES = [
 ];
 // -------------------------------------------------------------------------
 
-var VEIL_CURRENT_VERSION = '2.5.1';
+var VEIL_CURRENT_VERSION = '2.5.2';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 function getRandomUpdateMsg() {
@@ -1696,10 +1696,10 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.5.1',
+    version: '2.5.2',
 
-    title: '',
-    subtitle: '',
+    title: 'yes tuff',
+    subtitle: 'tuff update',
 
     image: '',
 
@@ -1712,7 +1712,7 @@ var CHANGELOG = {
 
     text: '',
 
-    buttonLabel: 'Pretty tuff',
+    buttonLabel: 'agreed',
 };
 // ============================================================
 
