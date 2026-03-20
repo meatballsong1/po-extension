@@ -409,3 +409,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+document.getElementById('check-update-btn').addEventListener('click', checkUpdate);
