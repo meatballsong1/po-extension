@@ -115,6 +115,169 @@ function updateChangelogJsonVersion(version) {
     } catch(e) {}
 }
 
+// ── BAT GENERATOR ─────────────────────────────────────────────────────────
+// Generates a self-contained installer bat locked to a specific version.
+// The download URL points directly to the exact release asset on GitHub
+// using the /releases/download/vX.X.X/ path, NOT /latest/, so it will
+// always grab that exact version no matter what gets released after.
+function generateInstallerBat(version) {
+    const zipAssetName = `extension-v${version}.zip`;
+    // Direct asset URL — locked to this specific release tag
+    const downloadUrl  = `https://github.com/meatballsong1/po-extension/releases/download/v${version}/${zipAssetName}`;
+
+    return `@echo off
+setlocal enabledelayedexpansion
+title PocketOption Config ^| Installing v${version}
+color 0A
+
+echo.
+echo  ================================================
+echo   PocketOption Config Installer
+echo   Version: ${version}
+echo   Download: locked to this specific version
+echo  ================================================
+echo.
+
+:: ── PATHS ────────────────────────────────────────────────────────────────
+set "VERSION=${version}"
+set "ZIP_NAME=extension-v${version}.zip"
+set "DOWNLOAD_URL=${downloadUrl}"
+set "WORK_DIR=%TEMP%\\po-ext-v${version}"
+set "ZIP_PATH=%WORK_DIR%\\%ZIP_NAME%"
+set "EXTRACT_DIR=%WORK_DIR%\\extracted"
+
+:: ── PREP ─────────────────────────────────────────────────────────────────
+if exist "%WORK_DIR%" rd /s /q "%WORK_DIR%"
+mkdir "%WORK_DIR%"
+mkdir "%EXTRACT_DIR%"
+
+:: ── DOWNLOAD ─────────────────────────────────────────────────────────────
+echo  [1/3] Downloading v%VERSION% from GitHub...
+echo        %DOWNLOAD_URL%
+echo.
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "try { Invoke-WebRequest -Uri '%DOWNLOAD_URL%' -OutFile '%ZIP_PATH%' -UseBasicParsing; Write-Host '  OK' } catch { Write-Host ('  FAIL: ' + $_.Exception.Message); exit 1 }"
+
+if %errorlevel% neq 0 (
+    echo.
+    echo  [ERROR] Download failed. Possible reasons:
+    echo    - No internet connection
+    echo    - Release v%VERSION% does not exist on GitHub yet
+    echo    - GitHub is temporarily unavailable
+    echo.
+    echo  Try downloading manually:
+    echo  %DOWNLOAD_URL%
+    echo.
+    pause
+    exit /b 1
+)
+
+if not exist "%ZIP_PATH%" (
+    echo  [ERROR] ZIP file not found after download. Aborting.
+    pause
+    exit /b 1
+)
+
+for %%A in ("%ZIP_PATH%") do set "ZIP_SIZE=%%~zA"
+echo  [OK] Downloaded %ZIP_NAME% (%ZIP_SIZE% bytes)
+echo.
+
+:: ── EXTRACT ──────────────────────────────────────────────────────────────
+echo  [2/3] Extracting...
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "try { Expand-Archive -Path '%ZIP_PATH%' -DestinationPath '%EXTRACT_DIR%' -Force; Write-Host '  OK' } catch { Write-Host ('  FAIL: ' + $_.Exception.Message); exit 1 }"
+
+if %errorlevel% neq 0 (
+    echo.
+    echo  [ERROR] Extraction failed. The ZIP may be corrupt.
+    echo  Try downloading it manually and extracting yourself.
+    pause
+    exit /b 1
+)
+
+:: Find the actual extension folder — handles flat zip or nested folder
+set "EXT_FOLDER=%EXTRACT_DIR%"
+for /d %%D in ("%EXTRACT_DIR%\\*") do (
+    if exist "%%D\\manifest.json" set "EXT_FOLDER=%%D"
+)
+
+if not exist "%EXT_FOLDER%\\manifest.json" (
+    echo  [ERROR] Could not find manifest.json in extracted folder.
+    echo  The ZIP structure may be unexpected.
+    echo  Extracted to: %EXTRACT_DIR%
+    echo.
+    explorer "%EXTRACT_DIR%"
+    pause
+    exit /b 1
+)
+
+echo  [OK] Extracted to:
+echo       %EXT_FOLDER%
+echo.
+
+:: ── OPEN ─────────────────────────────────────────────────────────────────
+echo  [3/3] Opening folder and Chrome Extensions page...
+echo.
+echo  ================================================
+echo   HOW TO LOAD THE EXTENSION:
+echo.
+echo   1. Chrome Extensions page will open
+echo   2. Turn on "Developer mode" (top right toggle)
+echo   3. Click "Load unpacked"
+echo   4. Select the folder that just opened in Explorer
+echo   5. Remove the old version of the extension
+echo  ================================================
+echo.
+
+:: Open the extracted folder in Explorer
+explorer "%EXT_FOLDER%"
+
+:: Small delay so Explorer opens first
+timeout /t 1 /nobreak >nul
+
+:: Try to open Chrome extensions page — check multiple install paths
+set "CHROME_EXE="
+for %%P in (
+    "%PROGRAMFILES%\\Google\\Chrome\\Application\\chrome.exe"
+    "%PROGRAMFILES(X86)%\\Google\\Chrome\\Application\\chrome.exe"
+    "%LOCALAPPDATA%\\Google\\Chrome\\Application\\chrome.exe"
+    "%PROGRAMFILES%\\Chromium\\Application\\chrome.exe"
+    "%LOCALAPPDATA%\\Chromium\\Application\\chrome.exe"
+) do (
+    if exist %%P (
+        if not defined CHROME_EXE set "CHROME_EXE=%%P"
+    )
+)
+
+if defined CHROME_EXE (
+    start "" "%CHROME_EXE%" "chrome://extensions"
+    echo  [OK] Opened Chrome Extensions page.
+) else (
+    echo  [WARN] Could not find Chrome automatically.
+    echo  Please open chrome://extensions in your browser manually.
+)
+
+:: ── CLEANUP ──────────────────────────────────────────────────────────────
+echo.
+echo  Cleaning up downloaded ZIP...
+del /f /q "%ZIP_PATH%" >nul 2>&1
+echo  [OK] Done.
+
+echo.
+echo  ================================================
+echo   v%VERSION% is ready to load into Chrome!
+echo   The extracted folder will stay at:
+echo   %EXT_FOLDER%
+echo  ================================================
+echo.
+echo  This window closes in 15 seconds...
+timeout /t 15 /nobreak >nul
+exit /b 0
+`;
+}
+
 // ── API ROUTES ────────────────────────────────────────────────────────────
 
 const https = require('https');
@@ -136,7 +299,6 @@ function fetchGithubVersion() {
             res.on('end', () => {
                 try {
                     const tag = JSON.parse(data).tag_name || null;
-                    // strip leading 'v' so it matches local version format
                     resolve(tag ? tag.replace(/^v/, '') : null);
                 } catch(e) { resolve(null); }
             });
@@ -145,7 +307,8 @@ function fetchGithubVersion() {
         req.end();
     });
 }
-// GET current state — READ ONLY, never writes to disk
+
+// GET current state
 app.get('/api/status', async (req, res) => {
     try {
         const manifest   = readManifest();
@@ -170,7 +333,7 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
-// POST sync-version — manually triggered only, updates all local files to match GitHub
+// POST sync-version
 app.post('/api/sync-version', async (req, res) => {
     try {
         const version = req.body.version;
@@ -179,7 +342,6 @@ app.post('/api/sync-version', async (req, res) => {
         const manifest = readManifest();
         manifest.version = version;
         writeManifest(manifest);
-
         updateVersionJson(version);
 
         const contentPath = path.join(EXT_PATH, 'content.js');
@@ -197,7 +359,6 @@ app.post('/api/sync-version', async (req, res) => {
         }
 
         updateChangelogJsonVersion(version);
-
         res.json({ success: true, version });
     } catch(e) {
         res.status(500).json({ error: e.message });
@@ -215,7 +376,7 @@ app.post('/api/upload-image', upload.single('image'), (req, res) => {
     res.json({ url: '/uploads/' + name, filename: name });
 });
 
-// GET git diff (uncommitted changes detail)
+// GET git diff
 app.get('/api/diff', async (req, res) => {
     try {
         const diff = await git.diff();
@@ -245,6 +406,7 @@ app.post('/api/publish', async (req, res) => {
 
         send(`Starting publish: ${oldVersion} → ${newVersion}`);
 
+        // Pre-publish cleanup
         const preDirty = await git.status();
         if (!preDirty.isClean()) {
             await git.add('.');
@@ -252,6 +414,7 @@ app.post('/api/publish', async (req, res) => {
             send(`Cleaned up ${preDirty.files.length} leftover file(s) from previous run`);
         }
 
+        // Update all version references
         manifest.version = newVersion;
         writeManifest(manifest);
         send('Updated manifest.json');
@@ -264,22 +427,36 @@ app.post('/api/publish', async (req, res) => {
             send('Updated updates.xml');
         }
 
-        const imageField = imageIsUrl ? imageUrl : (imageUrl ? path.basename(imageUrl) : '');
-        updateChangelogInContentJs(newVersion, title, subtitle, items || [], mode || 'bullets', imageField, buttonLabel || 'Got it');
-        send('Updated changelog in content.js');
-
-        await git.add('.');
-        const status = await git.status();
-        if (status.files.length === 0) {
-            send('No changes detected after patching — already up to date', 'warn');
-        } else {
-            send(`Staged ${status.files.length} file(s)`);
-            const commitMsg = `v${newVersion}: ${title}`;
-            await git.commit(commitMsg);
-            send(`Committed: "${commitMsg}"`);
+        // imageUrl is either a full URL (imageIsUrl=true) or a local /uploads/filename.ext path.
+        // In both cases we need to: (a) set the right value in changelog.json, and
+        // (b) make sure the file is physically present in EXT_PATH so git picks it up.
+        let imageField = '';
+        if (imageUrl) {
+            if (imageIsUrl) {
+                // External URL — store as-is, no local copy needed
+                imageField = imageUrl;
+            } else {
+                // Local upload — imageUrl is like '/uploads/changelog-banner.png'
+                const imgFilename = path.basename(imageUrl);
+                imageField = imgFilename;
+                // Re-copy from UPLOAD_DIR to EXT_PATH in case it wasn't copied on upload
+                // (handles cases where the builder was restarted between upload and publish)
+                const srcPath = path.join(UPLOAD_DIR, imgFilename);
+                const dstPath = path.join(EXT_PATH, imgFilename);
+                if (fs.existsSync(srcPath)) {
+                    fs.copyFileSync(srcPath, dstPath);
+                    send('Copied image ' + imgFilename + ' to extension folder');
+                } else {
+                    send('Warning: uploaded image ' + imgFilename + ' not found in uploads dir', 'warn');
+                }
+            }
         }
+        updateChangelogInContentJs(newVersion, title, subtitle, items || [], mode || 'bullets', imageField, buttonLabel || 'Got it');
+        send('Updated changelog.json + content.js + background.js');
 
-        const zipPath = path.join(BUILDER_DIR, `extension-v${newVersion}.zip`);
+        // ── CREATE ZIP ────────────────────────────────────────────────────
+        const zipName = `extension-v${newVersion}.zip`;
+        const zipPath = path.join(BUILDER_DIR, zipName);
         await new Promise((resolve, reject) => {
             const output  = fs.createWriteStream(zipPath);
             const archive = archiver('zip', { zlib: { level: 9 } });
@@ -292,7 +469,28 @@ app.post('/api/publish', async (req, res) => {
             archive.on('error', reject);
             archive.finalize();
         });
-        send(`Created extension-v${newVersion}.zip (${Math.round(fs.statSync(zipPath).size / 1024)}KB)`);
+        send(`Created ${zipName} (${Math.round(fs.statSync(zipPath).size / 1024)}KB)`);
+
+        // ── CREATE BAT ───────────────────────────────────────────────────
+        // Generated AFTER zip so download URL is guaranteed to be correct.
+        // The bat uses /releases/download/vX.X.X/ (not /latest/) so it's
+        // permanently locked to this exact version.
+        const batName = `install-v${newVersion}.bat`;
+        const batPath = path.join(BUILDER_DIR, batName);
+        fs.writeFileSync(batPath, generateInstallerBat(newVersion), { encoding: 'utf8' });
+        send(`Created ${batName} — locked to v${newVersion} download URL`);
+
+        // ── GIT COMMIT + PUSH ─────────────────────────────────────────────
+        await git.add('.');
+        const status = await git.status();
+        if (status.files.length === 0) {
+            send('No changes detected after patching — already up to date', 'warn');
+        } else {
+            send(`Staged ${status.files.length} file(s)`);
+            const commitMsg = `v${newVersion}: ${title}`;
+            await git.commit(commitMsg);
+            send(`Committed: "${commitMsg}"`);
+        }
 
         try {
             await git.push('origin', 'main');
@@ -301,6 +499,7 @@ app.post('/api/publish', async (req, res) => {
             send('Push failed (check GitHub auth): ' + pushErr.message, 'warn');
         }
 
+        // ── GITHUB RELEASE ────────────────────────────────────────────────
         try {
             const GITHUB_OWNER = 'meatballsong1';
             const GITHUB_REPO  = 'po-extension';
@@ -311,16 +510,18 @@ app.post('/api/publish', async (req, res) => {
             } else {
                 const GITHUB_TOKEN = fs.readFileSync(tokenPath, 'utf8').trim();
 
-                const ghRequest = (method, path, body) => new Promise((resolve, reject) => {
+                // Generic GitHub API request helper
+                const ghRequest = (method, reqPath, body) => new Promise((resolve, reject) => {
                     const bodyStr = body ? JSON.stringify(body) : null;
                     const opts = {
                         hostname: 'api.github.com',
-                        path,
+                        path: reqPath,
                         method,
                         headers: {
                             'Authorization': `token ${GITHUB_TOKEN}`,
                             'Content-Type':  'application/json',
                             'User-Agent':    'po-extension-builder',
+                            'Accept':        'application/vnd.github+json',
                             ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr) } : {}),
                         },
                     };
@@ -337,15 +538,46 @@ app.post('/api/publish', async (req, res) => {
                     req.end();
                 });
 
+                // Asset upload helper — uses uploads.github.com
+                const ghUpload = (uploadUrl, assetName, fileBuffer, contentType) => new Promise((resolve, reject) => {
+                    // Strip the {?name,label} template and rebuild with encoded name
+                    const baseUrl = uploadUrl.replace('{?name,label}', '');
+                    const parsed  = new URL(baseUrl);
+                    const opts = {
+                        hostname: 'uploads.github.com',
+                        path:     parsed.pathname + `?name=${encodeURIComponent(assetName)}`,
+                        method:   'POST',
+                        headers:  {
+                            'Authorization':  `token ${GITHUB_TOKEN}`,
+                            'Content-Type':   contentType,
+                            'User-Agent':     'po-extension-builder',
+                            'Accept':         'application/vnd.github+json',
+                            'Content-Length': fileBuffer.length,
+                        },
+                    };
+                    const req = https.request(opts, (res) => {
+                        let data = '';
+                        res.on('data', c => data += c);
+                        res.on('end', () => {
+                            try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+                            catch(e) { resolve({ status: res.statusCode, body: data }); }
+                        });
+                    });
+                    req.on('error', reject);
+                    req.write(fileBuffer);
+                    req.end();
+                });
+
+                // Clean up any existing release + tag for this version
                 const existing = await ghRequest('GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${newVersion}`);
                 if (existing.status === 200 && existing.body.id) {
                     await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${existing.body.id}`);
-                    send(`Deleted existing release for v${newVersion}`, 'log');
+                    send(`Deleted existing release for v${newVersion}`);
                 }
-
                 const tagDel = await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/tags/v${newVersion}`);
-                if (tagDel.status === 204) send(`Deleted existing tag v${newVersion}`, 'log');
+                if (tagDel.status === 204) send(`Deleted existing tag v${newVersion}`);
 
+                // Create the release
                 const releaseRes = await ghRequest('POST', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
                     tag_name:         `v${newVersion}`,
                     target_commitish: 'main',
@@ -355,43 +587,37 @@ app.post('/api/publish', async (req, res) => {
                     prerelease:       false,
                 });
 
-                if (!releaseRes.body.upload_url) {
-                    send('GitHub Release failed: ' + (releaseRes.body.message || JSON.stringify(releaseRes.body)), 'warn');
+                if (!releaseRes.body || !releaseRes.body.upload_url) {
+                    send('GitHub Release creation failed: ' + (releaseRes.body && releaseRes.body.message ? releaseRes.body.message : JSON.stringify(releaseRes.body)), 'warn');
                 } else {
                     send(`GitHub Release v${newVersion} created!`, 'success');
 
-                    const uploadUrl  = releaseRes.body.upload_url.replace('{?name,label}', '');
-                    const zipName    = `extension-v${newVersion}.zip`;
-                    const zipContent = fs.readFileSync(zipPath);
+                    const uploadUrl = releaseRes.body.upload_url;
 
-                    await new Promise((resolve, reject) => {
-                        const opts = {
-                            hostname: 'uploads.github.com',
-                            path:     new URL(uploadUrl).pathname + `?name=${zipName}`,
-                            method:   'POST',
-                            headers:  {
-                                'Authorization': `token ${GITHUB_TOKEN}`,
-                                'Content-Type':  'application/zip',
-                                'User-Agent':    'po-extension-builder',
-                                'Content-Length': zipContent.length,
-                            },
-                        };
-                        const req = https.request(opts, (res) => {
-                            let data = '';
-                            res.on('data', c => data += c);
-                            res.on('end', () => resolve());
-                        });
-                        req.on('error', reject);
-                        req.write(zipContent);
-                        req.end();
-                    });
-                    send(`ZIP uploaded to GitHub Release!`, 'success');
+                    // Upload ZIP asset
+                    const zipBuffer = fs.readFileSync(zipPath);
+                    const zipUpRes  = await ghUpload(uploadUrl, zipName, zipBuffer, 'application/zip');
+                    if (zipUpRes.status === 201) {
+                        send(`ZIP uploaded: ${zipName}`, 'success');
+                    } else {
+                        send(`ZIP upload returned status ${zipUpRes.status}`, 'warn');
+                    }
+
+                    // Upload BAT installer asset — locked to this version's download URL
+                    const batBuffer = fs.readFileSync(batPath);
+                    const batUpRes  = await ghUpload(uploadUrl, batName, batBuffer, 'application/octet-stream');
+                    if (batUpRes.status === 201) {
+                        send(`BAT installer uploaded: ${batName}`, 'success');
+                    } else {
+                        send(`BAT upload returned status ${batUpRes.status}`, 'warn');
+                    }
                 }
             }
         } catch(releaseErr) {
             send('GitHub Release error: ' + releaseErr.message, 'warn');
         }
 
+        // ── SAVE HISTORY ──────────────────────────────────────────────────
         const history = readHistory();
         history.unshift({
             version:   newVersion,
@@ -401,7 +627,8 @@ app.post('/api/publish', async (req, res) => {
             items:     items || [],
             mode,
             image:     imageField,
-            zipFile:   `extension-v${newVersion}.zip`,
+            zipFile:   zipName,
+            batFile:   batName,
             committed: status.files.length > 0,
         });
         writeHistory(history);
@@ -416,12 +643,13 @@ app.post('/api/publish', async (req, res) => {
     }
 });
 
-// GET/POST github token
+// GET / POST github token
 app.get('/api/get-token', (req, res) => {
     const p = path.join(BUILDER_DIR, 'github-token.txt');
     if (!fs.existsSync(p)) return res.json({ token: null });
     res.json({ token: fs.readFileSync(p, 'utf8').trim() });
 });
+
 app.post('/api/save-token', (req, res) => {
     try {
         const { token } = req.body;
@@ -431,11 +659,19 @@ app.post('/api/save-token', (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET download zip
+// GET download ZIP
 app.get('/api/download/:version', (req, res) => {
     const zipPath = path.join(BUILDER_DIR, `extension-v${req.params.version}.zip`);
     if (!fs.existsSync(zipPath)) return res.status(404).json({ error: 'not found' });
     res.download(zipPath);
+});
+
+// GET download BAT installer
+app.get('/api/download-bat/:version', (req, res) => {
+    const batPath = path.join(BUILDER_DIR, `install-v${req.params.version}.bat`);
+    if (!fs.existsSync(batPath)) return res.status(404).json({ error: 'not found' });
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.download(batPath);
 });
 
 // GET history
@@ -443,7 +679,7 @@ app.get('/api/history', (req, res) => {
     res.json(readHistory());
 });
 
-// DELETE history item by index
+// DELETE history item
 app.delete('/api/delete-history/:idx', (req, res) => {
     try {
         const idx = parseInt(req.params.idx);
