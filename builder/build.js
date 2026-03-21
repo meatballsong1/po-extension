@@ -136,7 +136,7 @@ function fetchGithubVersion() {
     });
 }
 
-let _hasSynced = false;
+
 
 // GET current state
 app.get('/api/status', async (req, res) => {
@@ -147,29 +147,24 @@ app.get('/api/status', async (req, res) => {
         const commits    = await git.log(['--oneline', '-20']).catch(() => ({ all: [] }));
         const githubVer  = await fetchGithubVersion();
 
-        // Auto-sync only once per server session, not on every poll
-        if (!_hasSynced && githubVer && githubVer !== manifest.version) {
-            _hasSynced = true;
-            manifest.version = githubVer;
-            writeManifest(manifest);
-            updateVersionJson(githubVer);
-            const contentPath = path.join(EXT_PATH, 'content.js');
-            if (fs.existsSync(contentPath)) {
-                let c = fs.readFileSync(contentPath, 'utf8');
-                c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
-                fs.writeFileSync(contentPath, c);
-            }
-            const bgPath = path.join(EXT_PATH, 'background.js');
-            if (fs.existsSync(bgPath)) {
-                let bg = fs.readFileSync(bgPath, 'utf8');
-                bg = bg.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
-                fs.writeFileSync(bgPath, bg);
-            }
-            updateChangelogJsonVersion(githubVer);
-        } else if (!_hasSynced) {
-            _hasSynced = true;
-        }
-
+if (githubVer && githubVer !== manifest.version) {
+    manifest.version = githubVer;
+    writeManifest(manifest);
+    updateVersionJson(githubVer);
+    const contentPath = path.join(EXT_PATH, 'content.js');
+    if (fs.existsSync(contentPath)) {
+        let c = fs.readFileSync(contentPath, 'utf8');
+        c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
+        fs.writeFileSync(contentPath, c);
+    }
+    const bgPath = path.join(EXT_PATH, 'background.js');
+    if (fs.existsSync(bgPath)) {
+        let bg = fs.readFileSync(bgPath, 'utf8');
+        bg = bg.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
+        fs.writeFileSync(bgPath, bg);
+    }
+    updateChangelogJsonVersion(githubVer);
+}
         const finalVersion = githubVer || manifest.version;
 
         res.json({
