@@ -1,14 +1,10 @@
 {
-  "version": "2.5.7",
-  "title": "welcome to 2.5.7!",
-  "subtitle": "minor fixes ",
+  "version": "2.5.8",
+  "title": "welcome to 2.5.8!",
+  "subtitle": "minor patch with autoupdater",
   "image": "changelog-banner.jpg",
-  "mode": "bullets",
-  "items": [
-    "improved editing mode",
-    "minor fixes",
-    "stability fixes"
-  ],
+  "mode": "text",
+  "items": [],
   "text": "",
-  "buttonLabel": "lets go!"
+  "buttonLabel": "Pretty tuff"
 }
