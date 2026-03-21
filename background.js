@@ -21,7 +21,6 @@ function checkForUpdate() {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (!data || !data.tag_name) return;
-            // Strip leading 'v' so "v2.5.7" becomes "2.5.7"
             var latestVersion = data.tag_name.replace(/^v/, '');
             if (latestVersion === VEIL_CURRENT_VERSION) return;
 
