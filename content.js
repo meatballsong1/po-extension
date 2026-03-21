@@ -59,6 +59,7 @@ const CURRENCY_LINK_HTML = `
 
 const GURU_SVG_HTML = `<svg viewBox="0 0 32 32" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><path d="M0 0 C4.28806873 0.47645208 6.26647487 1.65902484 9 5 C9 5.66 9 6.32 9 7 C9.763125 7.061875 10.52625 7.12375 11.3125 7.1875 C14 8 14 8 15.9375 10.1875 C17 13 17 13 16.375 16.1875 C15 19 15 19 12 21 C12.99 22.32 13.98 23.64 15 25 C12.875 27.0625 12.875 27.0625 10 29 C4.69387755 28.69387755 4.69387755 28.69387755 3 27 C2.67 28.65 2.34 30.3 2 32 C-1.5742977 31.67506385 -3.55712453 31.36129314 -6.375 29.0625 C-8 27 -8 27 -8 25 C-8.78375 24.896875 -9.5675 24.79375 -10.375 24.6875 C-13 24 -13 24 -15 21 C-14.74940605 16.40577752 -14.14608258 13.41965498 -11 10 C-11.66 8.68 -12.32 7.36 -13 6 C-9.91440696 3.73118159 -8.57790624 2.94548054 -4.6875 3.3125 C-3.800625 3.539375 -2.91375 3.76625 -2 4 C-1.34 2.68 -0.68 1.36 0 0 Z " fill="#DE9C2B" transform="translate(15,0)"/><path d="M0 0 C0.66 0.33 1.32 0.66 2 1 C2 1.66 2 2.32 2 3 C6.0100934 3.17864631 6.0100934 3.17864631 10 3 C10.66 2.34 11.32 1.68 12 1 C14.125 1.375 14.125 1.375 16 2 C16 5 16 5 14.375 6.75 C11.20356379 8.41917695 9.39719928 7.90591981 6 7 C5.67 6.67 5.34 6.34 5 6 C4.67 7.65 4.34 9.3 4 11 C1.0625 10.625 1.0625 10.625 -2 10 C-2.33 9.34 -2.66 8.68 -3 8 C-2.01 8 -1.02 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#7D5917" transform="translate(13,21)"/><path d="M0 0 C3 2 3 2 3.8125 3.8125 C4.06266724 6.73111783 3.35572923 8.42411446 2 11 C-1 13 -1 13 -3.625 12.75 C-4.40875 12.5025 -5.1925 12.255 -6 12 C-6.33 11.34 -6.66 10.68 -7 10 C-6.21625 9.649375 -5.4325 9.29875 -4.625 8.9375 C-1.16452728 6.38334156 -0.85463256 4.11777506 0 0 Z " fill="#7C5417" transform="translate(28,8)"/><path d="M0 0 C0 1.65 0 3.3 0 5 C-1.32 5.33 -2.64 5.66 -4 6 C-4.66 5.01 -5.32 4.02 -6 3 C-2.25 0 -2.25 0 0 0 Z " fill="#835C17" transform="translate(7,19)"/></svg>`;
 
+
 // -- CONFIG ------------------------------------------------------------
 let CONFIG = {
     isEnabled: true,
@@ -120,7 +121,6 @@ function performInstantSwap() {
             else document.body.classList.remove('is-verified-active');
         }
 
-        // Trade label spoofing
         document.querySelectorAll('.type-of-trade-label').forEach(label => {
             if (isDemoActive) {
                 if (label.innerText.includes('Demo') || label.classList.contains('type-of-trade-label--demo')) {
@@ -137,7 +137,6 @@ function performInstantSwap() {
             }
         });
 
-        // Account verification override
         if (isDemoActive) {
             const statusLink = document.querySelector('.statuses p a[href*="profile_status"]');
             if (statusLink) {
@@ -151,7 +150,6 @@ function performInstantSwap() {
             }
         }
 
-        // Guru injection
         if (CONFIG.isGuruEnabled) {
             document.querySelectorAll('.user-avatar__profile-level-icon:not([data-spoofed="guru"])').forEach(w => {
                 w.innerHTML = GURU_SVG_HTML;
@@ -165,109 +163,70 @@ function performInstantSwap() {
             });
         }
 
-        // Stat spoofer
         if (CONFIG.isSpoofEnabled && isDemoActive) {
             const wLevel = document.querySelector('.wreath-levels__level');
             if (wLevel && wLevel.innerText !== CONFIG.spLevel) wLevel.innerText = CONFIG.spLevel;
-
             const curExp = document.querySelector('.current-exp');
-            if (curExp) {
-                curExp.classList.remove('js-count-to');
-                if (curExp.innerText !== CONFIG.spExp) curExp.innerText = CONFIG.spExp;
-            }
-
+            if (curExp) { curExp.classList.remove('js-count-to'); if (curExp.innerText !== CONFIG.spExp) curExp.innerText = CONFIG.spExp; }
             const nextExp = document.querySelector('.next-level-exp');
             if (nextExp && nextExp.innerText !== '15,000') nextExp.innerText = '15,000';
-
             const pBar = document.querySelector('.progress__bar');
-            if (pBar) {
-                if (pBar.parentElement) pBar.parentElement.classList.remove('js-progress');
-                if (pBar.style.width !== '96.8%') pBar.style.width = '96.8%';
-            }
-
-            const redGem    = document.querySelector('.js-red-gem-count');
-            const blueGem   = document.querySelector('.js-blue-gem-count');
-            const greenGem  = document.querySelector('.js-green-gem-count');
+            if (pBar) { if (pBar.parentElement) pBar.parentElement.classList.remove('js-progress'); if (pBar.style.width !== '96.8%') pBar.style.width = '96.8%'; }
+            const redGem = document.querySelector('.js-red-gem-count');
+            const blueGem = document.querySelector('.js-blue-gem-count');
+            const greenGem = document.querySelector('.js-green-gem-count');
             const secretGem = document.querySelector('.js-secret-gem-count');
-            if (redGem    && redGem.innerText.trim()    !== '144') redGem.innerText    = '144';
-            if (blueGem   && blueGem.innerText.trim()   !== '76')  blueGem.innerText   = '76';
-            if (greenGem  && greenGem.innerText.trim()  !== '22')  greenGem.innerText  = '22';
-            if (secretGem && secretGem.innerText.trim() !== '3')   secretGem.innerText = '3';
-
-            const bMedal  = document.querySelector('.js-bronze-awards-current-count');
+            if (redGem && redGem.innerText.trim() !== '144') redGem.innerText = '144';
+            if (blueGem && blueGem.innerText.trim() !== '76') blueGem.innerText = '76';
+            if (greenGem && greenGem.innerText.trim() !== '22') greenGem.innerText = '22';
+            if (secretGem && secretGem.innerText.trim() !== '3') secretGem.innerText = '3';
+            const bMedal = document.querySelector('.js-bronze-awards-current-count');
             const bMedalT = document.querySelector('.js-bronze-awards-total-count');
-            const sMedal  = document.querySelector('.js-silver-awards-current-count');
+            const sMedal = document.querySelector('.js-silver-awards-current-count');
             const sMedalT = document.querySelector('.js-silver-awards-total-count');
-            const gMedal  = document.querySelector('.js-gold-awards-current-count');
+            const gMedal = document.querySelector('.js-gold-awards-current-count');
             const gMedalT = document.querySelector('.js-gold-awards-total-count');
-            if (bMedal  && bMedal.innerText  !== '103') bMedal.innerText  = '103';
+            if (bMedal && bMedal.innerText !== '103') bMedal.innerText = '103';
             if (bMedalT && bMedalT.innerText !== '116') bMedalT.innerText = '116';
-            if (sMedal  && sMedal.innerText  !== '11')  sMedal.innerText  = '11';
-            if (sMedalT && sMedalT.innerText !== '18')  sMedalT.innerText = '18';
-            if (gMedal  && gMedal.innerText  !== '9')   gMedal.innerText  = '9';
-            if (gMedalT && gMedalT.innerText !== '25')  gMedalT.innerText = '25';
-
+            if (sMedal && sMedal.innerText !== '11') sMedal.innerText = '11';
+            if (sMedalT && sMedalT.innerText !== '18') sMedalT.innerText = '18';
+            if (gMedal && gMedal.innerText !== '9') gMedal.innerText = '9';
+            if (gMedalT && gMedalT.innerText !== '25') gMedalT.innerText = '25';
             const statSpans = document.querySelectorAll('.real-account-stats p span');
             if (statSpans.length >= 3) {
-                if (statSpans[0].innerText !== CONFIG.spTrades)   statSpans[0].innerText = CONFIG.spTrades;
+                if (statSpans[0].innerText !== CONFIG.spTrades) statSpans[0].innerText = CONFIG.spTrades;
                 if (statSpans[1].innerText !== CONFIG.spTurnover) statSpans[1].innerText = CONFIG.spTurnover;
-                if (statSpans[2].innerText !== CONFIG.spProfit)   statSpans[2].innerText = CONFIG.spProfit;
+                if (statSpans[2].innerText !== CONFIG.spProfit) statSpans[2].innerText = CONFIG.spProfit;
             }
         }
 
-        // Account dropdown swapper
-        const topLabel   = document.querySelector('.balance-info-block__label');
+        const topLabel = document.querySelector('.balance-info-block__label');
         const topIconWrap = document.querySelector('.balance-info-block__icon');
-        const demoItem   = document.querySelector('.balance-item[data-type="demo"]');
-        const realItem   = document.querySelector('.balance-item[data-type="real"]');
+        const demoItem = document.querySelector('.balance-item[data-type="demo"]');
+        const realItem = document.querySelector('.balance-item[data-type="real"]');
 
         if (topLabel && topLabel.innerText !== (isDemoActive ? CONFIG.customName : 'QT Demo')) {
             topLabel.innerText = isDemoActive ? CONFIG.customName : 'QT Demo';
         }
 
         if (demoItem && realItem) {
-            const dLabel    = demoItem.querySelector('.balance-item__label');
-            const rLabel    = realItem.querySelector('.balance-item__label');
+            const dLabel = demoItem.querySelector('.balance-item__label');
+            const rLabel = realItem.querySelector('.balance-item__label');
             const dIconWrap = demoItem.querySelector('.balance-item__icon');
             const rIconWrap = realItem.querySelector('.balance-item__icon');
-            const dBottom   = demoItem.querySelector('.balance-item__bottom');
-            const rBottom   = realItem.querySelector('.balance-item__bottom');
-            const dEnd      = demoItem.querySelector('.balance-item__end');
-            const rEnd      = realItem.querySelector('.balance-item__end');
+            const dBottom = demoItem.querySelector('.balance-item__bottom');
+            const rBottom = realItem.querySelector('.balance-item__bottom');
+            const dEnd = demoItem.querySelector('.balance-item__end');
+            const rEnd = realItem.querySelector('.balance-item__end');
 
             if (dLabel && dLabel.getAttribute('data-spoofed') !== CONFIG.customName) {
-                // On demo page:
-                //   demoItem (data-type="demo") is displayed as QT Real  -> gets real buttons + USD
-                //   realItem (data-type="real") is displayed as QT Demo  -> gets nothing
                 dLabel.innerText = CONFIG.customName;
                 dLabel.setAttribute('data-spoofed', CONFIG.customName);
                 if (rLabel) rLabel.innerText = 'QT Demo';
-
-                if (dIconWrap && rIconWrap) {
-                    const tempHTML = dIconWrap.innerHTML;
-                    dIconWrap.innerHTML = rIconWrap.innerHTML;
-                    rIconWrap.innerHTML = tempHTML;
-                }
-
-                // QT Real (demoItem) -> Top up + Withdraw + Exchange buttons
-                if (dBottom) {
-                    dBottom.classList.remove('hidden');
-                    dBottom.style.display = 'grid';
-                    dBottom.style.gridTemplateColumns = '4fr 1fr 1fr';
-                    dBottom.style.gap = '10px';
-                    dBottom.innerHTML = REAL_BUTTONS_HTML;
-                }
-
-                // QT Demo (realItem) -> no buttons, clear the bottom
-                if (rBottom) {
-                    rBottom.innerHTML = '';
-                    rBottom.style.display = '';
-                    rBottom.classList.remove('hidden');
-                }
-
-                // QT Real gets the USD currency link
+                if (dIconWrap && rIconWrap) { const tempHTML = dIconWrap.innerHTML; dIconWrap.innerHTML = rIconWrap.innerHTML; rIconWrap.innerHTML = tempHTML; }
+                if (dBottom) { dBottom.classList.remove('hidden'); dBottom.style.display = 'grid'; dBottom.style.gridTemplateColumns = '4fr 1fr 1fr'; dBottom.style.gap = '10px'; dBottom.innerHTML = REAL_BUTTONS_HTML; }
+                if (rBottom) { rBottom.innerHTML = ''; rBottom.style.display = ''; rBottom.classList.remove('hidden'); }
                 if (dEnd) dEnd.innerHTML = CURRENCY_LINK_HTML;
-                // QT Demo gets no end tag
                 if (rEnd) rEnd.innerHTML = '';
             }
 
@@ -286,29 +245,23 @@ function performInstantSwap() {
 }
 
 setTimeout(() => { if (document.body) document.body.classList.add('ready'); }, 1000);
-// -- STREAM MODE (50ms interval) ----------------------------------------
+
 const BAL_MASK = '*******';
 const ID_MASK  = 'id *********';
 const IP_MASK  = '***.***.***.***';
 
 setInterval(function() {
     if (!CONFIG.isStreamModeEnabled) return;
-
-    // Balance
     if (CONFIG.streamMaskBalance) {
         document.querySelectorAll('.js-balance-real-USD, .js-balance-demo-USD, .js-balance-demo, .balance_current .js-hd').forEach(function(el) {
             if (el.textContent !== BAL_MASK) el.textContent = BAL_MASK;
         });
     }
-
-    // Account ID
     if (CONFIG.streamMaskId) {
         document.querySelectorAll('.info__id .js-hd, .js-user-id, .user-id, .profile-id').forEach(function(el) {
             if (el.textContent.trim() !== ID_MASK) el.textContent = ID_MASK;
         });
     }
-
-    // IP (Preserves country flag icon)
     if (CONFIG.streamMaskIp) {
         document.querySelectorAll('.info__last-login .js-hd, .js-user-ip, .user-ip').forEach(function(el) {
             if (!el.textContent.includes(IP_MASK)) {
@@ -317,28 +270,25 @@ setInterval(function() {
             }
         });
     }
-
-    // Email
     if (CONFIG.streamMaskEmail) {
         const alias = CONFIG.streamEmailAlias || 'hidden@domain.com';
         document.querySelectorAll('.info__email .js-hd, .js-user-email, .user-email').forEach(function(el) {
             if (el.textContent.trim() !== alias) el.textContent = alias;
         });
     }
-}, 50); // Changed from 1ms to 50ms to prevent browser lagging while remaining visually instant
+}, 50);
+
 // ==========================================================================
 // -- FLOATING POPOUT WIDGET + IN-PAGE EDITOR --------------------------------
 // ==========================================================================
 
 (function() {
 
-// ------ INJECT STYLES -------------------------------------------------
 function injectStyles() {
     if (document.getElementById('po-iife-styles')) return;
     var s = document.createElement('style');
     s.id = 'po-iife-styles';
     s.textContent = [
-        // ------ NOTIFICATIONS ------
         '#po-notif-root{position:fixed !important;bottom:20px !important;right:20px !important;display:flex !important;flex-direction:column-reverse !important;gap:8px !important;z-index:2147483647 !important;pointer-events:none !important;width:290px !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;}',
         '.po-n{pointer-events:all !important;background:rgba(12,12,18,0.96) !important;border:1px solid rgba(191,90,242,0.18) !important;border-radius:14px !important;padding:12px 13px 14px 15px !important;display:flex !important;align-items:flex-start !important;gap:9px !important;box-shadow:0 8px 32px rgba(0,0,0,0.75),0 0 0 1px rgba(191,90,242,0.06) !important;position:relative !important;overflow:hidden !important;transform:translateX(calc(100% + 24px)) !important;opacity:0 !important;transition:transform 0.38s cubic-bezier(0.22,1,0.36,1),opacity 0.3s ease,box-shadow 0.3s ease !important;backdrop-filter:blur(20px) !important;box-sizing:border-box !important;}',
         '.po-n.po-show{transform:translateX(0) !important;opacity:1 !important;}',
@@ -362,8 +312,6 @@ function injectStyles() {
         '.po-n-drain-fill{height:100% !important;width:100% !important;background:linear-gradient(90deg,#bf5af2,#ff375f) !important;transform-origin:left !important;animation:po-drain 4s linear forwards !important;}',
         '.po-n.po-err .po-n-drain-fill{background:#ff453a !important;}',
         '@keyframes po-drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}',
-
-        // ------ CHANGELOG MODAL CSS ------
         '#po-cl-overlay{position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;}',
         '#po-cl-blur{position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.6) !important;backdrop-filter:blur(20px) !important;-webkit-backdrop-filter:blur(20px) !important;}',
         '#po-cl-card{position:relative !important;width:310px !important;background:rgba(12,12,20,0.98) !important;border:1px solid rgba(191,90,242,0.25) !important;border-radius:22px !important;padding:22px 20px 18px !important;box-shadow:0 0 50px rgba(191,90,242,0.15),0 24px 70px rgba(0,0,0,0.85) !important;animation:clIn 0.4s cubic-bezier(0.22,1,0.36,1) !important;overflow:visible !important;}',
@@ -390,13 +338,11 @@ function injectStyles() {
         '.po-cl-link svg{flex-shrink:0 !important;opacity:0.5 !important;transition:opacity 0.2s !important;}',
         '.po-cl-link:hover svg{opacity:1 !important;}',
         '.po-cl-link-plain{font-size:11px !important;color:rgba(255,255,255,0.4) !important;font-weight:500 !important;padding:4px 2px !important;}',
-
-        // ------ FLOATING WIDGET ------
         '#po-float{position:fixed !important;z-index:2147483646 !important;top:80px !important;right:20px !important;width:285px !important;background:rgba(10,10,16,0.97) !important;border:1px solid rgba(191,90,242,0.2) !important;border-radius:18px !important;box-shadow:0 24px 60px rgba(0,0,0,0.85),0 0 0 1px rgba(191,90,242,0.06),0 0 40px rgba(191,90,242,0.08) !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;overflow:hidden !important;user-select:none !important;backdrop-filter:blur(30px) !important;}',
         '#po-float-hdr{display:flex !important;align-items:center !important;justify-content:space-between !important;padding:11px 13px 10px !important;background:rgba(255,255,255,0.03) !important;border-bottom:1px solid rgba(191,90,242,0.12) !important;cursor:grab !important;}',
         '#po-float-hdr:active{cursor:grabbing !important;}',
         '#po-float-ttl{font-size:10.5px !important;font-weight:700 !important;background:linear-gradient(90deg,#bf5af2,#ff375f,#00b0ff) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;}',
-        '#po-float-x{width:20px !important;height:20px !important;border-radius:50% !important;background:rgba(255,69,58,0.15) !important;border:1px solid rgba(255,69,58,0.3) !important;color:rgba(255,255,255,0.6) !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;font-size:11px !important;line-height:1 !important;transition:background 0.15s !important;padding:0 !important;margin:0 !important;box-shadow:none !important;transform:none !important;width:20px !important;}',
+        '#po-float-x{width:20px !important;height:20px !important;border-radius:50% !important;background:rgba(255,69,58,0.15) !important;border:1px solid rgba(255,69,58,0.3) !important;color:rgba(255,255,255,0.6) !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;font-size:11px !important;line-height:1 !important;transition:background 0.15s !important;padding:0 !important;margin:0 !important;box-shadow:none !important;transform:none !important;}',
         '#po-float-x:hover{background:rgba(255,69,58,0.4) !important;transform:none !important;box-shadow:none !important;}',
         '#po-float-bdy{padding:10px 12px 12px !important;max-height:72vh !important;overflow-y:auto !important;overflow-x:hidden !important;}',
         '#po-float-bdy::-webkit-scrollbar{width:3px !important;}',
@@ -420,8 +366,6 @@ function injectStyles() {
         '#pf-apply{width:100% !important;padding:10px !important;margin-top:6px !important;background:linear-gradient(135deg,#bf5af2,#ff375f) !important;border:none !important;color:#fff !important;font-weight:700 !important;font-size:11.5px !important;border-radius:10px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:0.3px !important;transition:opacity 0.2s,transform 0.15s !important;box-shadow:0 4px 14px rgba(191,90,242,0.3) !important;}',
         '#pf-apply:hover{opacity:0.88 !important;transform:translateY(-1px) !important;box-shadow:0 6px 20px rgba(191,90,242,0.45) !important;}',
         '#pf-apply:active{transform:scale(0.97) !important;}',
-
-        // ------ EDIT MODE BAR ------
         '#po-edit-bar{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;z-index:2147483646 !important;display:flex !important;align-items:center !important;gap:8px !important;padding:10px 16px !important;background:rgba(10,10,16,0.97) !important;backdrop-filter:blur(24px) !important;border-bottom:1px solid rgba(191,90,242,0.25) !important;box-shadow:0 0 30px rgba(191,90,242,0.15),0 4px 20px rgba(0,0,0,0.5) !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;animation:editBarIn 0.3s cubic-bezier(0.22,1,0.36,1) !important;}',
         '@keyframes editBarIn{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}',
         '#po-edit-bar::before{content:"" !important;position:absolute !important;inset:0 !important;background:linear-gradient(90deg,rgba(191,90,242,0.06),rgba(255,55,95,0.04),rgba(191,90,242,0.06)) !important;animation:editBarPulse 3s ease infinite !important;pointer-events:none !important;}',
@@ -448,27 +392,21 @@ function injectStyles() {
     (document.head || document.documentElement).appendChild(s);
 }
 
-// ------ NOTIF ROOT ----------------------------------------------------
 function getNotifRoot() {
     injectStyles();
     var r = document.getElementById('po-notif-root');
-    if (!r) {
-        r = document.createElement('div');
-        r.id = 'po-notif-root';
-        (document.body || document.documentElement).appendChild(r);
-    }
+    if (!r) { r = document.createElement('div'); r.id = 'po-notif-root'; (document.body || document.documentElement).appendChild(r); }
     return r;
 }
 
-// ------ PAGE NOTIFICATION ---------------------------------------------
 function showPageNotif(opts) {
-    var title   = (opts && opts.title) || 'pocket option config';
-    var desc    = (opts && opts.desc)  || '';
+    var title = (opts && opts.title) || 'pocket option config';
+    var desc = (opts && opts.desc) || '';
     var isError = !!(opts && opts.isError);
     var root = getNotifRoot();
     var n = document.createElement('div');
     n.className = 'po-n' + (isError ? ' po-err' : '');
-    var col  = isError ? '#ff453a' : '#bf5af2';
+    var col = isError ? '#ff453a' : '#bf5af2';
     var path = isError
         ? '<path d="M5 2.5V5.5" stroke="' + col + '" stroke-width="1.6" stroke-linecap="round"/><circle cx="5" cy="7.5" r="0.7" fill="' + col + '"/>'
         : '<path d="M1.5 5L3.8 7.5L8.5 2.5" stroke="' + col + '" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -489,166 +427,61 @@ function dismissN(n) {
     n.addEventListener('transitionend', function() { if (n.parentNode) n.parentNode.removeChild(n); }, { once: true });
 }
 
-// ------ FLOATING POPOUT WIDGET (full settings + free drag) ------------
 function buildPopoutWidget() {
     injectStyles();
     if (!document.body) { document.addEventListener('DOMContentLoaded', buildPopoutWidget); return; }
-    if (document.getElementById('po-float')) {
-        document.getElementById('po-float').style.display = 'block';
-        return;
-    }
-
-    function sw(id, label, color) {
-        return '<div class="pf-row">' +
-            '<span' + (color ? ' style="color:' + color + '"' : '') + '>' + label + '</span>' +
-            '<label class="pf-sw"><input type="checkbox" id="' + id + '"><span class="pf-sl"></span></label>' +
-        '</div>';
-    }
-    function field(id, label, placeholder, type) {
-        return '<div class="pf-field">' +
-            '<div class="pf-field-label">' + label + '</div>' +
-            '<input type="' + (type || 'text') + '" id="' + id + '" placeholder="' + (placeholder || '') + '">' +
-        '</div>';
-    }
-    function section(label) {
-        return '<div class="pf-section">' + label + '</div>';
-    }
-    function grid2(a, b) {
-        return '<div class="pf-grid2">' + a + b + '</div>';
-    }
-
+    if (document.getElementById('po-float')) { document.getElementById('po-float').style.display = 'block'; return; }
+    function sw(id, label, color) { return '<div class="pf-row"><span' + (color ? ' style="color:' + color + '"' : '') + '>' + label + '</span><label class="pf-sw"><input type="checkbox" id="' + id + '"><span class="pf-sl"></span></label></div>'; }
+    function field(id, label, placeholder, type) { return '<div class="pf-field"><div class="pf-field-label">' + label + '</div><input type="' + (type || 'text') + '" id="' + id + '" placeholder="' + (placeholder || '') + '"></div>'; }
+    function section(label) { return '<div class="pf-section">' + label + '</div>'; }
+    function grid2(a, b) { return '<div class="pf-grid2">' + a + b + '</div>'; }
     var w = document.createElement('div');
     w.id = 'po-float';
-    w.innerHTML =
-        '<div id="po-float-hdr">' +
-            '<span id="po-float-ttl">pocket option config</span>' +
-            '<button id="po-float-x">x</button>' +
-        '</div>' +
-        '<div id="po-float-bdy">' +
-            section('Main') +
-            sw('pf-master', 'Swap Script') +
-            sw('pf-guru',   'Guru Title') +
-            field('pf-alias', 'Display Alias', 'QT Real') +
-
-            section('Stats') +
-            sw('pf-spoof',    'Enable Stat Spoof', '#ffd60a') +
-            sw('pf-verified', 'Spoof Verified',    '#ffd60a') +
-            grid2(
-                field('pf-branch', 'Branch Lvl', '13', 'number'),
-                field('pf-level',  'Disp Lvl',   '87', 'number')
-            ) +
-            grid2(
-                field('pf-exp',    'Current XP',   '14,530'),
-                field('pf-trades', 'Total Trades', '113', 'number')
-            ) +
-            field('pf-turnover', 'Turnover', '$21,300.00') +
-            field('pf-profit',   'Profit',   '$4,225.00') +
-
-            section('Stream') +
-            sw('pf-stream',       'Stream Mode') +
-            sw('pf-mask-balance', 'Hide Balance') +
-            sw('pf-mask-id',      'Mask Account ID') +
-            sw('pf-mask-ip',      'Mask IP Address') +
-            sw('pf-mask-email',   'Replace Email') +
-            field('pf-email-alias', 'Email Alias', 'hidden@domain.com') +
-
-            '<button id="pf-apply">Apply Settings</button>' +
-        '</div>';
-
+    w.innerHTML = '<div id="po-float-hdr"><span id="po-float-ttl">pocket option config</span><button id="po-float-x">x</button></div><div id="po-float-bdy">' +
+        section('Main') + sw('pf-master','Swap Script') + sw('pf-guru','Guru Title') + field('pf-alias','Display Alias','QT Real') +
+        section('Stats') + sw('pf-spoof','Enable Stat Spoof','#ffd60a') + sw('pf-verified','Spoof Verified','#ffd60a') +
+        grid2(field('pf-branch','Branch Lvl','13','number'),field('pf-level','Disp Lvl','87','number')) +
+        grid2(field('pf-exp','Current XP','14,530'),field('pf-trades','Total Trades','113','number')) +
+        field('pf-turnover','Turnover','$21,300.00') + field('pf-profit','Profit','$4,225.00') +
+        section('Stream') + sw('pf-stream','Stream Mode') + sw('pf-mask-balance','Hide Balance') + sw('pf-mask-id','Mask Account ID') + sw('pf-mask-ip','Mask IP Address') + sw('pf-mask-email','Replace Email') + field('pf-email-alias','Email Alias','hidden@domain.com') +
+        '<button id="pf-apply">Apply Settings</button></div>';
     document.body.appendChild(w);
-
-    var BOOL_MAP = {
-        'pf-master':       'isEnabled',
-        'pf-guru':         'isGuruEnabled',
-        'pf-spoof':        'isSpoofEnabled',
-        'pf-verified':     'isVerifiedEnabled',
-        'pf-stream':       'isStreamModeEnabled',
-        'pf-mask-balance': 'streamMaskBalance',
-        'pf-mask-id':      'streamMaskId',
-        'pf-mask-ip':      'streamMaskIp',
-        'pf-mask-email':   'streamMaskEmail',
-    };
-    var VAL_MAP = {
-        'pf-alias':       'customName',
-        'pf-branch':      'spBranch',
-        'pf-level':       'spLevel',
-        'pf-exp':         'spExp',
-        'pf-trades':      'spTrades',
-        'pf-turnover':    'spTurnover',
-        'pf-profit':      'spProfit',
-        'pf-email-alias': 'streamEmailAlias',
-    };
-
+    var BOOL_MAP = {'pf-master':'isEnabled','pf-guru':'isGuruEnabled','pf-spoof':'isSpoofEnabled','pf-verified':'isVerifiedEnabled','pf-stream':'isStreamModeEnabled','pf-mask-balance':'streamMaskBalance','pf-mask-id':'streamMaskId','pf-mask-ip':'streamMaskIp','pf-mask-email':'streamMaskEmail'};
+    var VAL_MAP = {'pf-alias':'customName','pf-branch':'spBranch','pf-level':'spLevel','pf-exp':'spExp','pf-trades':'spTrades','pf-turnover':'spTurnover','pf-profit':'spProfit','pf-email-alias':'streamEmailAlias'};
     chrome.storage.local.get(null, function(data) {
-        Object.keys(BOOL_MAP).forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) el.checked = !!data[BOOL_MAP[id]];
-        });
-        Object.keys(VAL_MAP).forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el && data[VAL_MAP[id]] !== undefined) el.value = data[VAL_MAP[id]];
-        });
+        Object.keys(BOOL_MAP).forEach(function(id) { var el = document.getElementById(id); if (el) el.checked = !!data[BOOL_MAP[id]]; });
+        Object.keys(VAL_MAP).forEach(function(id) { var el = document.getElementById(id); if (el && data[VAL_MAP[id]] !== undefined) el.value = data[VAL_MAP[id]]; });
     });
-
     document.getElementById('pf-apply').addEventListener('click', function() {
         var updates = {};
-        Object.keys(BOOL_MAP).forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) updates[BOOL_MAP[id]] = !!el.checked;
-        });
-        Object.keys(VAL_MAP).forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) updates[VAL_MAP[id]] = el.value;
-        });
-        chrome.storage.local.set(updates, function() {
-            showPageNotif({ desc: 'settings applied!' });
-        });
+        Object.keys(BOOL_MAP).forEach(function(id) { var el = document.getElementById(id); if (el) updates[BOOL_MAP[id]] = !!el.checked; });
+        Object.keys(VAL_MAP).forEach(function(id) { var el = document.getElementById(id); if (el) updates[VAL_MAP[id]] = el.value; });
+        chrome.storage.local.set(updates, function() { showPageNotif({ desc: 'settings applied!' }); });
     });
-
-    document.getElementById('po-float-x').addEventListener('click', function() {
-        w.style.display = 'none';
-    });
-
-    // Free drag — snapshots position on mousedown, no clamping
+    document.getElementById('po-float-x').addEventListener('click', function() { w.style.display = 'none'; });
     var hdr = document.getElementById('po-float-hdr');
     var startX, startY, startLeft, startTop;
     hdr.addEventListener('mousedown', function(e) {
         e.preventDefault();
         var rect = w.getBoundingClientRect();
-        startX    = e.clientX;
-        startY    = e.clientY;
-        startLeft = rect.left;
-        startTop  = rect.top;
-        w.style.right = 'auto';
-        w.style.left  = startLeft + 'px';
-        w.style.top   = startTop  + 'px';
-        document.addEventListener('mousemove', onDrag);
-        document.addEventListener('mouseup',   onDragEnd);
+        startX = e.clientX; startY = e.clientY; startLeft = rect.left; startTop = rect.top;
+        w.style.right = 'auto'; w.style.left = startLeft + 'px'; w.style.top = startTop + 'px';
+        document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', onDragEnd);
     });
-    function onDrag(e) {
-        w.style.left = (startLeft + e.clientX - startX) + 'px';
-        w.style.top  = (startTop  + e.clientY - startY) + 'px';
-    }
-    function onDragEnd() {
-        document.removeEventListener('mousemove', onDrag);
-        document.removeEventListener('mouseup',   onDragEnd);
-    }
+    function onDrag(e) { w.style.left = (startLeft + e.clientX - startX) + 'px'; w.style.top = (startTop + e.clientY - startY) + 'px'; }
+    function onDragEnd() { document.removeEventListener('mousemove', onDrag); document.removeEventListener('mouseup', onDragEnd); }
 }
 
-
-// ------ IN-PAGE EDITOR (full) -----------------------------------------
 var editActive = false;
 var editChanges = {};
 var STORE_KEY = 'po_layout_v1';
-var selectedEl = null;  // currently selected element in explorer
+var selectedEl = null;
 
-// ---- EDITOR CSS (injected alongside existing styles via a second tag) ----
 function injectEditorStyles() {
     if (document.getElementById('po-ed-styles')) return;
     var s = document.createElement('style');
     s.id = 'po-ed-styles';
     s.textContent = [
-        // --- SIDE PANEL EXPLORER ---
         '#po-explorer{position:fixed !important;top:50px !important;left:0 !important;width:260px !important;bottom:0 !important;background:rgba(8,8,14,0.97) !important;border-right:1px solid rgba(191,90,242,0.18) !important;z-index:2147483644 !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;display:flex !important;flex-direction:column !important;transition:transform 0.3s cubic-bezier(0.22,1,0.36,1) !important;box-shadow:4px 0 24px rgba(0,0,0,0.6) !important;}',
         '#po-explorer.collapsed{transform:translateX(-248px) !important;}',
         '#po-exp-toggle{position:absolute !important;right:-22px !important;top:50% !important;transform:translateY(-50%) !important;width:22px !important;height:44px !important;background:rgba(8,8,14,0.97) !important;border:1px solid rgba(191,90,242,0.18) !important;border-left:none !important;border-radius:0 8px 8px 0 !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;color:rgba(191,90,242,0.7) !important;font-size:10px !important;transition:background 0.2s !important;padding:0 !important;margin:0 !important;box-shadow:none !important;width:22px !important;}',
@@ -667,7 +500,6 @@ function injectEditorStyles() {
         '.po-exp-txt{color:rgba(255,255,255,0.3) !important;font-size:9.5px !important;font-style:italic !important;overflow:hidden !important;text-overflow:ellipsis !important;max-width:100px !important;}',
         '.po-exp-children{display:none !important;}',
         '.po-exp-children.open{display:block !important;}',
-        // --- PROPS PANEL (bottom of explorer) ---
         '#po-exp-props{border-top:1px solid rgba(191,90,242,0.12) !important;padding:8px 10px !important;max-height:200px !important;overflow-y:auto !important;flex-shrink:0 !important;}',
         '#po-exp-props::-webkit-scrollbar{width:3px !important;}',
         '#po-exp-props::-webkit-scrollbar-thumb{background:rgba(191,90,242,0.3) !important;border-radius:3px !important;}',
@@ -675,18 +507,17 @@ function injectEditorStyles() {
         '.po-prop-key{font-size:9px !important;font-weight:600 !important;color:rgba(191,90,242,0.7) !important;text-transform:uppercase !important;letter-spacing:0.4px !important;width:52px !important;flex-shrink:0 !important;}',
         '.po-prop-val{flex:1 !important;font-size:10.5px !important;color:#fff !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:5px !important;padding:3px 6px !important;outline:none !important;font-family:monospace !important;transition:border-color 0.15s !important;width:100% !important;box-sizing:border-box !important;}',
         '.po-prop-val:focus{border-color:rgba(191,90,242,0.5) !important;background:rgba(255,255,255,0.07) !important;}',
-        '.po-prop-apply{padding:2px 8px !important;font-size:9.5px !important;font-weight:600 !important;background:rgba(191,90,242,0.2) !important;border:1px solid rgba(191,90,242,0.35) !important;border-radius:5px !important;color:#bf5af2 !important;cursor:pointer !important;font-family:inherit !important;white-space:nowrap !important;transition:background 0.15s !important;box-shadow:none !important;transform:none !important;padding:2px 8px !important;}',
+        '.po-prop-apply{padding:2px 8px !important;font-size:9.5px !important;font-weight:600 !important;background:rgba(191,90,242,0.2) !important;border:1px solid rgba(191,90,242,0.35) !important;border-radius:5px !important;color:#bf5af2 !important;cursor:pointer !important;font-family:inherit !important;white-space:nowrap !important;transition:background 0.15s !important;box-shadow:none !important;transform:none !important;}',
         '.po-prop-apply:hover{background:rgba(191,90,242,0.35) !important;transform:none !important;box-shadow:none !important;}',
-        // --- RIGHT-CLICK CONTEXT MENU ---
         '#po-ctx{position:fixed !important;z-index:2147483647 !important;background:rgba(10,10,18,0.98) !important;border:1px solid rgba(191,90,242,0.22) !important;border-radius:12px !important;padding:5px !important;min-width:190px !important;box-shadow:0 12px 40px rgba(0,0,0,0.8),0 0 0 1px rgba(191,90,242,0.06) !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;animation:ctxIn 0.15s cubic-bezier(0.22,1,0.36,1) !important;backdrop-filter:blur(20px) !important;}',
         '@keyframes ctxIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}',
         '.po-ctx-item{display:flex !important;align-items:center !important;gap:8px !important;padding:7px 10px !important;border-radius:8px !important;cursor:pointer !important;font-size:12px !important;font-weight:500 !important;color:rgba(255,255,255,0.75) !important;transition:background 0.12s !important;user-select:none !important;}',
         '.po-ctx-item:hover{background:rgba(191,90,242,0.12) !important;color:#fff !important;}',
         '.po-ctx-item.danger:hover{background:rgba(255,69,58,0.15) !important;color:#ff453a !important;}',
         '.po-ctx-item.code-item:hover{background:rgba(255,193,7,0.1) !important;color:#ffd60a !important;}',
+        '.po-ctx-item.streak-item:hover{background:rgba(255,193,7,0.12) !important;color:#ffd60a !important;}',
         '.po-ctx-sep{height:1px !important;background:rgba(255,255,255,0.07) !important;margin:4px 5px !important;}',
         '.po-ctx-ico{font-size:13px !important;width:16px !important;text-align:center !important;}',
-        // --- IMAGE EDITOR MODAL ---
         '#po-img-modal{position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;}',
         '#po-img-backdrop{position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.7) !important;backdrop-filter:blur(16px) !important;}',
         '#po-img-card{position:relative !important;width:360px !important;background:rgba(10,10,18,0.98) !important;border:1px solid rgba(191,90,242,0.25) !important;border-radius:18px !important;padding:20px !important;box-shadow:0 24px 60px rgba(0,0,0,0.85) !important;animation:clIn 0.3s cubic-bezier(0.22,1,0.36,1) !important;}',
@@ -701,15 +532,23 @@ function injectEditorStyles() {
         '.po-img-btn.primary{background:linear-gradient(135deg,#bf5af2,#ff375f) !important;color:#fff !important;box-shadow:0 4px 14px rgba(191,90,242,0.3) !important;}',
         '.po-img-btn.secondary{background:rgba(255,255,255,0.06) !important;border:1px solid rgba(255,255,255,0.1) !important;color:rgba(255,255,255,0.6) !important;}',
         '.po-img-btn:hover{opacity:0.85 !important;transform:none !important;box-shadow:none !important;}',
-        // --- CUSTOM CODE MODAL ---
         '#po-code-modal{position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;}',
         '#po-code-backdrop{position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.7) !important;backdrop-filter:blur(16px) !important;}',
         '#po-code-card{position:relative !important;width:420px !important;background:rgba(10,10,18,0.98) !important;border:1px solid rgba(255,193,7,0.25) !important;border-radius:18px !important;padding:20px !important;box-shadow:0 24px 60px rgba(0,0,0,0.85) !important;animation:clIn 0.3s cubic-bezier(0.22,1,0.36,1) !important;}',
         '#po-code-warn{background:rgba(255,193,7,0.08) !important;border:1px solid rgba(255,193,7,0.2) !important;border-radius:10px !important;padding:10px 12px !important;font-size:11px !important;color:rgba(255,193,7,0.9) !important;margin-bottom:12px !important;line-height:1.5 !important;}',
         '#po-code-area{width:100% !important;box-sizing:border-box !important;height:140px !important;padding:10px !important;font-size:12px !important;font-family:monospace !important;background:rgba(0,0,0,0.4) !important;border:1px solid rgba(255,193,7,0.2) !important;color:#ffd60a !important;border-radius:9px !important;outline:none !important;resize:vertical !important;margin-bottom:10px !important;}',
         '#po-code-area:focus{border-color:rgba(255,193,7,0.5) !important;}',
-        // element highlight while hovering in edit mode
         '.po-highlight:not([data-veil-overlay]):not(#po-vel-panel):not(#po-vel-panel *){outline:2px solid rgba(191,90,242,0.6) !important;outline-offset:2px !important;cursor:context-menu !important;}',
+        // -- STREAK HOTKEY MODAL --
+        '#po-streak-modal{position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;}',
+        '#po-streak-backdrop{position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.6) !important;backdrop-filter:blur(16px) !important;}',
+        '#po-streak-card{position:relative !important;width:340px !important;background:rgba(10,10,18,0.98) !important;border:1px solid rgba(255,193,7,0.3) !important;border-radius:18px !important;padding:20px !important;box-shadow:0 24px 60px rgba(0,0,0,0.85) !important;animation:clIn 0.3s cubic-bezier(0.22,1,0.36,1) !important;}',
+        '#po-streak-card h3{font-size:13px !important;font-weight:700 !important;margin:0 0 6px !important;color:#ffd60a !important;-webkit-text-fill-color:#ffd60a !important;}',
+        '#po-streak-card p{font-size:11px !important;color:rgba(255,255,255,0.45) !important;margin:0 0 16px !important;line-height:1.5 !important;}',
+        '#po-streak-key-display{width:100% !important;padding:16px !important;background:rgba(255,193,7,0.06) !important;border:2px dashed rgba(255,193,7,0.3) !important;border-radius:12px !important;text-align:center !important;font-size:22px !important;font-weight:800 !important;color:#ffd60a !important;-webkit-text-fill-color:#ffd60a !important;letter-spacing:4px !important;margin-bottom:14px !important;cursor:pointer !important;transition:border-color 0.2s,background 0.2s !important;}',
+        '#po-streak-key-display.listening{border-color:rgba(255,193,7,0.8) !important;background:rgba(255,193,7,0.12) !important;}',
+        '#po-streak-hint{font-size:10px !important;color:rgba(255,255,255,0.3) !important;text-align:center !important;margin-bottom:14px !important;}',
+        '#po-streak-current{font-size:10px !important;color:rgba(255,255,255,0.4) !important;text-align:center !important;margin-bottom:14px !important;}',
     ].join('');
     document.documentElement.appendChild(s);
 }
@@ -719,8 +558,8 @@ function inEditUI(el) {
         el.closest('#po-edit-bar') || el.closest('#po-explorer') ||
         el.closest('#po-float') || el.closest('#po-notif-root') ||
         el.closest('#po-ctx') || el.closest('#po-img-modal') ||
-        el.closest('#po-code-modal') ||
-        el.closest('[data-veil-overlay]') ||
+        el.closest('#po-code-modal') || el.closest('#po-streak-modal') ||
+        el.closest('#po-trades-modal') ||
         el.closest('#po-vel-panel') ||
         el.closest('#po-update-popup') ||
         el.closest('#po-cl-overlay') ||
@@ -728,7 +567,6 @@ function inEditUI(el) {
     ));
 }
 
-// ---- ELEMENT SELECTOR (for storage key) ----
 function getEl(el) {
     try {
         if (el.id) return '#' + el.id;
@@ -743,7 +581,285 @@ function getEl(el) {
     } catch(e) { return null; }
 }
 
-// ---- RIGHT-CLICK CONTEXT MENU ----
+// =========================================================================
+// -- STREAK SYSTEM --------------------------------------------------------
+// =========================================================================
+var streakHotkeyUp   = 'PageUp';
+var streakHotkeyDown = 'PageDown';
+var streakListening  = false;
+var streakListeningFor = null;
+
+function injectStreakCSS() {
+    if (document.getElementById('po-streak-anim-styles')) return;
+    var s = document.createElement('style');
+    s.id = 'po-streak-anim-styles';
+    s.textContent = [
+        '@keyframes streakUp{0%{transform:scale(1) translateY(0)}35%{transform:scale(1.4) translateY(-6px)}65%{transform:scale(0.9) translateY(2px)}100%{transform:scale(1) translateY(0)}}',
+        '@keyframes streakFire{0%{transform:scale(1) rotate(0deg) translateY(0)}20%{transform:scale(1.35) rotate(-4deg) translateY(-5px)}45%{transform:scale(1.5) rotate(4deg) translateY(-8px)}70%{transform:scale(1.3) rotate(-2deg) translateY(-3px)}100%{transform:scale(1) rotate(0deg) translateY(0)}}',
+        '@keyframes streakInferno{0%{transform:scale(1) rotate(0deg)}15%{transform:scale(1.5) rotate(-6deg) translateY(-10px)}35%{transform:scale(1.8) rotate(6deg) translateY(-14px)}55%{transform:scale(1.6) rotate(-4deg) translateY(-8px)}75%{transform:scale(1.3) rotate(3deg) translateY(-4px)}100%{transform:scale(1) rotate(0deg) translateY(0)}}',
+        '@keyframes streakGlow{0%,100%{text-shadow:none}50%{text-shadow:0 0 12px rgba(255,193,7,0.9),0 0 28px rgba(255,100,0,0.7),0 0 48px rgba(255,50,0,0.4)}}',
+        '@keyframes streakInfernoGlow{0%,100%{text-shadow:none}30%{text-shadow:0 0 20px rgba(255,193,7,1),0 0 40px rgba(255,80,0,0.9),0 0 70px rgba(255,0,0,0.6)}70%{text-shadow:0 0 16px rgba(255,193,7,0.8),0 0 32px rgba(255,100,0,0.7)}}',
+        '@keyframes streakBroken{0%{transform:scale(1);filter:brightness(1)}20%{transform:scale(1.4);filter:brightness(1.3)}40%{transform:scale(1.35) skewX(8deg) skewY(-4deg);filter:brightness(1.5) blur(0px)}55%{transform:scale(1.2) skewX(-12deg) skewY(6deg);filter:brightness(0.8) blur(1.5px)}70%{transform:scale(0.7) skewX(6deg);filter:blur(3px) brightness(0.5)}85%{transform:scale(0.3);filter:blur(6px) brightness(0.2);opacity:0.4}100%{transform:scale(0);filter:blur(8px);opacity:0}}',
+        '@keyframes streakBrokenIn{0%{transform:scale(0);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}',
+        '.streak-up{animation:streakUp 0.45s cubic-bezier(0.22,1,0.36,1) forwards !important;}',
+        '.streak-fire{animation:streakFire 0.5s cubic-bezier(0.22,1,0.36,1) forwards,streakGlow 0.5s ease forwards !important;}',
+        '.streak-inferno{animation:streakInferno 0.6s cubic-bezier(0.22,1,0.36,1) forwards,streakInfernoGlow 0.6s ease forwards !important;}',
+        '.streak-broken{animation:streakBroken 0.65s cubic-bezier(0.4,0,0.8,1) forwards !important;}',
+        '.streak-broken-in{animation:streakBrokenIn 0.4s cubic-bezier(0.22,1,0.36,1) forwards !important;}',
+        // streak modal
+        '#po-streak-modal{position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;}',
+        '#po-streak-backdrop{position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.6) !important;backdrop-filter:blur(16px) !important;}',
+        '#po-streak-card{position:relative !important;width:340px !important;background:rgba(10,10,18,0.98) !important;border:1px solid rgba(255,193,7,0.3) !important;border-radius:18px !important;padding:20px !important;box-shadow:0 24px 60px rgba(0,0,0,0.85) !important;animation:clIn 0.3s cubic-bezier(0.22,1,0.36,1) !important;}',
+        '#po-streak-card h3{font-size:13px !important;font-weight:700 !important;margin:0 0 6px !important;color:#ffd60a !important;-webkit-text-fill-color:#ffd60a !important;}',
+        '#po-streak-card p{font-size:11px !important;color:rgba(255,255,255,0.45) !important;margin:0 0 14px !important;line-height:1.5 !important;}',
+        '.po-streak-key-row{margin-bottom:10px !important;}',
+        '.po-streak-key-label{font-size:9px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.5px !important;color:rgba(255,255,255,0.4) !important;margin-bottom:5px !important;}',
+        '.po-streak-key-display{width:100% !important;padding:12px !important;background:rgba(255,193,7,0.06) !important;border:2px dashed rgba(255,193,7,0.3) !important;border-radius:10px !important;text-align:center !important;font-size:16px !important;font-weight:800 !important;color:#ffd60a !important;-webkit-text-fill-color:#ffd60a !important;letter-spacing:2px !important;cursor:pointer !important;transition:border-color 0.2s,background 0.2s !important;box-sizing:border-box !important;}',
+        '.po-streak-key-display.listening{border-color:rgba(255,193,7,0.8) !important;background:rgba(255,193,7,0.12) !important;}',
+    ].join('');
+    document.documentElement.appendChild(s);
+}
+
+function getStreakCount(wrap) {
+    var divs = wrap.querySelectorAll('div > div');
+    var numEl = divs[divs.length - 1];
+    if (!numEl) return 0;
+    var txt = numEl.innerText.trim().replace(/🔥/g,'').replace('x','').trim();
+    return parseInt(txt) || 0;
+}
+
+function setStreakCount(wrap, n) {
+    var divs = wrap.querySelectorAll('div > div');
+    var numEl = divs[divs.length - 1];
+    if (!numEl) return;
+
+    var prev = getStreakCount(wrap);
+    var count = Math.max(0, n);
+
+    var fires = '';
+    if (count >= 20)      fires = '🔥🔥🔥';
+    else if (count >= 10) fires = '🔥🔥';
+    else if (count >= 5)  fires = '🔥';
+
+    numEl.classList.remove('streak-up','streak-fire','streak-inferno','streak-broken','streak-broken-in');
+    void numEl.offsetWidth;
+
+    if (count === 0 && prev > 0) {
+        numEl.style.color = '#ff453a';
+        numEl.style.setProperty('-webkit-text-fill-color', '#ff453a', 'important');
+        numEl.classList.add('streak-broken');
+        setTimeout(function() {
+            numEl.classList.remove('streak-broken');
+            numEl.style.opacity = '0';
+            numEl.innerText = '0x';
+            numEl.style.color = '#ffd60a';
+            numEl.style.setProperty('-webkit-text-fill-color', '#ffd60a', 'important');
+            void numEl.offsetWidth;
+            numEl.classList.add('streak-broken-in');
+            numEl.style.opacity = '1';
+            setTimeout(function() { numEl.classList.remove('streak-broken-in'); }, 400);
+        }, 650);
+        return;
+    }
+
+    numEl.style.color = '#ffd60a';
+    numEl.style.setProperty('-webkit-text-fill-color', '#ffd60a', 'important');
+    numEl.innerText = fires + count + 'x';
+
+    if (count > prev) {
+        if (count >= 20)     numEl.classList.add('streak-inferno');
+        else if (count >= 5) numEl.classList.add('streak-fire');
+        else                 numEl.classList.add('streak-up');
+    }
+}
+
+function openStreakHotkeyModal(wrap) {
+    injectStreakCSS();
+    var existing = document.getElementById('po-streak-modal');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    function keyLabel(k) { return !k ? 'none' : (k === ' ' ? 'SPACE' : k); }
+
+    var modal = document.createElement('div');
+    modal.id = 'po-streak-modal';
+    modal.innerHTML =
+        '<div id="po-streak-backdrop"></div>' +
+        '<div id="po-streak-card">' +
+            '<h3>🔥 Streak Hotkeys</h3>' +
+            '<p>Click a box then press any key to bind it.<br>Page Down resets the streak to 0.</p>' +
+            '<div class="po-streak-key-row">' +
+                '<div class="po-streak-key-label">Increment +1</div>' +
+                '<div class="po-streak-key-display" id="po-sk-up">' + keyLabel(streakHotkeyUp) + '</div>' +
+            '</div>' +
+            '<div class="po-streak-key-row">' +
+                '<div class="po-streak-key-label">Reset to 0</div>' +
+                '<div class="po-streak-key-display" id="po-sk-down">' + keyLabel(streakHotkeyDown) + '</div>' +
+            '</div>' +
+            '<div class="po-img-btns" style="margin-top:4px">' +
+                '<button class="po-img-btn secondary" id="po-streak-clear-all">Clear Both</button>' +
+                '<button class="po-img-btn primary" id="po-streak-done">Done</button>' +
+            '</div>' +
+        '</div>';
+
+    document.body.appendChild(modal);
+
+    function bindBox(boxId, which) {
+        var box = document.getElementById(boxId);
+        box.addEventListener('click', function() {
+            document.querySelectorAll('.po-streak-key-display').forEach(function(b) { b.classList.remove('listening'); });
+            streakListeningFor = which;
+            streakListening = true;
+            box.classList.add('listening');
+            box.innerText = '...';
+            function onKey(e) {
+                e.preventDefault(); e.stopPropagation();
+                streakListening = false; streakListeningFor = null;
+                box.classList.remove('listening');
+                if (which === 'up') streakHotkeyUp = e.key;
+                else streakHotkeyDown = e.key;
+                box.innerText = keyLabel(e.key);
+                document.removeEventListener('keydown', onKey, true);
+            }
+            document.addEventListener('keydown', onKey, true);
+        });
+    }
+
+    bindBox('po-sk-up', 'up');
+    bindBox('po-sk-down', 'down');
+
+    document.getElementById('po-streak-clear-all').addEventListener('click', function() {
+        streakHotkeyUp = null; streakHotkeyDown = null;
+        document.getElementById('po-sk-up').innerText = 'none';
+        document.getElementById('po-sk-down').innerText = 'none';
+    });
+
+    document.getElementById('po-streak-done').addEventListener('click', function() {
+        modal.parentNode.removeChild(modal);
+        var msg = [];
+        if (streakHotkeyUp)   msg.push('up: ' + keyLabel(streakHotkeyUp));
+        if (streakHotkeyDown) msg.push('reset: ' + keyLabel(streakHotkeyDown));
+        if (msg.length) showPageNotif({ desc: 'streak keys — ' + msg.join(', ') });
+    });
+
+    document.getElementById('po-streak-backdrop').addEventListener('click', function() {
+        streakListening = false; streakListeningFor = null;
+        modal.parentNode.removeChild(modal);
+    });
+}
+
+// Streak global keydown
+document.addEventListener('keydown', function(e) {
+    if (streakListening) return;
+    if (document.getElementById('po-streak-modal')) return;
+    if (['INPUT','TEXTAREA'].indexOf(e.target.tagName) !== -1) return;
+    if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+    var wrap = document.querySelector('[data-veil-type="streak"]');
+    if (!wrap) return;
+    if (streakHotkeyUp && e.key === streakHotkeyUp) {
+        e.preventDefault();
+        setStreakCount(wrap, getStreakCount(wrap) + 1);
+    } else if (streakHotkeyDown && e.key === streakHotkeyDown) {
+        e.preventDefault();
+        setStreakCount(wrap, 0);
+    }
+}, true);
+
+// =========================================================================
+// -- TRADES TODAY SYSTEM --------------------------------------------------
+// =========================================================================
+var tradesHotkey    = 'Home';
+var tradesListening = false;
+
+function getTradesCount(wrap) {
+    var divs = wrap.querySelectorAll('div > div');
+    var numEl = divs[divs.length - 1];
+    if (!numEl) return 0;
+    return parseInt(numEl.innerText.trim()) || 0;
+}
+
+function setTradesCount(wrap, n) {
+    var divs = wrap.querySelectorAll('div > div');
+    var numEl = divs[divs.length - 1];
+    if (!numEl) return;
+    numEl.innerText = Math.max(0, n) + '';
+}
+
+function openTradesHotkeyModal(wrap) {
+    var existing = document.getElementById('po-trades-modal');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    function keyLabel(k) { return !k ? 'none' : (k === ' ' ? 'SPACE' : k); }
+
+    var modal = document.createElement('div');
+    modal.id = 'po-trades-modal';
+    modal.style.cssText = 'position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;';
+    modal.innerHTML =
+        '<div id="po-trades-backdrop" style="position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.6) !important;backdrop-filter:blur(16px) !important;"></div>' +
+        '<div style="position:relative !important;width:320px !important;background:rgba(10,10,18,0.98) !important;border:1px solid rgba(0,176,255,0.3) !important;border-radius:18px !important;padding:20px !important;box-shadow:0 24px 60px rgba(0,0,0,0.85) !important;animation:clIn 0.3s cubic-bezier(0.22,1,0.36,1) !important;">' +
+            '<h3 style="font-size:13px !important;font-weight:700 !important;margin:0 0 6px !important;color:#00b0ff !important;-webkit-text-fill-color:#00b0ff !important;">📊 Trades Today Hotkey</h3>' +
+            '<p style="font-size:11px !important;color:rgba(255,255,255,0.45) !important;margin:0 0 14px !important;line-height:1.5 !important;">Click the box then press any key to bind increment.</p>' +
+            '<div style="margin-bottom:14px !important;">' +
+                '<div style="font-size:9px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.5px !important;color:rgba(255,255,255,0.4) !important;margin-bottom:5px !important;">Increment +1</div>' +
+                '<div id="po-tk-up" style="width:100% !important;padding:12px !important;background:rgba(0,176,255,0.06) !important;border:2px dashed rgba(0,176,255,0.3) !important;border-radius:10px !important;text-align:center !important;font-size:16px !important;font-weight:800 !important;color:#00b0ff !important;-webkit-text-fill-color:#00b0ff !important;letter-spacing:2px !important;cursor:pointer !important;box-sizing:border-box !important;transition:border-color 0.2s,background 0.2s !important;">' + keyLabel(tradesHotkey) + '</div>' +
+            '</div>' +
+            '<div class="po-img-btns">' +
+                '<button class="po-img-btn secondary" id="po-trades-clear">Clear</button>' +
+                '<button class="po-img-btn primary" id="po-trades-done">Done</button>' +
+            '</div>' +
+        '</div>';
+
+    document.body.appendChild(modal);
+
+    var box = document.getElementById('po-tk-up');
+    box.addEventListener('click', function() {
+        tradesListening = true;
+        box.style.borderColor = 'rgba(0,176,255,0.8)';
+        box.style.background   = 'rgba(0,176,255,0.12)';
+        box.innerText = '...';
+        function onKey(e) {
+            e.preventDefault(); e.stopPropagation();
+            tradesListening = false;
+            tradesHotkey = e.key;
+            box.style.borderColor = 'rgba(0,176,255,0.3)';
+            box.style.background   = 'rgba(0,176,255,0.06)';
+            box.innerText = keyLabel(e.key);
+            document.removeEventListener('keydown', onKey, true);
+        }
+        document.addEventListener('keydown', onKey, true);
+    });
+
+    document.getElementById('po-trades-clear').addEventListener('click', function() {
+        tradesHotkey = null;
+        box.innerText = 'none';
+    });
+
+    document.getElementById('po-trades-done').addEventListener('click', function() {
+        modal.parentNode.removeChild(modal);
+        if (tradesHotkey) showPageNotif({ desc: 'trades hotkey: ' + keyLabel(tradesHotkey) });
+    });
+
+    document.getElementById('po-trades-backdrop').addEventListener('click', function() {
+        tradesListening = false;
+        modal.parentNode.removeChild(modal);
+    });
+}
+
+// Trades global keydown
+document.addEventListener('keydown', function(e) {
+    if (tradesListening) return;
+    if (document.getElementById('po-trades-modal')) return;
+    if (['INPUT','TEXTAREA'].indexOf(e.target.tagName) !== -1) return;
+    if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+    var wrap = document.querySelector('[data-veil-type="trades-today"]');
+    if (!wrap) return;
+    if (tradesHotkey && e.key === tradesHotkey) {
+        e.preventDefault();
+        setTradesCount(wrap, getTradesCount(wrap) + 1);
+    }
+}, true);
+
+// -- RIGHT-CLICK CONTEXT MENU ---------------------------------------------
+// =========================================================================
 var ctxTarget = null;
 
 function showCtxMenu(x, y, el) {
@@ -756,38 +872,58 @@ function showCtxMenu(x, y, el) {
 
     var isImg = el && el.tagName === 'IMG';
     var isText = el && el.innerText && el.innerText.trim().length > 0 && !isImg;
+    var veilWrap = el && el.closest && el.closest('[data-veil-overlay]');
+    var isStreak = veilWrap && veilWrap.getAttribute('data-veil-type') === 'streak';
+    var isTrades = veilWrap && veilWrap.getAttribute('data-veil-type') === 'trades-today';
 
     var items = [];
-    if (isText) {
-        items.push({ico:'T', label:'Edit Text', fn: function() { ctxEditText(el); }});
+
+    // Streak-specific items at top
+    if (isStreak) {
+        items.push({ico:'🔥', label:'Set Increment Hotkey', cls:'streak-item', fn: function() { openStreakHotkeyModal(veilWrap); }});
+        items.push({ico:'+', label:'Increment Streak +1', cls:'streak-item', fn: function() { var n = getStreakCount(veilWrap); setStreakCount(veilWrap, n + 1); }});
+        items.push({ico:'−', label:'Decrement Streak −1', cls:'streak-item', fn: function() { var n = getStreakCount(veilWrap); setStreakCount(veilWrap, Math.max(0, n - 1)); }});
+        items.push({ico:'0', label:'Reset Streak to 0', cls:'streak-item', fn: function() { setStreakCount(veilWrap, 0); }});
+        items.push('sep');
+        items.push({ico:'✕', label:'Remove Element', fn: function() { if (veilWrap && veilWrap.parentNode) veilWrap.parentNode.removeChild(veilWrap); }});
+        items.push('sep');
     }
-    if (isImg) {
-        items.push({ico:'IMG', label:'Edit Image / Swap URL', fn: function() { openImgModal(el); }});
+
+    if (isTrades) {
+        items.push({ico:'📊', label:'Set Hotkey', cls:'streak-item', fn: function() { openTradesHotkeyModal(veilWrap); }});
+        items.push({ico:'+', label:'Increment +1', cls:'streak-item', fn: function() { setTradesCount(veilWrap, getTradesCount(veilWrap) + 1); }});
+        items.push({ico:'−', label:'Decrement −1', cls:'streak-item', fn: function() { setTradesCount(veilWrap, getTradesCount(veilWrap) - 1); }});
+        items.push({ico:'0', label:'Reset to 0', cls:'streak-item', fn: function() { setTradesCount(veilWrap, 0); }});
+        items.push('sep');
+        items.push({ico:'✕', label:'Remove Element', fn: function() { if (veilWrap && veilWrap.parentNode) veilWrap.parentNode.removeChild(veilWrap); }});
+        items.push('sep');
     }
-    items.push({ico:'M', label:'Move Element (drag)', fn: function() { ctxStartDrag(el); }});
-    items.push({ico:'H', label:'Hide Element', fn: function() {
-        el.style.visibility = 'hidden';
-        var sel = getEl(el);
-        if (sel) { editChanges[sel] = editChanges[sel] || {}; editChanges[sel].hidden = true; }
-    }});
-    items.push({ico:'V', label:'Show Element', fn: function() {
-        el.style.visibility = 'visible';
-        var sel = getEl(el);
-        if (sel) { editChanges[sel] = editChanges[sel] || {}; editChanges[sel].hidden = false; }
-    }});
-    items.push({ico:'C', label:'Copy Selector', fn: function() {
-        var sel = getEl(el);
-        if (sel && navigator.clipboard) navigator.clipboard.writeText(sel);
-        showPageNotif({ desc: 'selector copied!' });
-    }});
-    items.push('sep');
-    items.push({ico:'I', label:'Inspect in Explorer', fn: function() {
-        if (!document.getElementById('po-explorer')) buildExplorer();
-        showExplorer();
-        selectInExplorer(el);
-    }});
-    items.push('sep');
-    items.push({ico:'<>', label:"Custom Code (don't be stupid)", cls:'code-item', fn: function() { openCodeModal(el); }});
+
+    if (!isStreak && !isTrades) {
+        if (isText) items.push({ico:'T', label:'Edit Text', fn: function() { ctxEditText(el); }});
+        if (isImg)  items.push({ico:'IMG', label:'Edit Image / Swap URL', fn: function() { openImgModal(el); }});
+        items.push({ico:'M', label:'Move Element (drag)', fn: function() { ctxStartDrag(el); }});
+        items.push({ico:'H', label:'Hide Element', fn: function() {
+            el.style.visibility = 'hidden';
+            var sel = getEl(el); if (sel) { editChanges[sel] = editChanges[sel] || {}; editChanges[sel].hidden = true; }
+        }});
+        items.push({ico:'V', label:'Show Element', fn: function() {
+            el.style.visibility = 'visible';
+            var sel = getEl(el); if (sel) { editChanges[sel] = editChanges[sel] || {}; editChanges[sel].hidden = false; }
+        }});
+        items.push({ico:'C', label:'Copy Selector', fn: function() {
+            var sel = getEl(el);
+            if (sel && navigator.clipboard) navigator.clipboard.writeText(sel);
+            showPageNotif({ desc: 'selector copied!' });
+        }});
+        items.push('sep');
+        items.push({ico:'I', label:'Inspect in Explorer', fn: function() {
+            if (!document.getElementById('po-explorer')) buildExplorer();
+            showExplorer(); selectInExplorer(el);
+        }});
+        items.push('sep');
+        items.push({ico:'<>', label:"Custom Code (don't be stupid)", cls:'code-item', fn: function() { openCodeModal(el); }});
+    }
 
     m.innerHTML = items.map(function(item) {
         if (item === 'sep') return '<div class="po-ctx-sep"></div>';
@@ -799,26 +935,17 @@ function showCtxMenu(x, y, el) {
 
     document.body.appendChild(m);
 
-    // Wire up click handlers
     var fns = items.filter(function(i) { return i !== 'sep'; });
     m.querySelectorAll('[data-fn]').forEach(function(node, i) {
-        node.addEventListener('click', function(e) {
-            e.stopPropagation();
-            closeCtxMenu();
-            fns[i].fn();
-        });
+        node.addEventListener('click', function(e) { e.stopPropagation(); closeCtxMenu(); fns[i].fn(); });
     });
 
-    // Close on outside click
-    setTimeout(function() {
-        document.addEventListener('click', closeCtxMenu, { once: true });
-    }, 0);
+    setTimeout(function() { document.addEventListener('click', closeCtxMenu, { once: true }); }, 0);
 
-    // Keep menu on screen
     requestAnimationFrame(function() {
         var r = m.getBoundingClientRect();
         if (r.right > window.innerWidth)  m.style.left = (window.innerWidth - r.width - 8) + 'px';
-        if (r.bottom > window.innerHeight) m.style.top = (window.innerHeight - r.height - 8) + 'px';
+        if (r.bottom > window.innerHeight) m.style.top  = (window.innerHeight - r.height - 8) + 'px';
     });
 }
 
@@ -827,11 +954,9 @@ function closeCtxMenu() {
     if (m) m.parentNode.removeChild(m);
 }
 
-// ---- IMAGE EDITOR MODAL ----
 function openImgModal(el) {
     var existing = document.getElementById('po-img-modal');
     if (existing) existing.parentNode.removeChild(existing);
-
     var modal = document.createElement('div');
     modal.id = 'po-img-modal';
     var curSrc = el.src || '';
@@ -840,55 +965,30 @@ function openImgModal(el) {
         '<div id="po-img-card">' +
             '<h3>Edit Image</h3>' +
             '<img id="po-img-preview" src="' + curSrc + '" onerror="this.style.opacity=0.2">' +
-            '<div class="po-img-row"><div class="po-img-lbl">Image URL or path</div>' +
-            '<input class="po-img-inp" id="po-img-src" type="text" value="' + curSrc + '" placeholder="https://... or filename.png"></div>' +
-            '<div class="po-img-row"><div class="po-img-lbl">Alt Text</div>' +
-            '<input class="po-img-inp" id="po-img-alt" type="text" value="' + (el.alt||'') + '" placeholder="description"></div>' +
-            '<div class="po-img-row"><div class="po-img-lbl">Width</div>' +
-            '<input class="po-img-inp" id="po-img-w" type="text" value="' + (el.style.width||el.getAttribute("width")||'') + '" placeholder="e.g. 100px or 50%"></div>' +
-            '<div class="po-img-btns">' +
-                '<button class="po-img-btn secondary" id="po-img-cancel">Cancel</button>' +
-                '<button class="po-img-btn primary" id="po-img-apply">Apply</button>' +
-            '</div>' +
+            '<div class="po-img-row"><div class="po-img-lbl">Image URL or path</div><input class="po-img-inp" id="po-img-src" type="text" value="' + curSrc + '" placeholder="https://... or filename.png"></div>' +
+            '<div class="po-img-row"><div class="po-img-lbl">Alt Text</div><input class="po-img-inp" id="po-img-alt" type="text" value="' + (el.alt||'') + '" placeholder="description"></div>' +
+            '<div class="po-img-row"><div class="po-img-lbl">Width</div><input class="po-img-inp" id="po-img-w" type="text" value="' + (el.style.width||el.getAttribute("width")||'') + '" placeholder="e.g. 100px or 50%"></div>' +
+            '<div class="po-img-btns"><button class="po-img-btn secondary" id="po-img-cancel">Cancel</button><button class="po-img-btn primary" id="po-img-apply">Apply</button></div>' +
         '</div>';
-
     document.body.appendChild(modal);
-
-    // Live preview
-    document.getElementById('po-img-src').addEventListener('input', function() {
-        document.getElementById('po-img-preview').src = this.value;
-    });
-
+    document.getElementById('po-img-src').addEventListener('input', function() { document.getElementById('po-img-preview').src = this.value; });
     document.getElementById('po-img-apply').addEventListener('click', function() {
         var src = document.getElementById('po-img-src').value;
         var alt = document.getElementById('po-img-alt').value;
-        var w   = document.getElementById('po-img-w').value;
-        el.src = src;
-        el.alt = alt;
-        if (w) el.style.width = w;
+        var w = document.getElementById('po-img-w').value;
+        el.src = src; el.alt = alt; if (w) el.style.width = w;
         var sel = getEl(el);
-        if (sel) {
-            editChanges[sel] = editChanges[sel] || {};
-            editChanges[sel].imgSrc = src;
-            editChanges[sel].imgAlt = alt;
-            if (w) editChanges[sel].imgWidth = w;
-        }
+        if (sel) { editChanges[sel] = editChanges[sel] || {}; editChanges[sel].imgSrc = src; editChanges[sel].imgAlt = alt; if (w) editChanges[sel].imgWidth = w; }
         modal.parentNode.removeChild(modal);
         showPageNotif({ desc: 'image updated!' });
     });
-    document.getElementById('po-img-cancel').addEventListener('click', function() {
-        modal.parentNode.removeChild(modal);
-    });
-    document.getElementById('po-img-backdrop').addEventListener('click', function() {
-        modal.parentNode.removeChild(modal);
-    });
+    document.getElementById('po-img-cancel').addEventListener('click', function() { modal.parentNode.removeChild(modal); });
+    document.getElementById('po-img-backdrop').addEventListener('click', function() { modal.parentNode.removeChild(modal); });
 }
 
-// ---- CUSTOM CODE MODAL ----
 function openCodeModal(el) {
     var existing = document.getElementById('po-code-modal');
     if (existing) existing.parentNode.removeChild(existing);
-
     var modal = document.createElement('div');
     modal.id = 'po-code-modal';
     modal.innerHTML =
@@ -896,34 +996,20 @@ function openCodeModal(el) {
         '<div id="po-code-card">' +
             '<div id="po-code-warn">are you sure you wanna do this? u don\'t wanna do ts if ur not a dev</div>' +
             '<textarea id="po-code-area" placeholder="// write JS here - runs on the selected element as `el`\n// e.g. el.style.background = \'red\'"></textarea>' +
-            '<div class="po-img-btns">' +
-                '<button class="po-img-btn secondary" id="po-code-cancel">nah nevermind</button>' +
-                '<button class="po-img-btn primary" id="po-code-run">run it</button>' +
-            '</div>' +
+            '<div class="po-img-btns"><button class="po-img-btn secondary" id="po-code-cancel">nah nevermind</button><button class="po-img-btn primary" id="po-code-run">run it</button></div>' +
         '</div>';
-
     document.body.appendChild(modal);
-
     document.getElementById('po-code-run').addEventListener('click', function() {
         var code = document.getElementById('po-code-area').value;
-        try {
-            var fn = new Function('el', code);
-            fn(el);
-            showPageNotif({ desc: 'code ran!' });
-            modal.parentNode.removeChild(modal);
-        } catch(err) {
-            showPageNotif({ desc: 'error: ' + err.message, isError: true });
-        }
+        try { var fn = new Function('el', code); fn(el); showPageNotif({ desc: 'code ran!' }); modal.parentNode.removeChild(modal); }
+        catch(err) { showPageNotif({ desc: 'error: ' + err.message, isError: true }); }
     });
     document.getElementById('po-code-cancel').addEventListener('click', function() { modal.parentNode.removeChild(modal); });
     document.getElementById('po-code-backdrop').addEventListener('click', function() { modal.parentNode.removeChild(modal); });
 }
 
-// ---- INLINE TEXT EDIT (from context menu) ----
 function ctxEditText(el) {
-    document.querySelectorAll('.po-ea').forEach(function(a) {
-        a.classList.remove('po-ea'); a.removeAttribute('contenteditable'); a.blur();
-    });
+    document.querySelectorAll('.po-ea').forEach(function(a) { a.classList.remove('po-ea'); a.removeAttribute('contenteditable'); a.blur(); });
     el.classList.add('po-ea');
     el.setAttribute('contenteditable', 'true');
     el.focus();
@@ -933,28 +1019,18 @@ function ctxEditText(el) {
     sel.removeAllRanges();
     sel.addRange(range);
     el.addEventListener('blur', function onB() {
-        el.removeAttribute('contenteditable');
-        el.classList.remove('po-ea');
-        var s = getEl(el);
-        if (s) { editChanges[s] = editChanges[s] || {}; editChanges[s].text = el.innerText; }
+        el.removeAttribute('contenteditable'); el.classList.remove('po-ea');
+        var s = getEl(el); if (s) { editChanges[s] = editChanges[s] || {}; editChanges[s].text = el.innerText; }
         el.removeEventListener('blur', onB);
     }, { once: true });
 }
 
-// ---- DRAG FROM CONTEXT MENU ----
 function ctxStartDrag(el) {
     var r = el.getBoundingClientRect();
-    el.style.position = 'fixed';
-    el.style.zIndex   = '2147483640';
-    el.style.left     = r.left + 'px';
-    el.style.top      = r.top  + 'px';
-    el.style.margin   = '0';
+    el.style.position = 'fixed'; el.style.zIndex = '2147483640';
+    el.style.left = r.left + 'px'; el.style.top = r.top + 'px'; el.style.margin = '0';
     showPageNotif({ desc: 'drag the element now!' });
-
-    var startX = r.left, startY = r.top;
-    var origX = 0, origY = 0;
-    var dragging = false;
-
+    var origX = 0, origY = 0, dragging = false;
     function onDown(e) {
         if (e.target !== el) return;
         dragging = true;
@@ -963,11 +1039,7 @@ function ctxStartDrag(el) {
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
     }
-    function onMove(e) {
-        if (!dragging) return;
-        el.style.left = (e.clientX - origX) + 'px';
-        el.style.top  = (e.clientY - origY) + 'px';
-    }
+    function onMove(e) { if (!dragging) return; el.style.left = (e.clientX - origX) + 'px'; el.style.top = (e.clientY - origY) + 'px'; }
     function onUp() {
         dragging = false;
         var sel = getEl(el);
@@ -979,7 +1051,6 @@ function ctxStartDrag(el) {
     el.addEventListener('mousedown', onDown);
 }
 
-// ---- DOM EXPLORER PANEL ----
 function showExplorer() {
     var panel = document.getElementById('po-explorer');
     if (!panel) buildExplorer();
@@ -1004,37 +1075,23 @@ function hideExplorer() {
 
 function toggleExplorer() {
     var panel = document.getElementById('po-explorer');
-    if (!panel) {
-        buildExplorer();
-        showExplorer();
-    } else if (panel.classList.contains('collapsed')) {
-        showExplorer();
-    } else {
-        hideExplorer();
-    }
+    if (!panel) { buildExplorer(); showExplorer(); }
+    else if (panel.classList.contains('collapsed')) showExplorer();
+    else hideExplorer();
 }
 
 function buildExplorer() {
     if (document.getElementById('po-explorer')) return;
     var panel = document.createElement('div');
     panel.id = 'po-explorer';
-
     var toggle = document.createElement('button');
     toggle.id = 'po-exp-toggle';
     toggle.innerHTML = '&#9654;';
     toggle.title = 'Toggle Explorer';
-    toggle.addEventListener('click', function() {
-        toggleExplorer();
-    });
-
-    panel.innerHTML =
-        '<div id="po-exp-hdr">Page Explorer</div>' +
-        '<div id="po-exp-tree"></div>' +
-        '<div id="po-exp-props"></div>';
-
+    toggle.addEventListener('click', function() { toggleExplorer(); });
+    panel.innerHTML = '<div id="po-exp-hdr">Page Explorer</div><div id="po-exp-tree"></div><div id="po-exp-props"></div>';
     panel.appendChild(toggle);
     document.body.appendChild(panel);
-
     renderTree(document.body, document.getElementById('po-exp-tree'), 0);
 }
 
@@ -1047,20 +1104,13 @@ function renderTree(root, container, depth) {
                c.id !== 'po-ctx' && c.id !== 'po-img-modal' && c.id !== 'po-code-modal' &&
                !c.id.startsWith('po-');
     });
-
     children.forEach(function(el) {
         var hasChildren = el.children.length > 0;
         var tag = el.tagName.toLowerCase();
-        var cls = (typeof el.className === 'string' && el.className.trim())
-            ? '.' + el.className.trim().split(/\s+/).slice(0,2).join('.')
-            : '';
-        var txt = el.childNodes.length > 0
-            ? Array.from(el.childNodes).find(function(n){ return n.nodeType === 3 && n.textContent.trim(); })
-            : null;
+        var cls = (typeof el.className === 'string' && el.className.trim()) ? '.' + el.className.trim().split(/\s+/).slice(0,2).join('.') : '';
+        var txt = el.childNodes.length > 0 ? Array.from(el.childNodes).find(function(n){ return n.nodeType === 3 && n.textContent.trim(); }) : null;
         var preview = txt ? txt.textContent.trim().slice(0,20) : '';
-
         var wrapper = document.createElement('div');
-
         var node = document.createElement('div');
         node.className = 'po-exp-node';
         node.style.paddingLeft = (8 + depth * 14) + 'px';
@@ -1069,41 +1119,24 @@ function renderTree(root, container, depth) {
             '<span class="po-exp-tag">' + tag + '</span>' +
             (cls ? '<span class="po-exp-cls">' + cls + '</span>' : '') +
             (preview ? '<span class="po-exp-txt">"' + preview + '"</span>' : '');
-
         var childrenDiv = document.createElement('div');
         childrenDiv.className = 'po-exp-children';
         var childrenBuilt = false;
-
         node.addEventListener('click', function(e) {
             e.stopPropagation();
-            // Select element
             document.querySelectorAll('.po-exp-node.selected').forEach(function(n) { n.classList.remove('selected'); });
             node.classList.add('selected');
             selectedEl = el;
             el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
             showElProps(el);
-
-            // Highlight
             document.querySelectorAll('.po-highlight').forEach(function(h) { h.classList.remove('po-highlight'); });
             el.classList.add('po-highlight');
-
-            // Toggle children
             if (hasChildren) {
                 var arrow = node.querySelector('.po-exp-arrow');
-                if (childrenDiv.classList.contains('open')) {
-                    childrenDiv.classList.remove('open');
-                    arrow.classList.remove('open');
-                } else {
-                    if (!childrenBuilt) {
-                        renderTree(el, childrenDiv, depth + 1);
-                        childrenBuilt = true;
-                    }
-                    childrenDiv.classList.add('open');
-                    arrow.classList.add('open');
-                }
+                if (childrenDiv.classList.contains('open')) { childrenDiv.classList.remove('open'); arrow.classList.remove('open'); }
+                else { if (!childrenBuilt) { renderTree(el, childrenDiv, depth + 1); childrenBuilt = true; } childrenDiv.classList.add('open'); arrow.classList.add('open'); }
             }
         });
-
         wrapper.appendChild(node);
         wrapper.appendChild(childrenDiv);
         container.appendChild(wrapper);
@@ -1111,13 +1144,8 @@ function renderTree(root, container, depth) {
 }
 
 function selectInExplorer(el) {
-    // Collapse explorer if it is
     var panel = document.getElementById('po-explorer');
-    if (panel) {
-        panel.classList.remove('collapsed');
-        var toggle = document.getElementById('po-exp-toggle');
-        if (toggle) toggle.innerHTML = '&#9664;';
-    }
+    if (panel) { panel.classList.remove('collapsed'); var toggle = document.getElementById('po-exp-toggle'); if (toggle) toggle.innerHTML = '&#9664;'; }
     selectedEl = el;
     showElProps(el);
     el.classList.add('po-highlight');
@@ -1126,30 +1154,23 @@ function selectInExplorer(el) {
 function showElProps(el) {
     var props = document.getElementById('po-exp-props');
     if (!props) return;
-
     var cs = window.getComputedStyle(el);
     var fields = [
-        { key: 'color',      val: el.style.color      || cs.color },
-        { key: 'bg',         val: el.style.background || cs.backgroundColor },
-        { key: 'font-size',  val: el.style.fontSize   || cs.fontSize },
-        { key: 'opacity',    val: el.style.opacity     || cs.opacity },
-        { key: 'display',    val: el.style.display     || cs.display },
-        { key: 'width',      val: el.style.width       || cs.width },
-        { key: 'height',     val: el.style.height      || cs.height },
-        { key: 'padding',    val: el.style.padding     || cs.padding },
-        { key: 'margin',     val: el.style.margin      || cs.margin },
-        { key: 'border-r',   val: el.style.borderRadius|| cs.borderRadius },
+        { key:'color', val:el.style.color||cs.color },
+        { key:'bg', val:el.style.background||cs.backgroundColor },
+        { key:'font-size', val:el.style.fontSize||cs.fontSize },
+        { key:'opacity', val:el.style.opacity||cs.opacity },
+        { key:'display', val:el.style.display||cs.display },
+        { key:'width', val:el.style.width||cs.width },
+        { key:'height', val:el.style.height||cs.height },
+        { key:'padding', val:el.style.padding||cs.padding },
+        { key:'margin', val:el.style.margin||cs.margin },
+        { key:'border-r', val:el.style.borderRadius||cs.borderRadius },
     ];
-
     props.innerHTML = fields.map(function(f) {
-        return '<div class="po-prop-row">' +
-            '<span class="po-prop-key">' + f.key + '</span>' +
-            '<input class="po-prop-val" data-prop="' + f.key + '" value="' + (f.val||'').replace(/"/g,'') + '">' +
-            '<button class="po-prop-apply" data-prop="' + f.key + '">OK</button>' +
-        '</div>';
+        return '<div class="po-prop-row"><span class="po-prop-key">' + f.key + '</span><input class="po-prop-val" data-prop="' + f.key + '" value="' + (f.val||'').replace(/"/g,'') + '"><button class="po-prop-apply" data-prop="' + f.key + '">OK</button></div>';
     }).join('');
-
-    var propMap = { color:'color', bg:'background', 'font-size':'fontSize', opacity:'opacity', display:'display', width:'width', height:'height', padding:'padding', margin:'margin', 'border-r':'borderRadius' };
+    var propMap = { color:'color',bg:'background','font-size':'fontSize',opacity:'opacity',display:'display',width:'width',height:'height',padding:'padding',margin:'margin','border-r':'borderRadius' };
     props.querySelectorAll('.po-prop-apply').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var key = btn.getAttribute('data-prop');
@@ -1158,56 +1179,41 @@ function showElProps(el) {
             if (cssProp) {
                 el.style[cssProp] = val;
                 var sel = getEl(el);
-                if (sel) {
-                    editChanges[sel] = editChanges[sel] || {};
-                    editChanges[sel].styles = editChanges[sel].styles || {};
-                    editChanges[sel].styles[cssProp] = val;
-                }
+                if (sel) { editChanges[sel] = editChanges[sel] || {}; editChanges[sel].styles = editChanges[sel].styles || {}; editChanges[sel].styles[cssProp] = val; }
             }
         });
     });
-
-    // Also handle enter key
     props.querySelectorAll('.po-prop-val').forEach(function(inp) {
         inp.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                props.querySelector('.po-prop-apply[data-prop="' + inp.getAttribute('data-prop') + '"]').click();
-            }
+            if (e.key === 'Enter') props.querySelector('.po-prop-apply[data-prop="' + inp.getAttribute('data-prop') + '"]').click();
         });
     });
 }
 
-// ---- MAIN EDITOR INIT ----
 function startEditor() {
     injectStyles();
     injectEditorStyles();
     if (!document.body) { document.addEventListener('DOMContentLoaded', startEditor); return; }
     if (editActive) return;
     editActive = true;
-
+    document.querySelectorAll('[data-veil-overlay]').forEach(function(el) { el.classList.add('edit-mode-active'); });
     chrome.storage.local.get(STORE_KEY, function(d) {
         try { editChanges = JSON.parse(d[STORE_KEY] || '{}'); } catch(e) { editChanges = {}; }
     });
-
-    // Top bar
     var bar = document.createElement('div');
     bar.id = 'po-edit-bar';
     bar.innerHTML =
         '<div id="po-edit-badge"><div id="po-edit-dot"></div><span id="po-edit-label">Edit Mode</span></div>' +
-        '<span id="po-edit-hint">right-click any element  |  use explorer panel left</span>' +
+        '<span id="po-edit-hint">right-click elements  |  M = drag overlays</span>' +
         '<button class="peb" id="peb-save">Save Changes</button>' +
         '<button class="peb" id="peb-reset">Reset</button>' +
         '<button class="peb" id="peb-explorer">Open Explorer</button>' +
         '<button class="peb" id="peb-cancel">Cancel Editing</button>';
     document.body.appendChild(bar);
-    document.body.style.paddingTop  = '50px';
-
-    // Right-click on page elements
+    document.body.style.paddingTop = '50px';
     document.addEventListener('contextmenu', edContextMenu, true);
-    // Hover highlight
     document.addEventListener('mouseover', edHover);
-    document.addEventListener('mouseout',  edHout);
-
+    document.addEventListener('mouseout', edHout);
     document.getElementById('peb-save').addEventListener('click', edSave);
     document.getElementById('peb-reset').addEventListener('click', edReset);
     document.getElementById('peb-cancel').addEventListener('click', edStop);
@@ -1216,6 +1222,9 @@ function startEditor() {
 
 function edStop() {
     editActive = false;
+    window._veilDragMode = false;
+    document.querySelectorAll('[data-veil-overlay]').forEach(function(el) { el.classList.remove('edit-mode-active'); });
+    document.querySelectorAll('[data-veil-overlay]').forEach(function(el) { el.classList.remove('drag-mode'); });
     closeCtxMenu();
     var bar = document.getElementById('po-explorer');
     if (bar) bar.parentNode.removeChild(bar);
@@ -1225,86 +1234,68 @@ function edStop() {
     if (imgModal) imgModal.parentNode.removeChild(imgModal);
     var codeModal = document.getElementById('po-code-modal');
     if (codeModal) codeModal.parentNode.removeChild(codeModal);
-    document.body.style.paddingTop  = '';
+    document.body.style.paddingTop = '';
     document.removeEventListener('contextmenu', edContextMenu, true);
     document.removeEventListener('mouseover', edHover);
-    document.removeEventListener('mouseout',  edHout);
+    document.removeEventListener('mouseout', edHout);
     document.querySelectorAll('.po-ea,.po-eh,.po-highlight').forEach(function(el) {
         el.classList.remove('po-ea','po-eh','po-highlight');
         el.removeAttribute('contenteditable');
     });
 }
 
+// FIX: no early return for veil overlays — they get our custom ctx menu
 function edContextMenu(e) {
     if (!editActive) return;
     if (inEditUI(e.target)) return;
-    // Let veil overlay elements handle their own events (drag/dblclick)
-    if (e.target.closest && e.target.closest('[data-veil-overlay]')) return;
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
     showCtxMenu(e.clientX, e.clientY, e.target);
 }
 
+// FIX: use closest() so children inside overlays don't get highlight
 function edHover(e) {
     if (!editActive || inEditUI(e.target)) return;
-    // Don't highlight our own injected UI
-    if (e.target.hasAttribute && e.target.hasAttribute('data-veil-overlay')) return;
     if (e.target.closest && e.target.closest('[data-veil-overlay]')) return;
     e.target.classList.add('po-highlight');
 }
+
 function edHout(e) {
     if (!editActive) return;
+    if (e.target.closest && e.target.closest('[data-veil-overlay]')) return;
     e.target.classList.remove('po-highlight');
 }
 
-// ---- APPLY SAVED LAYOUT ----
 function applyLayout(ch) {
     Object.keys(ch).forEach(function(sel) {
         try {
-            // Skip our own injected overlay elements
             if (sel.indexOf('po-veil-el-') !== -1) return;
             var el = document.querySelector(sel);
             if (!el) return;
             var c = ch[sel];
-            // Use setAttribute so MutationObserver swap doesn't clobber it
-            if (c.text !== undefined) {
-                el.setAttribute('data-veil-text', c.text);
-                el.innerText = c.text;
-            }
-            if (c.hidden)  el.style.setProperty('visibility', 'hidden', 'important');
-            if (c.imgSrc)  el.src = c.imgSrc;
-            if (c.imgAlt)  el.alt = c.imgAlt;
+            if (c.text !== undefined) { el.setAttribute('data-veil-text', c.text); el.innerText = c.text; }
+            if (c.hidden) el.style.setProperty('visibility', 'hidden', 'important');
+            if (c.imgSrc) el.src = c.imgSrc;
+            if (c.imgAlt) el.alt = c.imgAlt;
             if (c.imgWidth) el.style.width = c.imgWidth;
             if (c.styles) { Object.keys(c.styles).forEach(function(p) { el.style[p] = c.styles[p]; }); }
-            if (c.fixed) {
-                el.style.position = 'fixed';
-                el.style.zIndex   = '2147483640';
-                el.style.margin   = '0';
-                if (c.x) el.style.left = c.x;
-                if (c.y) el.style.top  = c.y;
-            }
+            if (c.fixed) { el.style.position = 'fixed'; el.style.zIndex = '2147483640'; el.style.margin = '0'; if (c.x) el.style.left = c.x; if (c.y) el.style.top = c.y; }
         } catch(e) {}
     });
-    // Restore custom overlay elements
     restoreVeilElements();
 }
 
 function edSave() {
-    // Also persist overlay elements
     var overlayEls = [];
     document.querySelectorAll('[data-veil-overlay]').forEach(function(el) {
-        overlayEls.push({
-            type:    el.getAttribute('data-veil-type'),
-            content: el.getAttribute('data-veil-content') || el.innerText,
-            x:       el.style.left,
-            y:       el.style.top,
-            style:   el.getAttribute('style') || '',
-        });
+        overlayEls.push({ type: el.getAttribute('data-veil-type'), content: el.getAttribute('data-veil-content') || el.innerText, x: el.style.left, y: el.style.top, style: el.getAttribute('style') || '' });
     });
     editChanges['__veil_overlays__'] = overlayEls;
     var store = {}; store[STORE_KEY] = JSON.stringify(editChanges);
     chrome.storage.local.set(store, function() { showPageNotif({ desc: 'layout saved!' }); });
 }
+
 function edReset() {
     editChanges = {}; var store = {}; store[STORE_KEY] = '{}';
     chrome.storage.local.set(store, function() { showPageNotif({ desc: 'layout reset!' }); });
@@ -1319,16 +1310,20 @@ chrome.storage.local.get(STORE_KEY, function(d) {
         }
     } catch(e) {}
 });
-
-
-// =========================================================================
 // -- HOTKEY SYSTEM --------------------------------------------------------
 // =========================================================================
 var HOTKEYS = {
-    // Alt + key combos
     's': function() { if (CONFIG.isStreamModeEnabled !== undefined) { CONFIG.isStreamModeEnabled = !CONFIG.isStreamModeEnabled; chrome.storage.local.set({ isStreamModeEnabled: CONFIG.isStreamModeEnabled }); showPageNotif({ desc: 'stream mode ' + (CONFIG.isStreamModeEnabled ? 'on' : 'off') }); } },
     'p': function() { buildPopoutWidget(); showPageNotif({ desc: 'popout opened' }); },
     'e': function() { if (!editActive) startEditor(); else edStop(); },
+    // M key (no alt) toggles drag mode on veil overlays
+    'm': function() {
+        window._veilDragMode = !window._veilDragMode;
+        showPageNotif({ desc: 'drag mode ' + (window._veilDragMode ? 'on — click overlays to drag' : 'off') });
+        document.querySelectorAll('[data-veil-overlay]').forEach(function(el) {
+            el.classList.toggle('drag-mode', window._veilDragMode);
+        });
+    },
     'h': function() {
         var f = document.getElementById('po-float');
         if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
@@ -1336,14 +1331,22 @@ var HOTKEYS = {
 };
 
 document.addEventListener('keydown', function(e) {
+    // M key fires without Alt — but only when not typing
+    if (e.key.toLowerCase() === 'm' && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (['INPUT','TEXTAREA'].indexOf(e.target.tagName) !== -1) return;
+        if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+        if (streakListening) return;
+        if (document.getElementById('po-streak-modal')) return;
+        if (document.getElementById('po-trades-modal')) return;
+        e.preventDefault();
+        HOTKEYS['m']();
+        return;
+    }
     if (!e.altKey) return;
     if (['INPUT','TEXTAREA'].indexOf(e.target.tagName) !== -1) return;
     if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
     var k = e.key.toLowerCase();
-    if (HOTKEYS[k]) {
-        e.preventDefault();
-        HOTKEYS[k]();
-    }
+    if (k !== 'm' && HOTKEYS[k]) { e.preventDefault(); HOTKEYS[k](); }
 });
 
 // =========================================================================
@@ -1351,52 +1354,47 @@ document.addEventListener('keydown', function(e) {
 // =========================================================================
 
 var VEIL_ELEMENTS = [
-    // TEXT ELEMENTS
-    { cat: 'Text',   id: 'live-badge',    label: 'LIVE Badge',         html: '<div style="background:linear-gradient(135deg,#ff375f,#bf5af2);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:1px;font-family:-apple-system,sans-serif;box-shadow:0 0 16px rgba(255,55,95,0.6)">LIVE</div>' },
-    { cat: 'Text',   id: 'not-financial', label: 'Not Financial Advice', html: '<div style="background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.6);padding:5px 12px;border-radius:8px;font-size:10px;font-family:-apple-system,sans-serif;border:1px solid rgba(255,255,255,0.1)">Not financial advice</div>' },
-    { cat: 'Text',   id: 'custom-label',  label: 'Custom Text Label',  html: '<div style="color:#fff;font-size:14px;font-weight:600;font-family:-apple-system,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,0.8)" contenteditable="true">Your text here</div>' },
-    { cat: 'Text',   id: 'profit-display',label: 'Profit Display (live)', html: '<div data-veil-live="profit" style="background:rgba(36,177,91,0.15);border:1px solid rgba(36,177,91,0.4);border-radius:12px;padding:8px 16px;color:#24b15b;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">+$0.00</div>' },
-    { cat: 'Text',   id: 'loss-display',  label: 'Loss Display (live)',   html: '<div data-veil-live="loss" style="background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.4);border-radius:12px;padding:8px 16px;color:#ff453a;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">-$0.00</div>' },
-    { cat: 'Text',   id: 'win-rate',      label: 'Win Rate Badge',     html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif;color:#fff"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Win Rate</div><div style="font-size:20px;font-weight:800;color:#24b15b">0%</div></div>' },
-    { cat: 'Text',   id: 'streak',        label: 'Streak Counter',     html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,193,7,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Streak</div><div style="font-size:20px;font-weight:800;color:#ffd60a">0x</div></div>' },
-    { cat: 'Text',   id: 'trades-today',  label: 'Trades Today',       html: '<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(0,176,255,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Trades Today</div><div style="font-size:20px;font-weight:800;color:#00b0ff">0</div></div>' },
-    { cat: 'Text',   id: 'disclaimer',    label: 'Risk Disclaimer',    html: '<div style="background:rgba(0,0,0,0.5);color:rgba(255,255,255,0.4);padding:4px 10px;border-radius:6px;font-size:9px;font-family:-apple-system,sans-serif;max-width:280px;text-align:center">Trading involves risk. Past performance does not guarantee future results.</div>' },
-    { cat: 'Text',   id: 'channel-name',  label: 'Channel Name',       html: '<div style="background:linear-gradient(135deg,#bf5af2,#ff375f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:22px;font-weight:900;font-family:-apple-system,sans-serif;letter-spacing:-0.5px" contenteditable="true">YourChannel</div>' },
-
-    // BADGE / STATUS
-    { cat: 'Badge',  id: 'verified-badge',label: 'Verified Badge',     html: '<div style="display:flex;align-items:center;gap:6px;background:rgba(36,177,91,0.12);border:1px solid rgba(36,177,91,0.3);border-radius:20px;padding:4px 12px;font-family:-apple-system,sans-serif"><div style="width:6px;height:6px;border-radius:50%;background:#24b15b;box-shadow:0 0 8px rgba(36,177,91,0.8)"></div><span style="font-size:11px;font-weight:600;color:#24b15b">Verified</span></div>' },
-    { cat: 'Badge',  id: 'demo-badge',    label: 'Demo Mode Badge',    html: '<div style="background:rgba(255,193,7,0.12);border:1px solid rgba(255,193,7,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#ffd60a;font-family:-apple-system,sans-serif;letter-spacing:0.5px">DEMO</div>' },
-    { cat: 'Badge',  id: 'real-badge',    label: 'Real Mode Badge',    html: '<div style="background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#bf5af2;font-family:-apple-system,sans-serif;letter-spacing:0.5px">REAL</div>' },
-    { cat: 'Badge',  id: 'pro-badge',     label: 'PRO Badge',          html: '<div style="background:linear-gradient(135deg,#bf5af2,#ff375f);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;color:#fff;font-family:-apple-system,sans-serif;letter-spacing:1px;box-shadow:0 4px 12px rgba(191,90,242,0.35)">PRO</div>' },
-    { cat: 'Badge',  id: 'sponsored',     label: 'Sponsored Tag',      html: '<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:3px 8px;font-size:9px;font-weight:600;color:rgba(255,255,255,0.4);font-family:-apple-system,sans-serif;text-transform:uppercase;letter-spacing:0.8px">Sponsored</div>' },
-
-    // SHAPES / DIVIDERS
-    { cat: 'Shape',  id: 'divider-h',     label: 'Horizontal Divider', html: '<div style="width:200px;height:1px;background:linear-gradient(90deg,transparent,rgba(191,90,242,0.6),transparent)"></div>' },
-    { cat: 'Shape',  id: 'divider-v',     label: 'Vertical Divider',   html: '<div style="width:1px;height:80px;background:linear-gradient(180deg,transparent,rgba(191,90,242,0.6),transparent)"></div>' },
-    { cat: 'Shape',  id: 'glow-dot',      label: 'Glow Dot',           html: '<div style="width:10px;height:10px;border-radius:50%;background:#bf5af2;box-shadow:0 0 0 4px rgba(191,90,242,0.2),0 0 20px rgba(191,90,242,0.6)"></div>' },
-    { cat: 'Shape',  id: 'corner-accent', label: 'Corner Accent',      html: '<div style="width:40px;height:40px;border-top:2px solid #bf5af2;border-left:2px solid #bf5af2;border-radius:4px 0 0 0;opacity:0.7"></div>' },
-    { cat: 'Shape',  id: 'glass-box',     label: 'Glass Box',          html: '<div style="width:120px;height:60px;background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:12px"></div>' },
-
-    // OVERLAYS / PANELS
-    { cat: 'Panel',  id: 'stats-panel',   label: 'Stats Panel',        html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(16px);border:1px solid rgba(191,90,242,0.18);border-radius:14px;padding:12px 16px;font-family:-apple-system,sans-serif;min-width:160px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:rgba(191,90,242,0.8);margin-bottom:8px">Session Stats</div><div style="display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>Win Rate</span><span style="color:#24b15b;font-weight:600">0%</span></div><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>Trades</span><span style="color:#fff;font-weight:600">0</span></div><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>P&L</span><span style="color:#24b15b;font-weight:600">$0.00</span></div></div></div>' },
-    { cat: 'Panel',  id: 'timer-panel',   label: 'Session Timer',      html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(16px);border:1px solid rgba(0,176,255,0.2);border-radius:12px;padding:10px 16px;font-family:-apple-system,sans-serif;text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Session</div><div style="font-size:22px;font-weight:800;color:#00b0ff;letter-spacing:2px;font-variant-numeric:tabular-nums">00:00</div></div>' },
-    { cat: 'Panel',  id: 'alert-box',     label: 'Alert Box',          html: '<div style="background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.3);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;max-width:200px"><div style="font-size:10px;font-weight:700;color:#ff453a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Alert</div><div style="font-size:11px;color:rgba(255,255,255,0.7)" contenteditable="true">Your alert message here</div></div>' },
-    { cat: 'Panel',  id: 'note-box',      label: 'Sticky Note',        html: '<div style="background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.25);border-radius:10px;padding:10px 14px;font-family:-apple-system,sans-serif;max-width:180px"><div style="font-size:9px;font-weight:700;color:#ffd60a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Note</div><div style="font-size:11px;color:rgba(255,255,255,0.75);line-height:1.5" contenteditable="true">Your note here...</div></div>' },
-    { cat: 'Panel',  id: 'social-links',  label: 'Social Links Bar',   html: '<div style="display:flex;gap:8px;align-items:center;background:rgba(10,10,16,0.8);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 12px;font-family:-apple-system,sans-serif"><span style="font-size:11px;color:rgba(255,255,255,0.5)">Follow:</span><span style="font-size:11px;font-weight:600;color:#00b0ff" contenteditable="true">@yourname</span></div>' },
-
-    // STREAM SPECIFIC
-    { cat: 'Stream', id: 'stream-badge',  label: 'Stream Live Badge',  html: '<div style="display:flex;align-items:center;gap:8px;background:rgba(10,10,16,0.9);backdrop-filter:blur(10px);border:1px solid rgba(255,55,95,0.3);border-radius:20px;padding:6px 14px;font-family:-apple-system,sans-serif"><div style="width:7px;height:7px;border-radius:50%;background:#ff375f;box-shadow:0 0 8px rgba(255,55,95,0.9);animation:po-drain 0s"></div><span style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.5px">LIVE</span><span style="font-size:10px;color:rgba(255,255,255,0.4)" contenteditable="true">0 viewers</span></div>' },
-    { cat: 'Stream', id: 'no-spoilers',   label: 'No Spoilers Bar',    html: '<div style="background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);padding:6px 16px;font-family:-apple-system,sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:0.3px;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)">Stream - No Spoilers Please</div>' },
-    { cat: 'Stream', id: 'hype-train',    label: 'Hype Bar',           html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(191,90,242,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px">Hype</span><span contenteditable="true">0%</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#bf5af2,#ff375f);border-radius:4px;transition:width 0.5s ease"></div></div></div>' },
-    { cat: 'Stream', id: 'goal-tracker',  label: 'Goal Tracker',       html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(36,177,91,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px" contenteditable="true">Daily Goal</span><span contenteditable="true">$0 / $100</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#24b15b,#00b0ff);border-radius:4px"></div></div></div>' },
+    { cat:'Text',   id:'live-badge',     label:'LIVE Badge',            html:'<div style="background:linear-gradient(135deg,#ff375f,#bf5af2);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:1px;font-family:-apple-system,sans-serif;box-shadow:0 0 16px rgba(255,55,95,0.6)">LIVE</div>' },
+    { cat:'Text',   id:'not-financial',  label:'Not Financial Advice',  html:'<div style="background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.6);padding:5px 12px;border-radius:8px;font-size:10px;font-family:-apple-system,sans-serif;border:1px solid rgba(255,255,255,0.1)">Not financial advice</div>' },
+    { cat:'Text',   id:'custom-label',   label:'Custom Text Label',     html:'<div style="color:#fff;font-size:14px;font-weight:600;font-family:-apple-system,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,0.8)" contenteditable="true">Your text here</div>' },
+    { cat:'Text',   id:'profit-display', label:'Profit Display (live)', html:'<div data-veil-live="profit" style="background:rgba(36,177,91,0.15);border:1px solid rgba(36,177,91,0.4);border-radius:12px;padding:8px 16px;color:#24b15b;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">+$0.00</div>' },
+    { cat:'Text',   id:'loss-display',   label:'Loss Display (live)',   html:'<div data-veil-live="loss" style="background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.4);border-radius:12px;padding:8px 16px;color:#ff453a;font-size:18px;font-weight:800;font-family:-apple-system,sans-serif">-$0.00</div>' },
+    { cat:'Text',   id:'win-rate',       label:'Win Rate Badge',        html:'<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif;color:#fff"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Win Rate</div><div style="font-size:20px;font-weight:800;color:#24b15b">0%</div></div>' },
+    { cat:'Text',   id:'streak',         label:'Streak Counter',        html:'<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(255,193,7,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Streak</div><div style="font-size:20px;font-weight:800;color:#ffd60a">0x</div></div>' },
+    { cat:'Text',   id:'trades-today',   label:'Trades Today',          html:'<div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(0,176,255,0.3);border-radius:12px;padding:8px 14px;font-family:-apple-system,sans-serif"><div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px">Trades Today</div><div style="font-size:20px;font-weight:800;color:#00b0ff">0</div></div>' },
+    { cat:'Text',   id:'disclaimer',     label:'Risk Disclaimer',       html:'<div style="background:rgba(0,0,0,0.5);color:rgba(255,255,255,0.4);padding:4px 10px;border-radius:6px;font-size:9px;font-family:-apple-system,sans-serif;max-width:280px;text-align:center">Trading involves risk. Past performance does not guarantee future results.</div>' },
+    { cat:'Text',   id:'channel-name',   label:'Channel Name',          html:'<div style="background:linear-gradient(135deg,#bf5af2,#ff375f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-size:22px;font-weight:900;font-family:-apple-system,sans-serif;letter-spacing:-0.5px" contenteditable="true">YourChannel</div>' },
+    { cat:'Badge',  id:'verified-badge', label:'Verified Badge',        html:'<div style="display:flex;align-items:center;gap:6px;background:rgba(36,177,91,0.12);border:1px solid rgba(36,177,91,0.3);border-radius:20px;padding:4px 12px;font-family:-apple-system,sans-serif"><div style="width:6px;height:6px;border-radius:50%;background:#24b15b;box-shadow:0 0 8px rgba(36,177,91,0.8)"></div><span style="font-size:11px;font-weight:600;color:#24b15b">Verified</span></div>' },
+    { cat:'Badge',  id:'demo-badge',     label:'Demo Mode Badge',       html:'<div style="background:rgba(255,193,7,0.12);border:1px solid rgba(255,193,7,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#ffd60a;font-family:-apple-system,sans-serif;letter-spacing:0.5px">DEMO</div>' },
+    { cat:'Badge',  id:'real-badge',     label:'Real Mode Badge',       html:'<div style="background:rgba(191,90,242,0.12);border:1px solid rgba(191,90,242,0.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#bf5af2;font-family:-apple-system,sans-serif;letter-spacing:0.5px">REAL</div>' },
+    { cat:'Badge',  id:'pro-badge',      label:'PRO Badge',             html:'<div style="background:linear-gradient(135deg,#bf5af2,#ff375f);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;color:#fff;font-family:-apple-system,sans-serif;letter-spacing:1px;box-shadow:0 4px 12px rgba(191,90,242,0.35)">PRO</div>' },
+    { cat:'Badge',  id:'sponsored',      label:'Sponsored Tag',         html:'<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:3px 8px;font-size:9px;font-weight:600;color:rgba(255,255,255,0.4);font-family:-apple-system,sans-serif;text-transform:uppercase;letter-spacing:0.8px">Sponsored</div>' },
+    { cat:'Shape',  id:'divider-h',      label:'Horizontal Divider',    html:'<div style="width:200px;height:1px;background:linear-gradient(90deg,transparent,rgba(191,90,242,0.6),transparent)"></div>' },
+    { cat:'Shape',  id:'divider-v',      label:'Vertical Divider',      html:'<div style="width:1px;height:80px;background:linear-gradient(180deg,transparent,rgba(191,90,242,0.6),transparent)"></div>' },
+    { cat:'Shape',  id:'glow-dot',       label:'Glow Dot',              html:'<div style="width:10px;height:10px;border-radius:50%;background:#bf5af2;box-shadow:0 0 0 4px rgba(191,90,242,0.2),0 0 20px rgba(191,90,242,0.6)"></div>' },
+    { cat:'Shape',  id:'corner-accent',  label:'Corner Accent',         html:'<div style="width:40px;height:40px;border-top:2px solid #bf5af2;border-left:2px solid #bf5af2;border-radius:4px 0 0 0;opacity:0.7"></div>' },
+    { cat:'Shape',  id:'glass-box',      label:'Glass Box',             html:'<div style="width:120px;height:60px;background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:12px"></div>' },
+    { cat:'Panel',  id:'stats-panel',    label:'Stats Panel',           html:'<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(16px);border:1px solid rgba(191,90,242,0.18);border-radius:14px;padding:12px 16px;font-family:-apple-system,sans-serif;min-width:160px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:rgba(191,90,242,0.8);margin-bottom:8px">Session Stats</div><div style="display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>Win Rate</span><span style="color:#24b15b;font-weight:600">0%</span></div><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>Trades</span><span style="color:#fff;font-weight:600">0</span></div><div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6)"><span>P&L</span><span style="color:#24b15b;font-weight:600">$0.00</span></div></div></div>' },
+    { cat:'Panel',  id:'timer-panel',    label:'Session Timer',         html:'<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(16px);border:1px solid rgba(0,176,255,0.2);border-radius:12px;padding:10px 16px;font-family:-apple-system,sans-serif;text-align:center"><div style="font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">Session</div><div style="font-size:22px;font-weight:800;color:#00b0ff;letter-spacing:2px;font-variant-numeric:tabular-nums">00:00</div></div>' },
+    { cat:'Panel',  id:'alert-box',      label:'Alert Box',             html:'<div style="background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.3);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;max-width:200px"><div style="font-size:10px;font-weight:700;color:#ff453a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Alert</div><div style="font-size:11px;color:rgba(255,255,255,0.7)" contenteditable="true">Your alert message here</div></div>' },
+    { cat:'Panel',  id:'note-box',       label:'Sticky Note',           html:'<div style="background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.25);border-radius:10px;padding:10px 14px;font-family:-apple-system,sans-serif;max-width:180px"><div style="font-size:9px;font-weight:700;color:#ffd60a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Note</div><div style="font-size:11px;color:rgba(255,255,255,0.75);line-height:1.5" contenteditable="true">Your note here...</div></div>' },
+    { cat:'Panel',  id:'social-links',   label:'Social Links Bar',      html:'<div style="display:flex;gap:8px;align-items:center;background:rgba(10,10,16,0.8);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 12px;font-family:-apple-system,sans-serif"><span style="font-size:11px;color:rgba(255,255,255,0.5)">Follow:</span><span style="font-size:11px;font-weight:600;color:#00b0ff" contenteditable="true">@yourname</span></div>' },
+    { cat:'Stream', id:'stream-badge',   label:'Stream Live Badge',     html:'<div style="display:flex;align-items:center;gap:8px;background:rgba(10,10,16,0.9);backdrop-filter:blur(10px);border:1px solid rgba(255,55,95,0.3);border-radius:20px;padding:6px 14px;font-family:-apple-system,sans-serif"><div style="width:7px;height:7px;border-radius:50%;background:#ff375f;box-shadow:0 0 8px rgba(255,55,95,0.9)"></div><span style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.5px">LIVE</span><span style="font-size:10px;color:rgba(255,255,255,0.4)" contenteditable="true">0 viewers</span></div>' },
+    { cat:'Stream', id:'no-spoilers',    label:'No Spoilers Bar',       html:'<div style="background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);padding:6px 16px;font-family:-apple-system,sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:0.3px;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)">Stream - No Spoilers Please</div>' },
+    { cat:'Stream', id:'hype-train',     label:'Hype Bar',              html:'<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(191,90,242,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px">Hype</span><span contenteditable="true">0%</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#bf5af2,#ff375f);border-radius:4px;transition:width 0.5s ease"></div></div></div>' },
+    { cat:'Stream', id:'goal-tracker',   label:'Goal Tracker',          html:'<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(36,177,91,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px" contenteditable="true">Daily Goal</span><span contenteditable="true">$0 / $100</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#24b15b,#00b0ff);border-radius:4px"></div></div></div>' },
+    { cat:'Stream', id:'discord-invite', label:'Discord Invite', html:'<div style="display:flex;align-items:center;gap:10px;background:rgba(88,101,242,0.12);backdrop-filter:blur(12px);border:1px solid rgba(88,101,242,0.35);border-radius:999px;padding:8px 16px 8px 10px;font-family:-apple-system,sans-serif;position:relative;overflow:hidden;min-width:200px;" class="po-discord-wrap"><div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(88,101,242,0.08),transparent);transform:translateX(-100%);animation:po-discord-shimmer 2.8s ease-in-out infinite;border-radius:999px;"></div><div style="position:relative;width:34px;height:34px;border-radius:50%;background:rgba(88,101,242,0.2);border:1.5px solid rgba(88,101,242,0.5);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:po-discord-pulse 2.5s ease infinite;"><svg width="18" height="14" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60.105 4.898A58.55 58.55 0 0 0 45.653.415a.22.22 0 0 0-.233.11 40.784 40.784 0 0 0-1.8 3.697c-5.456-.817-10.886-.817-16.23 0a37.358 37.358 0 0 0-1.827-3.697.228.228 0 0 0-.233-.11A58.394 58.394 0 0 0 10.883 4.898a.207.207 0 0 0-.095.082C1.578 18.73-.944 32.144.293 45.39a.244.244 0 0 0 .093.166c6.073 4.46 11.956 7.167 17.729 8.962a.23.23 0 0 0 .249-.082 42.08 42.08 0 0 0 3.627-5.9.225.225 0 0 0-.123-.312 38.772 38.772 0 0 1-5.539-2.64.228.228 0 0 1-.022-.378c.372-.279.744-.569 1.1-.862a.22.22 0 0 1 .23-.03c11.619 5.304 24.198 5.304 35.68 0a.219.219 0 0 1 .233.027c.356.293.728.586 1.103.865a.228.228 0 0 1-.02.378 36.384 36.384 0 0 1-5.54 2.637.227.227 0 0 0-.121.315 47.249 47.249 0 0 0 3.624 5.897.225.225 0 0 0 .249.084c5.797-1.795 11.68-4.502 17.753-8.962a.228.228 0 0 0 .092-.163c1.48-15.315-2.48-28.618-10.498-40.412a.18.18 0 0 0-.093-.084ZM23.725 37.332c-3.497 0-6.38-3.211-6.38-7.156 0-3.944 2.827-7.156 6.38-7.156 3.582 0 6.437 3.24 6.38 7.156 0 3.945-2.827 7.156-6.38 7.156Zm23.593 0c-3.498 0-6.38-3.211-6.38-7.156 0-3.944 2.826-7.156 6.38-7.156 3.582 0 6.437 3.24 6.38 7.156 0 3.945-2.826 7.156-6.38 7.156Z" fill="#5865F2"/></svg></div><div style="position:relative;display:flex;flex-direction:column;gap:2px;"><div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:rgba(88,101,242,0.8);">Join our Discord</div><div style="font-size:12px;font-weight:700;color:#fff;letter-spacing:-0.2px;" contenteditable="true">discord.gg/yourcode</div></div><div style="position:relative;margin-left:auto;display:flex;align-items:center;gap:5px;"><div style="width:7px;height:7px;border-radius:50%;background:#23a559;box-shadow:0 0 6px rgba(35,165,89,0.9);animation:po-discord-dot 2s ease infinite;flex-shrink:0;"></div><span style="font-size:10px;font-weight:600;color:#23a559;" contenteditable="true">Online</span></div></div>' },
 ];
 
-// ---- CUSTOM ELEMENTS CSS ----
+// FIX: cursor:default by default, cursor:move only when drag-mode class active
 function injectVeilElementsCSS() {
     if (document.getElementById('po-vel-styles')) return;
     var s = document.createElement('style');
     s.id = 'po-vel-styles';
     s.textContent = [
+        '@keyframes po-discord-shimmer{0%{transform:translateX(-100%)}60%,100%{transform:translateX(200%)}}',
+       '@keyframes po-discord-pulse{0%,100%{box-shadow:0 0 0 0 rgba(88,101,242,0)}50%{box-shadow:0 0 0 6px rgba(88,101,242,0.15)}}',
+       '@keyframes po-discord-dot{0%,100%{opacity:1;box-shadow:0 0 6px rgba(35,165,89,0.9)}50%{opacity:0.6;box-shadow:0 0 12px rgba(35,165,89,0.5)}}',
         '#po-vel-panel{position:fixed !important;top:50px !important;right:0 !important;width:240px !important;bottom:0 !important;background:rgba(8,8,14,0.97) !important;border-left:1px solid rgba(191,90,242,0.18) !important;z-index:2147483644 !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;display:flex !important;flex-direction:column !important;transition:transform 0.3s cubic-bezier(0.22,1,0.36,1) !important;}',
         '#po-vel-panel.closed{transform:translateX(240px) !important;}',
         '#po-vel-hdr{padding:10px 12px 8px !important;border-bottom:1px solid rgba(191,90,242,0.12) !important;font-size:9px !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:0.8px !important;background:linear-gradient(90deg,#bf5af2,#ff375f) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;flex-shrink:0 !important;}',
@@ -1412,8 +1410,11 @@ function injectVeilElementsCSS() {
         '.po-vel-item:hover{background:rgba(191,90,242,0.1) !important;border-color:rgba(191,90,242,0.3) !important;}',
         '.po-vel-item-cat{font-size:8.5px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.5px !important;color:rgba(191,90,242,0.6) !important;margin-bottom:2px !important;}',
         '.po-vel-item-label{font-size:11.5px !important;font-weight:500 !important;color:rgba(255,255,255,0.8) !important;}',
-        '[data-veil-overlay]{cursor:move !important;user-select:none !important;}',
-        '[data-veil-overlay]:hover{outline:1px dashed rgba(191,90,242,0.5) !important;outline-offset:2px !important;}',
+        // DEFAULT: no move cursor so right-click works normally
+'[data-veil-overlay]{cursor:default !important;user-select:none !important;}',
+'[data-veil-overlay].edit-mode-active{outline:1px dashed rgba(191,90,242,0.35) !important;outline-offset:2px !important;}',
+'[data-veil-overlay].edit-mode-active:hover{outline:1px dashed rgba(191,90,242,0.7) !important;outline-offset:2px !important;}',
+'[data-veil-overlay].drag-mode{cursor:move !important;}',
         '[data-veil-overlay] [contenteditable]{cursor:text !important;outline:none !important;}',
         '#po-vel-toggle{position:absolute !important;left:-22px !important;top:50% !important;transform:translateY(-50%) !important;width:22px !important;height:44px !important;background:rgba(8,8,14,0.97) !important;border:1px solid rgba(191,90,242,0.18) !important;border-right:none !important;border-radius:8px 0 0 8px !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;color:rgba(191,90,242,0.7) !important;font-size:10px !important;padding:0 !important;margin:0 !important;box-shadow:none !important;transition:background 0.2s !important;}',
         '#po-vel-toggle:hover{background:rgba(191,90,242,0.12) !important;color:#bf5af2 !important;transform:translateY(-50%) !important;box-shadow:none !important;}',
@@ -1421,7 +1422,6 @@ function injectVeilElementsCSS() {
     document.documentElement.appendChild(s);
 }
 
-// ---- RESTORE OVERLAY ELEMENTS FROM SAVED DATA ----
 function restoreVeilElements() {
     chrome.storage.local.get(STORE_KEY, function(d) {
         try {
@@ -1429,7 +1429,6 @@ function restoreVeilElements() {
             var overlays = ch['__veil_overlays__'];
             if (!overlays || !overlays.length) return;
             overlays.forEach(function(data) {
-                // Don't re-add if already on page
                 var existing = document.querySelector('[data-veil-type="' + data.type + '"][data-veil-restored]');
                 if (existing) return;
                 var def = VEIL_ELEMENTS.find(function(e) { return e.id === data.type; });
@@ -1440,7 +1439,6 @@ function restoreVeilElements() {
     });
 }
 
-// ---- SPAWN ELEMENT ONTO PAGE ----
 function spawnVeilElement(def, x, y, restored) {
     injectVeilElementsCSS();
     var wrap = document.createElement('div');
@@ -1450,52 +1448,40 @@ function spawnVeilElement(def, x, y, restored) {
     wrap.innerHTML = def.html;
     wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '100px') + ';top:' + (y || '100px') + ';';
 
-    // Delete on double-click
+    // Double-click to delete (only when not in drag mode)
     wrap.addEventListener('dblclick', function(e) {
+        if (window._veilDragMode) return;
         if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
         wrap.parentNode.removeChild(wrap);
     });
 
-    // Drag to reposition
+    // Drag: only fires when _veilDragMode is on (M key toggled)
     wrap.addEventListener('mousedown', function(e) {
+        if (!window._veilDragMode) return;
         if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
         e.preventDefault();
         var startX = e.clientX - wrap.offsetLeft;
         var startY = e.clientY - wrap.offsetTop;
-        function onMove(ev) {
-            wrap.style.left = (ev.clientX - startX) + 'px';
-            wrap.style.top  = (ev.clientY - startY) + 'px';
-        }
-        function onUp() {
-            document.removeEventListener('mousemove', onMove);
-            document.removeEventListener('mouseup', onUp);
-        }
+        function onMove(ev) { wrap.style.left = (ev.clientX - startX) + 'px'; wrap.style.top = (ev.clientY - startY) + 'px'; }
+        function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
     });
 
     document.body.appendChild(wrap);
-
-    // If this element has a live data attribute, start feeding it PO data
+if (editActive) wrap.classList.add('edit-mode-active');
     var liveType = wrap.querySelector('[data-veil-live]');
-    if (liveType) {
-        startVeilLiveUpdater(wrap, liveType.getAttribute('data-veil-live'));
-    }
+    if (liveType) startVeilLiveUpdater(wrap, liveType.getAttribute('data-veil-live'));
 
     return wrap;
 }
 
-// Live data updater — pulls values from PO DOM and feeds into veil overlay elements
 function startVeilLiveUpdater(wrap, type) {
     var interval = setInterval(function() {
-        // Stop if element removed from page
         if (!document.body.contains(wrap)) { clearInterval(interval); return; }
-
         var display = wrap.querySelector('[data-veil-live]');
         if (!display) { clearInterval(interval); return; }
-
         if (type === 'profit') {
-            // Try to get last closed trade profit from PO DOM
             var profitEl = document.querySelector('.deals-list .deal:first-child .deal__profit') ||
                            document.querySelector('.trade-history .profit:first-child') ||
                            document.querySelector('[class*="profit"]:not([data-veil-live])');
@@ -1514,23 +1500,17 @@ function startVeilLiveUpdater(wrap, type) {
             var lossEl = document.querySelector('.deals-list .deal:first-child .deal__loss') ||
                          document.querySelector('.trade-history .loss:first-child') ||
                          document.querySelector('[class*="loss"]:not([data-veil-live])');
-            if (lossEl) {
-                var lv = lossEl.innerText.trim();
-                if (lv && lv !== display.innerText) display.innerText = lv;
-            }
+            if (lossEl) { var lv = lossEl.innerText.trim(); if (lv && lv !== display.innerText) display.innerText = lv; }
         }
     }, 500);
 }
 
-// ---- ELEMENTS PANEL ----
 function buildElementsPanel() {
     if (document.getElementById('po-vel-panel')) return;
     injectVeilElementsCSS();
-
     var panel = document.createElement('div');
     panel.id = 'po-vel-panel';
     panel.classList.add('closed');
-
     var toggle = document.createElement('button');
     toggle.id = 'po-vel-toggle';
     toggle.innerHTML = '&#9664;';
@@ -1539,53 +1519,35 @@ function buildElementsPanel() {
     toggle.addEventListener('click', function() {
         open = !open;
         if (open) { panel.classList.remove('closed'); toggle.innerHTML = '&#9654;'; }
-        else       { panel.classList.add('closed');    toggle.innerHTML = '&#9664;'; }
+        else { panel.classList.add('closed'); toggle.innerHTML = '&#9664;'; }
     });
-
     var cats = ['All'].concat([...new Set(VEIL_ELEMENTS.map(function(e) { return e.cat; }))]);
     var activeCat = 'All';
-
     panel.innerHTML =
         '<div id="po-vel-hdr">Add Elements</div>' +
         '<input id="po-vel-search" placeholder="Search elements..." type="text">' +
-        '<div id="po-vel-cats">' +
-            cats.map(function(c) { return '<button class="po-vel-cat' + (c === 'All' ? ' active' : '') + '" data-cat="' + c + '">' + c + '</button>'; }).join('') +
-        '</div>' +
+        '<div id="po-vel-cats">' + cats.map(function(c) { return '<button class="po-vel-cat' + (c === 'All' ? ' active' : '') + '" data-cat="' + c + '">' + c + '</button>'; }).join('') + '</div>' +
         '<div id="po-vel-list"></div>';
-
     panel.appendChild(toggle);
     document.body.appendChild(panel);
-
     function renderList(filter, cat) {
         var list = document.getElementById('po-vel-list');
         var items = VEIL_ELEMENTS.filter(function(e) {
-            var matchCat   = cat === 'All' || e.cat === cat;
-            var matchFilter = !filter || e.label.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
-            return matchCat && matchFilter;
+            return (cat === 'All' || e.cat === cat) && (!filter || e.label.toLowerCase().indexOf(filter.toLowerCase()) !== -1);
         });
         list.innerHTML = items.map(function(e) {
-            return '<div class="po-vel-item" data-id="' + e.id + '">' +
-                '<div class="po-vel-item-cat">' + e.cat + '</div>' +
-                '<div class="po-vel-item-label">' + e.label + '</div>' +
-            '</div>';
+            return '<div class="po-vel-item" data-id="' + e.id + '"><div class="po-vel-item-cat">' + e.cat + '</div><div class="po-vel-item-label">' + e.label + '</div></div>';
         }).join('');
         list.querySelectorAll('.po-vel-item').forEach(function(node) {
             node.addEventListener('click', function() {
                 var id = node.getAttribute('data-id');
                 var def = VEIL_ELEMENTS.find(function(e) { return e.id === id; });
-                if (def) {
-                    spawnVeilElement(def, '120px', '120px', false);
-                    showPageNotif({ desc: def.label + ' added! drag it anywhere. double-click to remove.' });
-                }
+                if (def) { spawnVeilElement(def, '120px', '120px', false); showPageNotif({ desc: def.label + ' added! press M to drag. right-click for options.' }); }
             });
         });
     }
-
     renderList('', 'All');
-
-    document.getElementById('po-vel-search').addEventListener('input', function() {
-        renderList(this.value, activeCat);
-    });
+    document.getElementById('po-vel-search').addEventListener('input', function() { renderList(this.value, activeCat); });
     panel.querySelectorAll('.po-vel-cat').forEach(function(btn) {
         btn.addEventListener('click', function() {
             panel.querySelectorAll('.po-vel-cat').forEach(function(b) { b.classList.remove('active'); });
@@ -1596,12 +1558,10 @@ function buildElementsPanel() {
     });
 }
 
-// ---- WIRE ELEMENTS PANEL INTO EDITOR ----
 var _origStartEditor = startEditor;
 startEditor = function() {
     _origStartEditor();
     buildElementsPanel();
-    // Add "Add Elements" button to top bar
     var bar = document.getElementById('po-edit-bar');
     if (bar && !document.getElementById('peb-elements')) {
         var btn = document.createElement('button');
@@ -1614,10 +1574,9 @@ startEditor = function() {
             if (panel) {
                 var isOpen = !panel.classList.contains('closed');
                 if (isOpen) { panel.classList.add('closed'); document.getElementById('po-vel-toggle').innerHTML = '&#9664;'; }
-                else        { panel.classList.remove('closed'); document.getElementById('po-vel-toggle').innerHTML = '&#9654;'; }
+                else { panel.classList.remove('closed'); document.getElementById('po-vel-toggle').innerHTML = '&#9654;'; }
             }
         });
-        // Insert before Save Changes
         var saveBtn = document.getElementById('peb-save');
         bar.insertBefore(btn, saveBtn);
     }
@@ -1631,15 +1590,11 @@ edStop = function() {
 };
 
 // =========================================================================
-// =========================================================================
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
 var VEIL_CURRENT_VERSION = '2.5.9';
-var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
-
-// Full-screen update popup — replaces the old banner
 function getUpdateBrowserInfo() {
     var ua = navigator.userAgent;
     if (ua.indexOf('Edg/') !== -1)    return { name: 'Edge',    url: 'edge://extensions' };
@@ -1652,8 +1607,6 @@ function getUpdateBrowserInfo() {
 function showUpdateBanner(currentVersion, latestVersion) {
     if (document.getElementById('po-update-popup')) return;
     injectStyles();
-
-    // Inject Apple Intelligence smooth animation styles
     if (!document.getElementById('po-update-styles')) {
         var us = document.createElement('style');
         us.id = 'po-update-styles';
@@ -1665,19 +1618,16 @@ function showUpdateBanner(currentVersion, latestVersion) {
             '@keyframes poSlideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}',
             '@keyframes poShimmer{0%{background-position:200% center}100%{background-position:-200% center}}',
             '#po-update-popup *{box-sizing:border-box !important;}',
-            // Snooze picker
             '#po-snooze-picker{display:none;flex-direction:column;gap:6px;margin-top:10px;animation:poSlideUp 0.25s cubic-bezier(0.22,1,0.36,1);}',
             '#po-snooze-picker.visible{display:flex !important;}',
             '.po-snooze-opt{padding:7px 12px !important;border-radius:9px !important;border:1px solid rgba(255,255,255,0.07) !important;background:rgba(255,255,255,0.03) !important;color:rgba(255,255,255,0.7) !important;font-size:11px !important;font-weight:500 !important;cursor:pointer !important;font-family:inherit !important;text-align:left !important;transition:background 0.18s,border-color 0.18s,transform 0.12s !important;display:flex !important;align-items:center !important;justify-content:space-between !important;}',
             '.po-snooze-opt:hover{background:rgba(191,90,242,0.1) !important;border-color:rgba(191,90,242,0.25) !important;color:#fff !important;transform:translateX(2px) !important;}',
             '.po-snooze-opt span{font-size:10px !important;color:rgba(255,255,255,0.3) !important;}',
-            // Steps view
             '#po-steps-view{display:none;flex-direction:column;gap:6px;margin-top:8px;animation:poSlideUp 0.28s cubic-bezier(0.22,1,0.36,1);}',
             '#po-steps-view.visible{display:flex !important;}',
             '.po-step-row{display:flex !important;align-items:flex-start !important;gap:10px !important;}',
             '.po-step-num{width:18px !important;height:18px !important;border-radius:50% !important;background:rgba(0,176,255,0.1) !important;border:1px solid rgba(0,176,255,0.25) !important;color:#00b0ff !important;font-size:8px !important;font-weight:700 !important;display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;margin-top:2px !important;}',
             '.po-step-txt{font-size:11px !important;color:rgba(255,255,255,0.65) !important;line-height:1.5 !important;}',
-            // Changelog expand panel inside update popup
             '#po-cl-expand{max-height:0;overflow:hidden;transition:max-height 0.45s cubic-bezier(0.22,1,0.36,1),opacity 0.3s ease;opacity:0;margin-bottom:0;}',
             '#po-cl-expand.open{max-height:400px;opacity:1;margin-bottom:12px;}',
             '#po-cl-expand-inner{padding:12px 0 0;border-top:1px solid rgba(255,255,255,0.06);}',
@@ -1698,499 +1648,141 @@ function showUpdateBanner(currentVersion, latestVersion) {
         (document.head || document.documentElement).appendChild(us);
     }
 
-    var browser   = getUpdateBrowserInfo();
+    var browser = getUpdateBrowserInfo();
     var avatarSrc = chrome.runtime.getURL('image.jpg');
-
-    // --- OVERLAY ---
     var overlay = document.createElement('div');
-    overlay.id  = 'po-update-popup';
+    overlay.id = 'po-update-popup';
     overlay.style.cssText = 'position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;';
-
-    // Animated backdrop
     var backdrop = document.createElement('div');
     backdrop.style.cssText = 'position:absolute !important;inset:0 !important;background:rgba(0,0,0,0) !important;backdrop-filter:blur(0px) !important;-webkit-backdrop-filter:blur(0px) !important;animation:poFadeIn 0.4s ease forwards !important;';
-    // Animate backdrop separately so blur ramps in
-    setTimeout(function() {
-        backdrop.style.background   = 'rgba(0,0,0,0.55)';
-        backdrop.style.backdropFilter = 'blur(24px)';
-        backdrop.style.webkitBackdropFilter = 'blur(24px)';
-        backdrop.style.transition   = 'background 0.45s ease, backdrop-filter 0.45s ease';
-    }, 16);
-
-    // --- CARD ---
+    setTimeout(function() { backdrop.style.background = 'rgba(0,0,0,0.55)'; backdrop.style.backdropFilter = 'blur(24px)'; backdrop.style.webkitBackdropFilter = 'blur(24px)'; backdrop.style.transition = 'background 0.45s ease, backdrop-filter 0.45s ease'; }, 16);
     var card = document.createElement('div');
-    card.style.cssText = [
-        'position:relative !important',
-        'width:310px !important',
-        'background:rgba(10,8,18,0.98) !important',
-        'border:1px solid rgba(191,90,242,0.18) !important',
-        'border-radius:22px !important',
-        'padding:20px 18px 16px !important',
-        'box-shadow:0 40px 80px rgba(0,0,0,0.8),0 0 0 0.5px rgba(191,90,242,0.12),inset 0 1px 0 rgba(191,90,242,0.1),0 0 40px rgba(191,90,242,0.08) !important',
-        'animation:poUpIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards !important',
-        'overflow:hidden !important',
-    ].join(';');
-
-    // Top shimmer line
+    card.style.cssText = 'position:relative !important;width:310px !important;background:rgba(10,8,18,0.98) !important;border:1px solid rgba(191,90,242,0.18) !important;border-radius:22px !important;padding:20px 18px 16px !important;box-shadow:0 40px 80px rgba(0,0,0,0.8),0 0 0 0.5px rgba(191,90,242,0.12),inset 0 1px 0 rgba(191,90,242,0.1),0 0 40px rgba(191,90,242,0.08) !important;animation:poUpIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards !important;overflow:hidden !important;';
     var shimmer = document.createElement('div');
     shimmer.style.cssText = 'position:absolute !important;top:0 !important;left:0 !important;right:0 !important;height:1px !important;background:linear-gradient(90deg,transparent 0%,rgba(191,90,242,0.6) 30%,rgba(0,176,255,0.6) 60%,transparent 100%) !important;background-size:200% auto !important;animation:poShimmer 3s linear infinite !important;';
-
-    // --- TOPBAR ---
     var topBar = document.createElement('div');
     topBar.style.cssText = 'display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:12px !important;';
-    topBar.innerHTML =
-        '<div style="display:flex;align-items:center;gap:9px;">' +
-            '<img src="' + avatarSrc + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.35);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
-            '<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:rgba(191,90,242,0.1);border:1px solid rgba(191,90,242,0.25);border-radius:20px;">' +
-                '<div style="width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,#bf5af2,#00b0ff);box-shadow:0 0 7px rgba(191,90,242,0.9);flex-shrink:0;"></div>' +
-                '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;background:linear-gradient(90deg,#bf5af2,#00b0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">update available</span>' +
-            '</div>' +
-        '</div>' +
-        '<div style="font-size:10.5px;color:rgba(255,255,255,0.35);font-weight:500;font-variant-numeric:tabular-nums;">' +
-            '<span style="color:rgba(255,255,255,0.3);">v' + currentVersion + '</span>' +
-            '<span style="margin:0 5px;color:rgba(255,255,255,0.25);">→</span>' +
-            '<span style="color:#fff;font-weight:700;">v' + latestVersion + '</span>' +
-        '</div>';
-
-    // --- HEADING ---
+    topBar.innerHTML = '<div style="display:flex;align-items:center;gap:9px;"><img src="' + avatarSrc + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.35);flex-shrink:0;" onerror="this.style.display=\'none\'"><div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:rgba(191,90,242,0.1);border:1px solid rgba(191,90,242,0.25);border-radius:20px;"><div style="width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,#bf5af2,#00b0ff);box-shadow:0 0 7px rgba(191,90,242,0.9);flex-shrink:0;"></div><span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;background:linear-gradient(90deg,#bf5af2,#00b0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">update available</span></div></div><div style="font-size:10.5px;color:rgba(255,255,255,0.35);font-weight:500;font-variant-numeric:tabular-nums;"><span style="color:rgba(255,255,255,0.3);">v' + currentVersion + '</span><span style="margin:0 5px;color:rgba(255,255,255,0.25);">→</span><span style="color:#fff;font-weight:700;">v' + latestVersion + '</span></div>';
     var heading = document.createElement('div');
     heading.style.cssText = 'font-size:18px !important;font-weight:700 !important;color:#fff !important;-webkit-text-fill-color:#fff !important;letter-spacing:-0.4px !important;line-height:1.2 !important;margin-bottom:4px !important;';
     heading.textContent = "we\u2019ve detected a new update";
-
     var sub = document.createElement('div');
     sub.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.35) !important;margin-bottom:14px !important;font-weight:400 !important;line-height:1.5 !important;';
     sub.textContent = 'version ' + latestVersion + ' is available for your extension';
-
-    // --- DIVIDER ---
     var div1 = document.createElement('div');
     div1.style.cssText = 'height:1px !important;background:rgba(255,255,255,0.05) !important;margin-bottom:12px !important;';
-
-    // --- CHANGELOG TOGGLE ---
-
-    var clExpand = document.createElement('div');
-    clExpand.id = 'po-cl-expand';
-
-    var clInner = document.createElement('div');
-    clInner.id = 'po-cl-expand-inner';
-
-    // Build changelog content lazily when user first opens it
-    var clOpen = false;
-    var clBuilt = false;
-
-    function buildClExpand(cl) {
-        if (clBuilt) return;
-        clBuilt = true;
-        if (cl.image) {
-            var clImg = document.createElement('img');
-            clImg.id = 'po-cl-expand-img';
-            var imgSrc = (cl.image.indexOf('http') === 0 || cl.image.indexOf('//') === 0)
-                ? cl.image : chrome.runtime.getURL(cl.image);
-            clImg.src = imgSrc;
-            clImg.onerror = function() { this.style.display = 'none'; };
-            clInner.appendChild(clImg);
-        }
-        var clTitleEl = document.createElement('div');
-        clTitleEl.id = 'po-cl-expand-title';
-        clTitleEl.textContent = cl.title || '';
-        clInner.appendChild(clTitleEl);
-        if (cl.subtitle) {
-            var clSubEl = document.createElement('div');
-            clSubEl.id = 'po-cl-expand-sub';
-            clSubEl.textContent = cl.subtitle;
-            clInner.appendChild(clSubEl);
-        }
-        if (cl.mode === 'bullets' && cl.items && cl.items.length) {
-            var clList = document.createElement('ul');
-            clList.id = 'po-cl-expand-list';
-            cl.items.forEach(function(item) {
-                var li = document.createElement('li');
-                li.textContent = typeof item === 'string' ? item : (item.text || '');
-                clList.appendChild(li);
-            });
-            clInner.appendChild(clList);
-        } else if (cl.mode === 'text' && cl.text) {
-            var clTxtEl = document.createElement('p');
-            clTxtEl.id = 'po-cl-expand-text';
-            clTxtEl.textContent = cl.text;
-            clInner.appendChild(clTxtEl);
-        } else if (cl.mode === 'links' && cl.items && cl.items.length) {
-            var clList2 = document.createElement('ul');
-            clList2.id = 'po-cl-expand-list';
-            cl.items.forEach(function(item) {
-                var li = document.createElement('li');
-                if (typeof item === 'string') { li.textContent = item; }
-                else {
-                    var a = document.createElement('a');
-                    a.href = item.url; a.target = '_blank'; a.rel = 'noopener';
-                    a.textContent = item.text;
-                    a.style.cssText = 'color:#bf5af2;-webkit-text-fill-color:#bf5af2;text-decoration:none;';
-                    li.appendChild(a);
-                }
-                clList2.appendChild(li);
-            });
-            clInner.appendChild(clList2);
-        }
-    }
-
+    var clExpand = document.createElement('div'); clExpand.id = 'po-cl-expand';
+    var clInner = document.createElement('div'); clInner.id = 'po-cl-expand-inner';
     clExpand.appendChild(clInner);
-
-
-
-    // --- MAIN BUTTONS (default view) ---
-    var mainBtns = document.createElement('div');
-    mainBtns.id  = 'po-main-btns';
-    mainBtns.style.cssText = 'display:flex !important;gap:8px !important;';
-
+    var mainBtns = document.createElement('div'); mainBtns.id = 'po-main-btns'; mainBtns.style.cssText = 'display:flex !important;gap:8px !important;';
     var updateBtn = document.createElement('button');
-    updateBtn.textContent = 'let’s get started';
-    updateBtn.style.cssText = [
-        'flex:1 !important',
-        'padding:9px 14px !important',
-        'background:linear-gradient(135deg,#bf5af2,#00b0ff) !important',
-        'border:none !important',
-        'border-radius:11px !important',
-        'color:#fff !important',
-        '-webkit-text-fill-color:#fff !important',
-        'font-weight:600 !important',
-        'font-size:12px !important',
-        'cursor:pointer !important',
-        'font-family:inherit !important',
-        'letter-spacing:-0.1px !important',
-        'box-shadow:0 3px 14px rgba(191,90,242,0.35) !important',
-        'transition:opacity 0.2s,transform 0.15s,box-shadow 0.2s !important',
-    ].join(';');
-    updateBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; this.style.boxShadow = '0 8px 28px rgba(191,90,242,0.55)'; });
-    updateBtn.addEventListener('mouseout',  function() { this.style.opacity = '1'; this.style.transform = 'translateY(0)'; this.style.boxShadow = '0 4px 20px rgba(191,90,242,0.35)'; });
-    updateBtn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.97)'; });
-    updateBtn.addEventListener('mouseup',   function() { this.style.transform = 'translateY(-1px)'; });
-
+    updateBtn.textContent = 'let\u2019s get started';
+    updateBtn.style.cssText = 'flex:1 !important;padding:9px 14px !important;background:linear-gradient(135deg,#bf5af2,#00b0ff) !important;border:none !important;border-radius:11px !important;color:#fff !important;-webkit-text-fill-color:#fff !important;font-weight:600 !important;font-size:12px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:-0.1px !important;box-shadow:0 3px 14px rgba(191,90,242,0.35) !important;transition:opacity 0.2s,transform 0.15s,box-shadow 0.2s !important;';
     var snoozeBtn = document.createElement('button');
     snoozeBtn.textContent = 'remind me later';
-    snoozeBtn.style.cssText = [
-        'flex:1 !important',
-        'padding:9px 14px !important',
-        'background:rgba(255,255,255,0.05) !important',
-        'border:1px solid rgba(255,255,255,0.08) !important',
-        'border-radius:11px !important',
-        'color:rgba(255,255,255,0.5) !important',
-        'font-weight:500 !important',
-        'font-size:12px !important',
-        'cursor:pointer !important',
-        'font-family:inherit !important',
-        'transition:background 0.2s,color 0.2s,transform 0.12s !important',
-    ].join(';');
-    snoozeBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.1)'; this.style.color = '#fff'; });
-    snoozeBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.06)'; this.style.color = 'rgba(255,255,255,0.6)'; });
-    snoozeBtn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.97)'; });
-    snoozeBtn.addEventListener('mouseup',   function() { this.style.transform = 'scale(1)'; });
-
-    mainBtns.appendChild(updateBtn);
-    mainBtns.appendChild(snoozeBtn);
-
-    // --- SNOOZE PICKER ---
-    var snoozePicker = document.createElement('div');
-    snoozePicker.id = 'po-snooze-picker';
-    var snoozeLabel = document.createElement('div');
-    snoozeLabel.style.cssText = 'font-size:10px !important;color:rgba(255,255,255,0.35) !important;margin-bottom:6px !important;font-weight:500 !important;letter-spacing:0.2px !important;';
-    snoozeLabel.textContent = 'remind me in…';
-    var snoozeOpts = [
-        { label: '1 hour',  sub: 'remind you in an hour', ms: 3600000 },
-        { label: '1 day',   sub: 'tomorrow same time',    ms: 86400000 },
-        { label: '1 week',  sub: 'a week from now',       ms: 604800000 },
-    ];
+    snoozeBtn.style.cssText = 'flex:1 !important;padding:9px 14px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:11px !important;color:rgba(255,255,255,0.5) !important;font-weight:500 !important;font-size:12px !important;cursor:pointer !important;font-family:inherit !important;transition:background 0.2s,color 0.2s,transform 0.12s !important;';
+    mainBtns.appendChild(updateBtn); mainBtns.appendChild(snoozeBtn);
+    var snoozePicker = document.createElement('div'); snoozePicker.id = 'po-snooze-picker';
+    var snoozeLabel = document.createElement('div'); snoozeLabel.style.cssText = 'font-size:10px !important;color:rgba(255,255,255,0.35) !important;margin-bottom:6px !important;font-weight:500 !important;';
+    snoozeLabel.textContent = 'remind me in\u2026';
+    var snoozeOpts = [{label:'1 hour',sub:'remind you in an hour',ms:3600000},{label:'1 day',sub:'tomorrow same time',ms:86400000},{label:'1 week',sub:'a week from now',ms:604800000}];
     snoozePicker.appendChild(snoozeLabel);
     snoozeOpts.forEach(function(opt) {
-        var row = document.createElement('button');
-        row.className = 'po-snooze-opt';
+        var row = document.createElement('button'); row.className = 'po-snooze-opt';
         row.innerHTML = '<span style="-webkit-text-fill-color:rgba(255,255,255,0.7);color:rgba(255,255,255,0.7);">' + opt.label + '</span><span>' + opt.sub + '</span>';
-        row.addEventListener('click', function() {
-            var snoozeUntil = Date.now() + opt.ms;
-            chrome.storage.local.set({ 'veil_snooze_until': snoozeUntil, 'veil_last_seen_update': latestVersion });
-            closeUpdate(overlay);
-            showPageNotif({ desc: "ok we'll remind you in " + opt.label });
-        });
+        row.addEventListener('click', function() { var su = Date.now() + opt.ms; chrome.storage.local.set({'veil_snooze_until':su,'veil_last_seen_update':latestVersion}); closeUpdate(overlay); showPageNotif({desc:"ok we'll remind you in " + opt.label}); });
         snoozePicker.appendChild(row);
     });
-    // Back button
-    var backBtn = document.createElement('button');
-    backBtn.textContent = '← back';
+    var backBtn = document.createElement('button'); backBtn.textContent = '\u2190 back';
     backBtn.style.cssText = 'background:none !important;border:none !important;color:rgba(255,255,255,0.3) !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;padding:4px 0 !important;text-align:left !important;transition:color 0.15s !important;';
-    backBtn.addEventListener('mouseover', function() { this.style.color = 'rgba(255,255,255,0.7)'; });
-    backBtn.addEventListener('mouseout',  function() { this.style.color = 'rgba(255,255,255,0.3)'; });
-    backBtn.addEventListener('click', function() {
-        snoozePicker.classList.remove('visible');
-        mainBtns.style.display = 'flex';
-    });
+    backBtn.addEventListener('click', function() { snoozePicker.classList.remove('visible'); mainBtns.style.display = 'flex'; });
     snoozePicker.appendChild(backBtn);
-
-    // --- STEPS VIEW ---
-    var stepsView = document.createElement('div');
-    stepsView.id = 'po-steps-view';
-    var stepsList = [
-        { n:'1', html:'Download the ZIP file using the button below' },
-        { n:'2', html:'Unzip it anywhere on your computer' },
-        { n:'3', html:'Go to <b style="color:#fff;-webkit-text-fill-color:#fff;">' + browser.url + '</b>' },
-        { n:'4', html:'Enable <b style="color:#fff;-webkit-text-fill-color:#fff;">Developer Mode</b> (toggle, top right)' },
-        { n:'5', html:'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Load unpacked</b> and select the folder' },
-        { n:'6', html:'Remove the old version — you\'re done' },
-    ];
-    stepsList.forEach(function(step) {
-        var row = document.createElement('div');
-        row.className = 'po-step-row';
+    var stepsView = document.createElement('div'); stepsView.id = 'po-steps-view';
+    [{n:'1',html:'Download the ZIP file using the button below'},{n:'2',html:'Unzip it anywhere on your computer'},{n:'3',html:'Go to <b style="color:#fff;-webkit-text-fill-color:#fff;">' + browser.url + '</b>'},{n:'4',html:'Enable <b style="color:#fff;-webkit-text-fill-color:#fff;">Developer Mode</b> (toggle, top right)'},{n:'5',html:'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Load unpacked</b> and select the folder'},{n:'6',html:'Remove the old version \u2014 you\'re done'}].forEach(function(step) {
+        var row = document.createElement('div'); row.className = 'po-step-row';
         row.innerHTML = '<div class="po-step-num">' + step.n + '</div><div class="po-step-txt">' + step.html + '</div>';
         stepsView.appendChild(row);
     });
-
-    // Download + open extensions buttons
-    var dlRow = document.createElement('div');
-    dlRow.style.cssText = 'display:flex !important;gap:6px !important;margin-top:6px !important;';
-
-    var dlBtn = document.createElement('a');
-    dlBtn.href = '#';
-    dlBtn.textContent = 'Download ZIP';
+    var dlRow = document.createElement('div'); dlRow.style.cssText = 'display:flex !important;gap:6px !important;margin-top:6px !important;';
+    var dlBtn = document.createElement('a'); dlBtn.href = '#'; dlBtn.textContent = 'Download ZIP';
+    dlBtn.style.cssText = 'flex:1 !important;padding:9px !important;background:linear-gradient(135deg,#bf5af2,#00b0ff) !important;border:none !important;border-radius:10px !important;color:#fff !important;-webkit-text-fill-color:#fff !important;font-weight:600 !important;font-size:11.5px !important;text-decoration:none !important;text-align:center !important;display:block !important;box-shadow:0 3px 12px rgba(191,90,242,0.3) !important;transition:opacity 0.18s,transform 0.12s !important;';
     dlBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        dlBtn.textContent = 'Fetching...';
-        fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var asset = data.assets && data.assets.find(function(a) { return a.name.endsWith('.zip'); });
-                var url = asset ? asset.browser_download_url : data.zipball_url;
-                dlBtn.textContent = 'Download ZIP';
-                // Trigger download
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = '';
-                a.target = '_blank';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            //    window.open('chrome://extensions', '_blank');
-                setTimeout(function() {
-                    closeUpdate(overlay);
-                    chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url })
-                }, 800);
-            })
-            .catch(function() {
-                dlBtn.textContent = 'Download ZIP';
-                // Fallback to releases page
-                window.open('https://github.com/meatballsong1/po-extension/releases/latest', '_blank');
-            });
+        e.preventDefault(); dlBtn.textContent = 'Fetching...';
+        fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest').then(function(r){return r.json();}).then(function(data) {
+            var asset = data.assets && data.assets.find(function(a){return a.name.endsWith('.zip');});
+            var url = asset ? asset.browser_download_url : data.zipball_url;
+            dlBtn.textContent = 'Download ZIP';
+            var a = document.createElement('a'); a.href = url; a.download = ''; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(function() { closeUpdate(overlay); chrome.runtime.sendMessage({type:'PO_OPEN_TAB',url:browser.url}); }, 800);
+        }).catch(function() { dlBtn.textContent = 'Download ZIP'; window.open('https://github.com/meatballsong1/po-extension/releases/latest','_blank'); });
     });
-    dlBtn.style.cssText = [
-        'flex:1 !important',
-        'padding:9px !important',
-        'background:linear-gradient(135deg,#bf5af2,#00b0ff) !important',
-        'border:none !important',
-        'border-radius:10px !important',
-        'color:#fff !important',
-        '-webkit-text-fill-color:#fff !important',
-        'font-weight:600 !important',
-        'font-size:11.5px !important',
-        'text-decoration:none !important',
-        'text-align:center !important',
-        'display:block !important',
-        'box-shadow:0 3px 12px rgba(191,90,242,0.3) !important',
-        'transition:opacity 0.18s,transform 0.12s !important',
-    ].join(';');
-    dlBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; });
-    dlBtn.addEventListener('mouseout',  function() { this.style.opacity = '1'; this.style.transform = 'translateY(0)'; });
-
-    var extBtn = document.createElement('button');
-    extBtn.textContent = browser.name + ' Extensions';
-    extBtn.style.cssText = [
-        'flex:0 0 auto !important',
-        'padding:9px 12px !important',
-        'background:rgba(255,255,255,0.04) !important',
-        'border:1px solid rgba(255,255,255,0.08) !important',
-        'border-radius:10px !important',
-        'color:rgba(255,255,255,0.45) !important',
-        'font-weight:500 !important',
-        'font-size:11px !important',
-        'cursor:pointer !important',
-        'font-family:inherit !important',
-        'white-space:nowrap !important',
-        'transition:background 0.18s,color 0.15s !important',
-    ].join(';');
-    extBtn.addEventListener('mouseover', function() { this.style.background = 'rgba(255,255,255,0.1)'; this.style.color = '#fff'; });
-    extBtn.addEventListener('mouseout',  function() { this.style.background = 'rgba(255,255,255,0.05)'; this.style.color = 'rgba(255,255,255,0.55)'; });
-    extBtn.addEventListener('click', function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); });
-
-    dlRow.appendChild(dlBtn);
-    dlRow.appendChild(extBtn);
-    stepsView.appendChild(dlRow);
-
-    // Back from steps
-    var stepsBackBtn = document.createElement('button');
-    stepsBackBtn.textContent = '← back';
+    var extBtn = document.createElement('button'); extBtn.textContent = browser.name + ' Extensions';
+    extBtn.style.cssText = 'flex:0 0 auto !important;padding:9px 12px !important;background:rgba(255,255,255,0.04) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:10px !important;color:rgba(255,255,255,0.45) !important;font-weight:500 !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;white-space:nowrap !important;transition:background 0.18s,color 0.15s !important;';
+    extBtn.addEventListener('click', function() { chrome.runtime.sendMessage({type:'PO_OPEN_TAB',url:browser.url}); });
+    dlRow.appendChild(dlBtn); dlRow.appendChild(extBtn); stepsView.appendChild(dlRow);
+    var stepsBackBtn = document.createElement('button'); stepsBackBtn.textContent = '\u2190 back';
     stepsBackBtn.style.cssText = 'background:none !important;border:none !important;color:rgba(255,255,255,0.3) !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;padding:4px 0 !important;text-align:left !important;transition:color 0.15s !important;margin-top:2px !important;';
-    stepsBackBtn.addEventListener('mouseover', function() { this.style.color = 'rgba(255,255,255,0.7)'; });
-    stepsBackBtn.addEventListener('mouseout',  function() { this.style.color = 'rgba(255,255,255,0.3)'; });
-    stepsBackBtn.addEventListener('click', function() {
-        stepsView.classList.remove('visible');
-        mainBtns.style.display = 'flex';
-    });
+    stepsBackBtn.addEventListener('click', function() { stepsView.classList.remove('visible'); mainBtns.style.display = 'flex'; });
     stepsView.appendChild(stepsBackBtn);
-
-    // --- BUTTON LOGIC ---
-    updateBtn.addEventListener('click', function() {
-        mainBtns.style.display = 'none';
-        stepsView.classList.add('visible');
-    });
-
-    snoozeBtn.addEventListener('click', function() {
-        mainBtns.style.display = 'none';
-        snoozePicker.classList.add('visible');
-    });
-
-    // No X button — dismissed via Remind me later or Download
-
+    updateBtn.addEventListener('click', function() { mainBtns.style.display = 'none'; stepsView.classList.add('visible'); });
+    snoozeBtn.addEventListener('click', function() { mainBtns.style.display = 'none'; snoozePicker.classList.add('visible'); });
     function closeUpdate(el) {
         card.style.animation = 'poUpOut 0.3s cubic-bezier(0.22,1,0.36,1) forwards';
-        backdrop.style.transition = 'opacity 0.3s ease';
-        backdrop.style.opacity = '0';
+        backdrop.style.transition = 'opacity 0.3s ease'; backdrop.style.opacity = '0';
         setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
     }
-
-    // backdrop click intentionally disabled — use Remind me later or Download to dismiss
-
-    // Assemble
-    card.appendChild(shimmer);
-    card.appendChild(topBar);
-    card.appendChild(heading);
-    card.appendChild(sub);
-    card.appendChild(div1);
-    card.appendChild(clExpand);
-    card.appendChild(mainBtns);
-    card.appendChild(snoozePicker);
-    card.appendChild(stepsView);
-    overlay.appendChild(backdrop);
-    overlay.appendChild(card);
+    card.appendChild(shimmer); card.appendChild(topBar); card.appendChild(heading); card.appendChild(sub); card.appendChild(div1); card.appendChild(clExpand); card.appendChild(mainBtns); card.appendChild(snoozePicker); card.appendChild(stepsView);
+    overlay.appendChild(backdrop); overlay.appendChild(card);
     (document.body || document.documentElement).appendChild(overlay);
 }
 
-
-// ---- POPUP QUEUE ----
-// changelog shows first; update popup fires ~5s after changelog is dismissed
 var _pendingUpdateVersions = null;
-
 function _maybeFireQueuedUpdate() {
     if (!_pendingUpdateVersions) return;
-    var v = _pendingUpdateVersions;
-    _pendingUpdateVersions = null;
+    var v = _pendingUpdateVersions; _pendingUpdateVersions = null;
     showUpdateBanner(v.current, v.latest);
 }
 
-// Update checking handled by background service worker (background.js)
-// It sends PO_UPDATE_AVAILABLE to this tab when it detects a newer version
-
-
-// -- CHANGELOG ---------------------------------------------------------
-// Changelog is loaded from changelog.json at runtime — edit that file
-// or use the builder to update it. Do not hardcode values here.
-// ============================================================
-var CHANGELOG = null; // loaded async from changelog.json
+var CHANGELOG = null;
 var _changelogLoaded = false;
 var _changelogCallbacks = [];
 
 function loadChangelog(cb) {
     if (_changelogLoaded && CHANGELOG) { cb(CHANGELOG); return; }
     _changelogCallbacks.push(cb);
-    if (_changelogCallbacks.length > 1) return; // already fetching
+    if (_changelogCallbacks.length > 1) return;
     fetch(chrome.runtime.getURL('changelog.json') + '?t=' + Date.now())
         .then(function(r) { return r.json(); })
-        .then(function(data) {
-            CHANGELOG = data;
-            _changelogLoaded = true;
-            _changelogCallbacks.forEach(function(fn) { fn(CHANGELOG); });
-            _changelogCallbacks = [];
-        })
-        .catch(function(e) {
-            console.warn('[veil] Failed to load changelog.json:', e);
-            // Fallback so popup doesn't break
-            CHANGELOG = { version: '0', title: '', subtitle: '', image: '', mode: 'none', items: [], text: '', buttonLabel: 'Got it' };
-            _changelogLoaded = true;
-            _changelogCallbacks.forEach(function(fn) { fn(CHANGELOG); });
-            _changelogCallbacks = [];
-        });
+        .then(function(data) { CHANGELOG = data; _changelogLoaded = true; _changelogCallbacks.forEach(function(fn) { fn(CHANGELOG); }); _changelogCallbacks = []; })
+        .catch(function(e) { CHANGELOG = {version:'0',title:'',subtitle:'',image:'',mode:'none',items:[],text:'',buttonLabel:'Got it'}; _changelogLoaded = true; _changelogCallbacks.forEach(function(fn) { fn(CHANGELOG); }); _changelogCallbacks = []; });
 }
-// ============================================================
 
 var CL_KEY = 'po_seen_version';
 
-function showUpdateToast(version) {
-    // Uses the existing po-notif-root notification stack — matches extension style exactly
-    showPageNotif({
-        title: 'pocket option config',
-        desc: 'updated to v' + version + ' — enjoy.',
-    });
-}
+function showUpdateToast(version) { showPageNotif({ title: 'pocket option config', desc: 'updated to v' + version + ' \u2014 enjoy.' }); }
 
 function showChangelog() {
     injectStyles();
     if (!document.body) { document.addEventListener('DOMContentLoaded', showChangelog); return; }
     if (document.getElementById('po-cl-overlay')) return;
-
     loadChangelog(function(cl) {
         chrome.storage.local.get(CL_KEY, function(stored) {
             var oldVersion = stored[CL_KEY] || null;
-
             var bodyHTML = '';
-            if (cl.mode === 'bullets' && cl.items && cl.items.length) {
-                var lis = cl.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
-                bodyHTML = '<ul id="po-cl-list">' + lis + '</ul>';
-            } else if (cl.mode === 'text' && cl.text) {
-                bodyHTML = '<p id="po-cl-text">' + cl.text + '</p>';
-            } else if (cl.mode === 'links' && cl.items && cl.items.length) {
-                var rows = cl.items.map(function(item) {
-                    if (typeof item === 'string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">' + item + '</span></li>';
-                    return '<li class="po-cl-link-row"><a class="po-cl-link" href="' + item.url + '" target="_blank" rel="noopener"><span class="po-cl-link-text">' + item.text + '</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>';
-                }).join('');
-                bodyHTML = '<ul id="po-cl-links">' + rows + '</ul>';
-            }
-
+            if (cl.mode === 'bullets' && cl.items && cl.items.length) { bodyHTML = '<ul id="po-cl-list">' + cl.items.map(function(t){return '<li>'+t+'</li>';}).join('') + '</ul>'; }
+            else if (cl.mode === 'text' && cl.text) { bodyHTML = '<p id="po-cl-text">' + cl.text + '</p>'; }
+            else if (cl.mode === 'links' && cl.items && cl.items.length) { bodyHTML = '<ul id="po-cl-links">' + cl.items.map(function(item){ if(typeof item==='string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">'+item+'</span></li>'; return '<li class="po-cl-link-row"><a class="po-cl-link" href="'+item.url+'" target="_blank" rel="noopener"><span class="po-cl-link-text">'+item.text+'</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>'; }).join('') + '</ul>'; }
             var imgHTML = '';
-            if (cl.image) {
-                var src = (cl.image.indexOf('http') === 0 || cl.image.indexOf('//') === 0)
-                    ? cl.image : chrome.runtime.getURL(cl.image);
-                imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">';
-            }
-
+            if (cl.image) { var src = (cl.image.indexOf('http')===0||cl.image.indexOf('//')===0) ? cl.image : chrome.runtime.getURL(cl.image); imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">'; }
             var avatarSrc = chrome.runtime.getURL('image.jpg');
-            var verHTML = oldVersion
-                ? 'v' + oldVersion + ' <span style="-webkit-text-fill-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.3);margin:0 4px;">→</span> <b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>'
-                : '<b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>';
-
-            var topBar =
-                '<div id="po-cl-topbar">' +
-                    '<div style="display:flex;align-items:center;gap:8px;">' +
-                        '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.45);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
-                        '<div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">new update</span></div>' +
-                    '</div>' +
-                    '<div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:500;">' + verHTML + '</div>' +
-                '</div>';
-
-            var overlay = document.createElement('div');
-            overlay.id = 'po-cl-overlay';
-            overlay.innerHTML =
-                '<div id="po-cl-blur"></div>' +
-                '<div id="po-cl-card">' +
-                    topBar + imgHTML +
-                    '<div id="po-cl-title">' + cl.title + '</div>' +
-                    '<div id="po-cl-sub">' + cl.subtitle + '</div>' +
-                    bodyHTML +
-                    '<button id="po-cl-dismiss">' + (cl.buttonLabel || 'Got it') + '</button>' +
-                '</div>';
-
+            var verHTML = oldVersion ? 'v' + oldVersion + ' <span style="-webkit-text-fill-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.3);margin:0 4px;">\u2192</span> <b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>' : '<b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>';
+            var topBarHTML = '<div id="po-cl-topbar"><div style="display:flex;align-items:center;gap:8px;"><img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.45);flex-shrink:0;" onerror="this.style.display=\'none\'"><div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">new update</span></div></div><div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:500;">' + verHTML + '</div></div>';
+            var overlay = document.createElement('div'); overlay.id = 'po-cl-overlay';
+            overlay.innerHTML = '<div id="po-cl-blur"></div><div id="po-cl-card">' + topBarHTML + imgHTML + '<div id="po-cl-title">' + cl.title + '</div><div id="po-cl-sub">' + cl.subtitle + '</div>' + bodyHTML + '<button id="po-cl-dismiss">' + (cl.buttonLabel||'Got it') + '</button></div>';
             document.body.appendChild(overlay);
-
             function dismiss() {
                 var clCard = overlay.querySelector('#po-cl-card');
-                if (clCard) {
-                    clCard.style.transition = 'opacity 0.22s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)';
-                    clCard.style.opacity = '0';
-                    clCard.style.transform = 'scale(0.92) translateY(12px)';
-                }
+                if (clCard) { clCard.style.transition = 'opacity 0.22s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)'; clCard.style.opacity = '0'; clCard.style.transform = 'scale(0.92) translateY(12px)'; }
                 var clBlur = overlay.querySelector('#po-cl-blur');
                 if (clBlur) { clBlur.style.transition = 'opacity 0.3s ease'; clBlur.style.opacity = '0'; }
                 setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300);
@@ -2209,7 +1801,7 @@ function maybeShowChangelog() {
         chrome.storage.local.get(CL_KEY, function(d) {
             if (chrome.runtime.lastError) return;
             if ((d[CL_KEY] || '') !== cl.version) setTimeout(showChangelog, 1200);
-        });
+        }); 
     });
 }
 
@@ -2224,14 +1816,10 @@ chrome.runtime.onMessage.addListener(function(msg) {
     if (msg.type === 'PO_POPOUT')          buildPopoutWidget();
     if (msg.type === 'PO_EDIT_START')      startEditor();
     if (msg.type === 'PO_UPDATE_AVAILABLE') {
-        // If changelog is open, queue the update popup to appear after it's dismissed
-        if (document.getElementById('po-cl-overlay')) {
-            _pendingUpdateVersions = { current: msg.current, latest: msg.latest };
-        } else {
-            showUpdateBanner(msg.current, msg.latest);
-        }
+        if (document.getElementById('po-cl-overlay')) { _pendingUpdateVersions = { current: msg.current, latest: msg.latest }; }
+        else { showUpdateBanner(msg.current, msg.latest); }
     }
-    if (msg.type === 'PO_FORCE_UPDATE')    showUpdateBanner(VEIL_CURRENT_VERSION, msg.latest || 'latest');
+    if (msg.type === 'PO_FORCE_UPDATE') showUpdateBanner(VEIL_CURRENT_VERSION, msg.latest || 'latest');
 });
 
 })();
