@@ -142,14 +142,14 @@ echo.
 set "VERSION=${version}"
 set "ZIP_NAME=extension-v${version}.zip"
 set "DOWNLOAD_URL=${downloadUrl}"
-set "WORK_DIR=%TEMP%\\po-ext-v${version}"
-set "ZIP_PATH=%WORK_DIR%\\%ZIP_NAME%"
-set "EXTRACT_DIR=%WORK_DIR%\\extracted"
+set "DOWNLOADS=%USERPROFILE%\\Downloads"
+set "WORK_DIR=%DOWNLOADS%\\po-ext-v${version}"
+set "ZIP_PATH=%DOWNLOADS%\\%ZIP_NAME%"
+set "EXTRACT_DIR=%WORK_DIR%"
 
 :: ── PREP ─────────────────────────────────────────────────────────────────
 if exist "%WORK_DIR%" rd /s /q "%WORK_DIR%"
 mkdir "%WORK_DIR%"
-mkdir "%EXTRACT_DIR%"
 
 :: ── DOWNLOAD ─────────────────────────────────────────────────────────────
 echo  [1/3] Downloading v%VERSION% from GitHub...
@@ -268,7 +268,7 @@ echo  [OK] Done.
 echo.
 echo  ================================================
 echo   v%VERSION% is ready to load into Chrome!
-echo   The extracted folder will stay at:
+echo   The extracted folder is in your Downloads:
 echo   %EXT_FOLDER%
 echo  ================================================
 echo.
@@ -689,6 +689,125 @@ app.delete('/api/delete-history/:idx', (req, res) => {
         writeHistory(history);
         res.json({ success: true, history });
     } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── BAT MANAGEMENT ROUTES ────────────────────────────────────────────────
+
+// GET list all bat files in builder dir with their version + whether zip exists
+app.get('/api/bats', (req, res) => {
+    try {
+        const files = fs.readdirSync(BUILDER_DIR);
+        const bats = files
+            .filter(f => f.startsWith('install-v') && f.endsWith('.bat'))
+            .map(f => {
+                const version = f.replace('install-v', '').replace('.bat', '');
+                const batPath  = path.join(BUILDER_DIR, f);
+                const zipName  = `extension-v${version}.zip`;
+                const zipPath  = path.join(BUILDER_DIR, zipName);
+                const stat     = fs.statSync(batPath);
+                return {
+                    filename:    f,
+                    version,
+                    batExists:   true,
+                    zipExists:   fs.existsSync(zipPath),
+                    zipFilename: zipName,
+                    sizeBytes:   stat.size,
+                    modified:    stat.mtime.toISOString(),
+                };
+            })
+            .sort((a, b) => b.modified.localeCompare(a.modified));
+        res.json(bats);
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE a bat file
+app.delete('/api/bats/:version', (req, res) => {
+    try {
+        const version = req.params.version;
+        const batPath = path.join(BUILDER_DIR, `install-v${version}.bat`);
+        if (!fs.existsSync(batPath)) return res.status(404).json({ error: 'not found' });
+        fs.unlinkSync(batPath);
+        res.json({ success: true, deleted: `install-v${version}.bat` });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// DELETE all bat files
+app.delete('/api/bats', (req, res) => {
+    try {
+        const files = fs.readdirSync(BUILDER_DIR)
+            .filter(f => f.startsWith('install-v') && f.endsWith('.bat'));
+        files.forEach(f => fs.unlinkSync(path.join(BUILDER_DIR, f)));
+        res.json({ success: true, deleted: files });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST regenerate a bat for a specific version (rewrites with current template)
+app.post('/api/bats/regenerate/:version', (req, res) => {
+    try {
+        const version = req.params.version;
+        const batPath = path.join(BUILDER_DIR, `install-v${version}.bat`);
+        const batContent = generateInstallerBat(version);
+        fs.writeFileSync(batPath, batContent, { encoding: 'utf8' });
+        const stat = fs.statSync(batPath);
+        res.json({
+            success: true,
+            filename: `install-v${version}.bat`,
+            version,
+            sizeBytes: stat.size,
+        });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST regenerate ALL bat files (for every version that has a zip)
+app.post('/api/bats/regenerate-all', (req, res) => {
+    try {
+        const files = fs.readdirSync(BUILDER_DIR)
+            .filter(f => f.startsWith('extension-v') && f.endsWith('.zip'));
+        const results = [];
+        files.forEach(f => {
+            const version = f.replace('extension-v', '').replace('.zip', '');
+            const batPath = path.join(BUILDER_DIR, `install-v${version}.bat`);
+            const batContent = generateInstallerBat(version);
+            fs.writeFileSync(batPath, batContent, { encoding: 'utf8' });
+            results.push({ version, filename: `install-v${version}.bat` });
+        });
+        res.json({ success: true, regenerated: results });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST generate a bat for a custom/arbitrary version string
+app.post('/api/bats/generate', (req, res) => {
+    try {
+        const { version } = req.body;
+        if (!version) return res.status(400).json({ error: 'version required' });
+        const batPath = path.join(BUILDER_DIR, `install-v${version}.bat`);
+        const batContent = generateInstallerBat(version);
+        fs.writeFileSync(batPath, batContent, { encoding: 'utf8' });
+        const stat = fs.statSync(batPath);
+        res.json({
+            success: true,
+            filename: `install-v${version}.bat`,
+            version,
+            sizeBytes: stat.size,
+        });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Serve bat manager UI
+app.get('/bats', (req, res) => {
+    res.sendFile(path.join(BUILDER_DIR, 'ui', 'bat-manager.html'));
 });
 
 // ── START ─────────────────────────────────────────────────────────────────

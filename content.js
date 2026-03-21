@@ -314,11 +314,11 @@ function injectStyles() {
         '@keyframes po-drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}',
         '#po-cl-overlay{position:fixed !important;inset:0 !important;z-index:2147483647 !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;}',
         '#po-cl-blur{position:absolute !important;inset:0 !important;background:rgba(0,0,0,0.6) !important;backdrop-filter:blur(20px) !important;-webkit-backdrop-filter:blur(20px) !important;}',
-        '#po-cl-card{position:relative !important;width:310px !important;background:rgba(12,12,20,0.98) !important;border:1px solid rgba(191,90,242,0.25) !important;border-radius:22px !important;padding:22px 20px 18px !important;box-shadow:0 0 50px rgba(191,90,242,0.15),0 24px 70px rgba(0,0,0,0.85) !important;animation:clIn 0.4s cubic-bezier(0.22,1,0.36,1) !important;overflow:visible !important;}',
+        '#po-cl-card{position:relative !important;width:min(90vw,560px) !important;background:rgba(12,12,20,0.98) !important;border:1px solid rgba(191,90,242,0.25) !important;border-radius:22px !important;padding:22px 20px 18px !important;box-shadow:0 0 50px rgba(191,90,242,0.15),0 24px 70px rgba(0,0,0,0.85) !important;animation:clIn 0.4s cubic-bezier(0.22,1,0.36,1) !important;overflow:visible !important;}',
         '@keyframes clIn{from{opacity:0;transform:scale(0.88) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}',
-        '#po-cl-img-wrap{width:100% !important;margin-bottom:14px !important;border-radius:14px !important;overflow:hidden !important;border:1px solid rgba(191,90,242,0.45) !important;box-shadow:0 0 0 1px rgba(191,90,242,0.15),0 0 18px rgba(191,90,242,0.25),0 0 36px rgba(191,90,242,0.1) !important;animation:clImgGlow 3s ease infinite !important;}',
+        '#po-cl-img-wrap{display:block !important;margin:0 auto 14px auto !important;border-radius:14px !important;overflow:hidden !important;border:1px solid rgba(191,90,242,0.45) !important;box-shadow:0 0 0 1px rgba(191,90,242,0.15),0 0 18px rgba(191,90,242,0.25),0 0 36px rgba(191,90,242,0.1) !important;animation:clImgGlow 3s ease infinite !important;line-height:0 !important;width:fit-content !important;max-width:100% !important;}',
         '@keyframes clImgGlow{0%,100%{box-shadow:0 0 0 1px rgba(191,90,242,0.15),0 0 14px rgba(191,90,242,0.2),0 0 28px rgba(191,90,242,0.08)}50%{box-shadow:0 0 0 1px rgba(191,90,242,0.3),0 0 22px rgba(191,90,242,0.4),0 0 44px rgba(255,55,95,0.15)}}',
-        '#po-cl-img{width:100% !important;height:140px !important;border-radius:0 !important;margin:0 !important;display:block !important;object-fit:cover !important;object-position:center !important;}',
+        '#po-cl-img{display:block !important;max-width:100% !important;height:auto !important;width:auto !important;margin:0 !important;padding:0 !important;border:none !important;border-radius:0 !important;}',
         '#po-cl-topbar{display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:14px !important;}',
         '#po-cl-badge{display:inline-flex !important;align-items:center !important;gap:6px !important;padding:3px 10px !important;background:linear-gradient(135deg,rgba(191,90,242,0.18),rgba(255,55,95,0.1)) !important;border:1px solid rgba(191,90,242,0.3) !important;border-radius:20px !important;}',
         '#po-cl-badge-dot{width:6px !important;height:6px !important;border-radius:50% !important;background:linear-gradient(135deg,#bf5af2,#ff375f) !important;box-shadow:0 0 8px rgba(191,90,242,0.9) !important;animation:clDot 1.8s ease infinite !important;flex-shrink:0 !important;}',
@@ -1591,7 +1591,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.2';
+var VEIL_CURRENT_VERSION = '2.5.9';
 
 function getUpdateBrowserInfo() {
     var ua = navigator.userAgent;
@@ -1696,28 +1696,50 @@ function showUpdateBanner(currentVersion, latestVersion) {
     backBtn.addEventListener('click', function() { snoozePicker.classList.remove('visible'); mainBtns.style.display = 'flex'; });
     snoozePicker.appendChild(backBtn);
     var stepsView = document.createElement('div'); stepsView.id = 'po-steps-view';
-    [{n:'1',html:'Download the ZIP file using the button below'},{n:'2',html:'Unzip it anywhere on your computer'},{n:'3',html:'Go to <b style="color:#fff;-webkit-text-fill-color:#fff;">' + browser.url + '</b>'},{n:'4',html:'Enable <b style="color:#fff;-webkit-text-fill-color:#fff;">Developer Mode</b> (toggle, top right)'},{n:'5',html:'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Load unpacked</b> and select the folder'},{n:'6',html:'Remove the old version \u2014 you\'re done'}].forEach(function(step) {
+    [{n:'1',html:'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Auto Installer (.bat)</b> below — recommended'},{n:'2',html:'Run the .bat file. It downloads and extracts automatically'},{n:'3',html:'A folder opens in Explorer — that is the extension'},{n:'4',html:'Go to <b style="color:#fff;-webkit-text-fill-color:#fff;">' + browser.url + '</b>'},{n:'5',html:'Enable <b style="color:#fff;-webkit-text-fill-color:#fff;">Developer Mode</b> (top right toggle)'},{n:'6',html:'Click <b style="color:#fff;-webkit-text-fill-color:#fff;">Load unpacked</b> and select that folder'},{n:'7',html:'Remove the old version if still listed — done'}].forEach(function(step) {
         var row = document.createElement('div'); row.className = 'po-step-row';
         row.innerHTML = '<div class="po-step-num">' + step.n + '</div><div class="po-step-txt">' + step.html + '</div>';
         stepsView.appendChild(row);
     });
-    var dlRow = document.createElement('div'); dlRow.style.cssText = 'display:flex !important;gap:6px !important;margin-top:6px !important;';
-    var dlBtn = document.createElement('a'); dlBtn.href = '#'; dlBtn.textContent = 'Download ZIP';
-    dlBtn.style.cssText = 'flex:1 !important;padding:9px !important;background:linear-gradient(135deg,#bf5af2,#00b0ff) !important;border:none !important;border-radius:10px !important;color:#fff !important;-webkit-text-fill-color:#fff !important;font-weight:600 !important;font-size:11.5px !important;text-decoration:none !important;text-align:center !important;display:block !important;box-shadow:0 3px 12px rgba(191,90,242,0.3) !important;transition:opacity 0.18s,transform 0.12s !important;';
+    var dlRow = document.createElement('div'); dlRow.style.cssText = 'display:flex !important;gap:6px !important;margin-top:6px !important;flex-direction:column !important;';
+    // BAT button — primary, version-locked
+    var batBtn = document.createElement('button'); batBtn.textContent = 'Auto Installer (.bat)';
+    batBtn.style.cssText = 'width:100% !important;padding:10px !important;background:linear-gradient(135deg,rgba(191,90,242,0.18),rgba(255,55,95,0.1)) !important;border:1px solid rgba(191,90,242,0.45) !important;border-radius:10px !important;color:#fff !important;-webkit-text-fill-color:#fff !important;font-weight:700 !important;font-size:12px !important;cursor:pointer !important;font-family:inherit !important;box-shadow:0 0 14px rgba(191,90,242,0.2) !important;transition:all 0.2s !important;text-align:center !important;';
+    batBtn.addEventListener('click', function() {
+        batBtn.textContent = 'Fetching...';
+        fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest').then(function(r){return r.json();}).then(function(data) {
+            var ver = data.tag_name ? data.tag_name.replace(/^v/,'') : null;
+            var asset = data.assets && data.assets.find(function(a){return a.name.startsWith('install-') && a.name.endsWith('.bat');});
+            if (asset) {
+                batBtn.textContent = 'Auto Installer (.bat)';
+                var a = document.createElement('a'); a.href = asset.browser_download_url; a.download = ''; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            } else if (ver) {
+                batBtn.textContent = 'Auto Installer (.bat)';
+                var a = document.createElement('a'); a.href = 'https://github.com/meatballsong1/po-extension/releases/download/v' + ver + '/install-v' + ver + '.bat'; a.download = ''; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            } else {
+                batBtn.textContent = 'Auto Installer (.bat)';
+                window.open('https://github.com/meatballsong1/po-extension/releases/latest','_blank');
+            }
+        }).catch(function() { batBtn.textContent = 'Auto Installer (.bat)'; window.open('https://github.com/meatballsong1/po-extension/releases/latest','_blank'); });
+    });
+    // ZIP + Extensions row
+    var zipExtRow = document.createElement('div'); zipExtRow.style.cssText = 'display:flex !important;gap:6px !important;';
+    var dlBtn = document.createElement('a'); dlBtn.href = '#'; dlBtn.textContent = 'ZIP (manual)';
+    dlBtn.style.cssText = 'flex:1 !important;padding:8px !important;background:rgba(255,255,255,0.04) !important;border:1px solid rgba(255,255,255,0.09) !important;border-radius:10px !important;color:rgba(255,255,255,0.45) !important;-webkit-text-fill-color:rgba(255,255,255,0.45) !important;font-weight:600 !important;font-size:11px !important;text-decoration:none !important;text-align:center !important;display:block !important;transition:all 0.18s !important;';
     dlBtn.addEventListener('click', function(e) {
         e.preventDefault(); dlBtn.textContent = 'Fetching...';
         fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest').then(function(r){return r.json();}).then(function(data) {
             var asset = data.assets && data.assets.find(function(a){return a.name.endsWith('.zip');});
             var url = asset ? asset.browser_download_url : data.zipball_url;
-            dlBtn.textContent = 'Download ZIP';
+            dlBtn.textContent = 'ZIP (manual)';
             var a = document.createElement('a'); a.href = url; a.download = ''; a.target = '_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(function() { closeUpdate(overlay); chrome.runtime.sendMessage({type:'PO_OPEN_TAB',url:browser.url}); }, 800);
-        }).catch(function() { dlBtn.textContent = 'Download ZIP'; window.open('https://github.com/meatballsong1/po-extension/releases/latest','_blank'); });
+        }).catch(function() { dlBtn.textContent = 'ZIP (manual)'; window.open('https://github.com/meatballsong1/po-extension/releases/latest','_blank'); });
     });
-    var extBtn = document.createElement('button'); extBtn.textContent = browser.name + ' Extensions';
-    extBtn.style.cssText = 'flex:0 0 auto !important;padding:9px 12px !important;background:rgba(255,255,255,0.04) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:10px !important;color:rgba(255,255,255,0.45) !important;font-weight:500 !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;white-space:nowrap !important;transition:background 0.18s,color 0.15s !important;';
+    var extBtn = document.createElement('button'); extBtn.textContent = browser.name + ' Ext';
+    extBtn.style.cssText = 'flex:0 0 auto !important;padding:8px 10px !important;background:rgba(255,255,255,0.04) !important;border:1px solid rgba(255,255,255,0.09) !important;border-radius:10px !important;color:rgba(255,255,255,0.45) !important;font-weight:500 !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;white-space:nowrap !important;transition:all 0.18s !important;';
     extBtn.addEventListener('click', function() { chrome.runtime.sendMessage({type:'PO_OPEN_TAB',url:browser.url}); });
-    dlRow.appendChild(dlBtn); dlRow.appendChild(extBtn); stepsView.appendChild(dlRow);
+    zipExtRow.appendChild(dlBtn); zipExtRow.appendChild(extBtn);
+    dlRow.appendChild(batBtn); dlRow.appendChild(zipExtRow); stepsView.appendChild(dlRow);
     var stepsBackBtn = document.createElement('button'); stepsBackBtn.textContent = '\u2190 back';
     stepsBackBtn.style.cssText = 'background:none !important;border:none !important;color:rgba(255,255,255,0.3) !important;font-size:11px !important;cursor:pointer !important;font-family:inherit !important;padding:4px 0 !important;text-align:left !important;transition:color 0.15s !important;margin-top:2px !important;';
     stepsBackBtn.addEventListener('click', function() { stepsView.classList.remove('visible'); mainBtns.style.display = 'flex'; });
@@ -1771,7 +1793,7 @@ function showChangelog() {
             else if (cl.mode === 'text' && cl.text) { bodyHTML = '<p id="po-cl-text">' + cl.text + '</p>'; }
             else if (cl.mode === 'links' && cl.items && cl.items.length) { bodyHTML = '<ul id="po-cl-links">' + cl.items.map(function(item){ if(typeof item==='string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">'+item+'</span></li>'; return '<li class="po-cl-link-row"><a class="po-cl-link" href="'+item.url+'" target="_blank" rel="noopener"><span class="po-cl-link-text">'+item.text+'</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>'; }).join('') + '</ul>'; }
             var imgHTML = '';
-            if (cl.image) { var src = (cl.image.indexOf('http')===0||cl.image.indexOf('//')===0) ? cl.image : chrome.runtime.getURL(cl.image); imgHTML = '<div id="po-cl-img-wrap"><img id="po-cl-img" src="' + src + '" alt="" onerror="this.parentNode.style.display=\'none\'">' + '</div>'; }
+            if (cl.image) { var src = (cl.image.indexOf('http')===0||cl.image.indexOf('//')===0) ? cl.image : chrome.runtime.getURL(cl.image); imgHTML = '<div id="po-cl-img-wrap" style="display:block;margin:0 auto 14px auto;width:fit-content;max-width:100%;border-radius:14px;overflow:hidden;border:1px solid rgba(191,90,242,0.45);box-shadow:0 0 0 1px rgba(191,90,242,0.15),0 0 18px rgba(191,90,242,0.25),0 0 36px rgba(191,90,242,0.1);animation:clImgGlow 3s ease infinite;line-height:0;"><img id="po-cl-img" src="' + src + '" style="display:block;width:auto;height:auto;max-width:100%;margin:0;padding:0;border:none;" alt="" onerror="this.parentNode.style.display=\'none\'">' + '</div>'; }
             var avatarSrc = chrome.runtime.getURL('image.jpg');
             var verHTML = oldVersion ? 'v' + oldVersion + ' <span style="-webkit-text-fill-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.3);margin:0 4px;">\u2192</span> <b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>' : '<b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>';
             var topBarHTML = '<div id="po-cl-topbar"><div style="display:flex;align-items:center;gap:8px;"><img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.45);flex-shrink:0;" onerror="this.style.display=\'none\'"><div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">new update</span></div></div><div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:500;">' + verHTML + '</div></div>';
@@ -1785,7 +1807,7 @@ function showChangelog() {
                 if (clBlur) { clBlur.style.transition = 'opacity 0.3s ease'; clBlur.style.opacity = '0'; }
                 setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300);
                 var s = {}; s[CL_KEY] = cl.version; chrome.storage.local.set(s);
-                setTimeout(function() { showUpdateToast(cl.version); }, 350);
+                setTimeout(function() { showUpdateToast(cl.version); }, 3550);
                 setTimeout(function() { _maybeFireQueuedUpdate(); }, 5000);
             }
             overlay.querySelector('#po-cl-dismiss').addEventListener('click', dismiss);

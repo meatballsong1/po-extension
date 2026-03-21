@@ -6,8 +6,8 @@ function showNotif({ title = 'pocket option config', desc = '', isError = false 
     if (!stack) return;
     const notif = document.createElement('div');
     notif.className = 'po-notif' + (isError ? ' error' : '');
-    const checkIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 5L4.2 7.5L8 3" stroke="${isError ? '#ff4444' : '#00b0ff'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    const errorIcon = `<svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 2V5.5M5 7.5V8" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    const checkIcon = `<svg viewBox="0 0 10 10" fill="none"><path d="M2 5L4.2 7.5L8 3" stroke="${isError ? '#ff4444' : '#00b0ff'}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const errorIcon = `<svg viewBox="0 0 10 10" fill="none"><path d="M5 2V5.5M5 7.5V8" stroke="#ff4444" stroke-width="1.5" stroke-linecap="round"/></svg>`;
     notif.innerHTML = `
         <div class="po-notif-icon">${isError ? errorIcon : checkIcon}</div>
         <div class="po-notif-body">
@@ -15,9 +15,7 @@ function showNotif({ title = 'pocket option config', desc = '', isError = false 
             <div class="po-notif-desc">${desc}</div>
         </div>
         <button class="po-notif-close" aria-label="close">
-            <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2 2L8 8M8 2L2 8" stroke="#666" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
+            <svg viewBox="0 0 10 10" fill="none"><path d="M2 2L8 8M8 2L2 8" stroke="#666" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
         <div class="po-notif-progress"><div class="po-notif-progress-bar"></div></div>
     `;
@@ -58,20 +56,45 @@ function buildChangeLog(oldData, newData) {
     const boolKeys = ['isEnabled','isGuruEnabled','isSpoofEnabled','isVerifiedEnabled','isStreamModeEnabled',
                       'streamMaskBalance','streamMaskId','streamMaskIp','streamMaskEmail'];
     const valKeys  = ['customName','streamEmailAlias','spBranch','spLevel','spExp','spTrades','spTurnover','spProfit'];
-    boolKeys.forEach(k => { if (oldData[k] !== newData[k]) lines.push(`${label(k)} -> ${newData[k] ? 'on' : 'off'}`); });
-    valKeys.forEach(k =>  { if (oldData[k] !== newData[k]) lines.push(`${label(k)} updated`); });
+    boolKeys.forEach(k => { if (oldData[k] !== newData[k]) lines.push(label(k) + ' -> ' + (newData[k] ? 'on' : 'off')); });
+    valKeys.forEach(k =>  { if (oldData[k] !== newData[k]) lines.push(label(k) + ' updated'); });
     return lines;
+}
+
+// -- BROWSER DETECTION ------------------------------------------------
+function getBrowserInfo() {
+    const ua = navigator.userAgent;
+    if (ua.indexOf('Edg/') !== -1)    return { name: 'Edge',    url: 'edge://extensions',    label: 'edge://extensions' };
+    if (ua.indexOf('OPR/') !== -1)    return { name: 'Opera',   url: 'opera://extensions',   label: 'opera://extensions' };
+    if (ua.indexOf('Brave') !== -1)   return { name: 'Brave',   url: 'brave://extensions',   label: 'brave://extensions' };
+    if (ua.indexOf('Vivaldi') !== -1) return { name: 'Vivaldi', url: 'vivaldi://extensions', label: 'vivaldi://extensions' };
+    return { name: 'Chrome', url: 'chrome://extensions', label: 'chrome://extensions' };
+}
+
+function openExtPage() {
+    const browser = getBrowserInfo();
+    chrome.tabs.create({ url: browser.url }, function() {
+        if (chrome.runtime.lastError) {
+            navigator.clipboard.writeText(browser.url).then(function() {
+                const btn = document.getElementById('open-ext-page-btn');
+                if (btn) {
+                    btn.textContent = 'Copied ' + browser.url + ' -- paste in address bar';
+                    btn.style.color = '#24b15b';
+                }
+            });
+        }
+    });
 }
 
 // -- MAIN POPUP LOGIC -------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Tab Logic
+    // Tab logic
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            var tabId = tab.getAttribute('data-tab');
+            const tabId = tab.getAttribute('data-tab');
             tab.classList.add('active');
             document.getElementById(tabId).classList.add('active');
             updateSaveBtn(tabId);
@@ -81,19 +104,19 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSaveBtn('main');
 
     function updateSaveBtn(tabId) {
-        var btn = document.getElementById('saveBtn');
+        const btn = document.getElementById('saveBtn');
         if (!btn) return;
         btn.style.display = (tabId === 'about' || tabId === 'customize') ? 'none' : 'block';
     }
 
     function set(id, val) {
-        var el = document.getElementById(id);
+        const el = document.getElementById(id);
         if (el) el.textContent = val;
     }
 
     function populateAbout() {
         try {
-            var m = chrome.runtime.getManifest();
+            const m = chrome.runtime.getManifest();
             set('ab-name',    m.name || 'pocket option config');
             set('ab-version', m.version || '-');
             set('ab-mv',      'MV' + (m.manifest_version || '3'));
@@ -102,10 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
             set('ab-version', '-');
             set('ab-mv', 'MV3');
         }
-        var ua = navigator.userAgent;
-        var browser = 'Chrome';
-        if (ua.indexOf('Edg') !== -1)      browser = 'Edge';
-        else if (ua.indexOf('OPR') !== -1)  browser = 'Opera';
+        const ua = navigator.userAgent;
+        let browser = 'Chrome';
+        if (ua.indexOf('Edg') !== -1)        browser = 'Edge';
+        else if (ua.indexOf('OPR') !== -1)   browser = 'Opera';
         else if (ua.indexOf('Brave') !== -1) browser = 'Brave';
         set('ab-browser', browser);
         try {
@@ -132,33 +155,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     populateAbout();
 
-    // -- CHECK FOR UPDATES --
+    // -- UPDATE CHECK ------------------------------------------------
+    function resetUpdateUI() {
+        const batRow  = document.getElementById('bat-download-row');
+        const steps   = document.getElementById('install-steps');
+        const stepsBat = document.getElementById('steps-bat');
+        const stepsZip = document.getElementById('steps-zip');
+        if (batRow)   batRow.style.display   = 'none';
+        if (steps)    steps.style.display    = 'none';
+        if (stepsBat) stepsBat.style.display = 'block';
+        if (stepsZip) stepsZip.style.display = 'none';
+        // Reset wired flags so buttons re-wire with correct version on next check
+        const batBtn    = document.getElementById('bat-download-btn');
+        const zipBtn    = document.getElementById('zip-download-btn');
+        const zipDlBtn  = document.getElementById('zip-actual-download-btn');
+        const openBtn   = document.getElementById('open-ext-page-btn');
+        const openBtnZ  = document.getElementById('open-ext-page-btn-zip');
+        [batBtn, zipBtn, zipDlBtn, openBtn, openBtnZ].forEach(function(b) { if (b) b._wired = false; });
+    }
+
     function checkUpdate() {
-        var btn    = document.getElementById('update-btn');
-        var result = document.getElementById('update-result');
-        var verEl  = document.getElementById('update-result-ver');
-        var msgEl  = document.getElementById('update-result-msg');
-        var dlBtn  = document.getElementById('download-btn');
-        var steps  = document.getElementById('install-steps');
-        var link   = document.getElementById('refresh-link');
+        const btn    = document.getElementById('update-btn');
+        const result = document.getElementById('update-result');
+        const verEl  = document.getElementById('update-result-ver');
+        const msgEl  = document.getElementById('update-result-msg');
 
         btn.disabled = true;
         btn.textContent = 'Checking...';
         result.style.display = 'none';
-        if (dlBtn)  dlBtn.style.display  = 'none';
-        if (steps)  steps.style.display  = 'none';
-        if (link)   link.style.display   = 'none';
+        resetUpdateUI();
 
-        var m = chrome.runtime.getManifest();
-        var current = m.version;
+        const m = chrome.runtime.getManifest();
+        const current = m.version;
 
         fetch('https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now())
-            .then(function(r) {
+            .then(r => {
                 if (!r.ok) throw new Error('Could not reach GitHub');
                 return r.json();
             })
-            .then(function(data) {
-                var latest = data.version;
+            .then(data => {
+                const latest = data.version;
                 result.style.display = 'block';
 
                 if (latest === current) {
@@ -169,101 +205,95 @@ document.addEventListener('DOMContentLoaded', () => {
                     result.className = 'update-result has-update';
                     verEl.style.display = 'block';
                     verEl.textContent = 'v' + latest + ' available';
-                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + ". updating you now would be sick.";
-                    if (link) { link.style.display = 'inline-block'; link.textContent = 'how to update'; }
-
-
+                    msgEl.textContent = "you're on v" + current + ", v" + latest + " is out. grab the installer below, run it, then click Load Unpacked.";
+                    showUpdateDownloads(latest);
                 }
             })
-            .catch(function(e) {
+            .catch(e => {
                 result.style.display = 'block';
                 result.className = 'update-result update-error';
                 verEl.style.display = 'none';
                 msgEl.textContent = 'could not check: ' + e.message;
             })
-            .finally(function() {
+            .finally(() => {
                 btn.disabled = false;
                 btn.textContent = 'Check for Updates';
             });
     }
 
-    // Detect browser and return extensions page URL + name
-    function getBrowserInfo() {
-        var ua = navigator.userAgent;
-        if (ua.indexOf('Edg/') !== -1)     return { name: 'Edge',    url: 'edge://extensions',    label: 'edge://extensions' };
-        if (ua.indexOf('OPR/') !== -1)     return { name: 'Opera',   url: 'opera://extensions',   label: 'opera://extensions' };
-        if (ua.indexOf('Brave') !== -1)    return { name: 'Brave',   url: 'brave://extensions',   label: 'brave://extensions' };
-        if (ua.indexOf('Vivaldi') !== -1)  return { name: 'Vivaldi', url: 'vivaldi://extensions', label: 'vivaldi://extensions' };
-        return { name: 'Chrome', url: 'chrome://extensions', label: 'chrome://extensions' };
-    }
+    function showUpdateDownloads(version) {
+        const batRow  = document.getElementById('bat-download-row');
+        const steps   = document.getElementById('install-steps');
+        const browser = getBrowserInfo();
 
-    function openExtPage() {
-        var browser = getBrowserInfo();
-        chrome.tabs.create({ url: browser.url }, function() {
-            if (chrome.runtime.lastError) {
-                // Fallback: copy to clipboard
-                navigator.clipboard.writeText(browser.url).then(function() {
-                    var openBtn = document.getElementById('open-ext-page-btn');
-                    if (openBtn) {
-                        openBtn.textContent = 'Copied ' + browser.url + ' — paste in address bar';
-                        openBtn.style.color = '#24b15b';
-                        openBtn.style.borderColor = 'rgba(36,177,91,0.4)';
-                    }
-                });
-            }
-        });
-    }
-
-    function showDownloadOption() {
-        var dlBtn = document.getElementById('download-btn');
-        var steps = document.getElementById('install-steps');
-        var link  = document.getElementById('refresh-link');
-        if (dlBtn)  dlBtn.style.display  = 'block';
+        if (batRow) batRow.style.display = 'flex';
         if (steps)  steps.style.display  = 'block';
-        if (link)   link.style.display   = 'none';
 
-        var browser = getBrowserInfo();
+        // Set ext page names
+        const extPageName    = document.getElementById('ext-page-name');
+        const extPageNameZip = document.getElementById('ext-page-name-zip');
+        if (extPageName)    extPageName.textContent    = browser.label;
+        if (extPageNameZip) extPageNameZip.textContent = browser.label;
 
-        // Update instruction text to show the right browser URL
-        var extPageName = document.getElementById('ext-page-name');
-        if (extPageName) extPageName.textContent = browser.label;
+        // Wire open ext page buttons
+        const openBtn    = document.getElementById('open-ext-page-btn');
+        const openBtnZip = document.getElementById('open-ext-page-btn-zip');
+        if (openBtn    && !openBtn._wired)    { openBtn._wired    = true; openBtn.onclick    = openExtPage; }
+        if (openBtnZip && !openBtnZip._wired) { openBtnZip._wired = true; openBtnZip.onclick = openExtPage; }
 
-        // Wire open extensions button
-        var openBtn = document.getElementById('open-ext-page-btn');
-        if (openBtn) {
-            openBtn.textContent = 'Open ' + browser.name + ' Extensions Page';
-            openBtn.onclick = openExtPage;
+        // Wire BAT button -- downloads version-locked installer bat
+        const batBtn = document.getElementById('bat-download-btn');
+        if (batBtn && !batBtn._wired) {
+            batBtn._wired = true;
+            batBtn.addEventListener('click', function() {
+                // Make sure bat steps are showing
+                const stepsBat = document.getElementById('steps-bat');
+                const stepsZip = document.getElementById('steps-zip');
+                if (stepsBat) stepsBat.style.display = 'block';
+                if (stepsZip) stepsZip.style.display = 'none';
+                // Download the bat
+                const batUrl = 'https://github.com/meatballsong1/po-extension/releases/download/v' + version + '/install-v' + version + '.bat';
+                chrome.tabs.create({ url: batUrl });
+            });
         }
 
-        // Wire download button — fetch latest release asset URL dynamically
-        if (dlBtn && !dlBtn._wired) {
-            dlBtn._wired = true;
-            dlBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                var origText = dlBtn.textContent;
-                dlBtn.textContent = 'Fetching...';
-                fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        var asset = data.assets && data.assets.find(function(a) { return a.name.endsWith('.zip'); });
-                        var url = asset ? asset.browser_download_url : data.zipball_url;
-                        dlBtn.textContent = origText;
-                        chrome.tabs.create({ url: url });
-                        setTimeout(function() { openExtPage(); }, 2000);
-                    })
-                    .catch(function() {
-                        dlBtn.textContent = origText;
-                        chrome.tabs.create({ url: 'https://github.com/meatballsong1/po-extension/releases/latest' });
+        // Wire ZIP toggle button -- switches to zip instructions view
+        const zipBtn = document.getElementById('zip-download-btn');
+        if (zipBtn && !zipBtn._wired) {
+            zipBtn._wired = true;
+            zipBtn.addEventListener('click', function() {
+                const stepsBat = document.getElementById('steps-bat');
+                const stepsZip = document.getElementById('steps-zip');
+                if (stepsBat) stepsBat.style.display = 'none';
+                if (stepsZip) stepsZip.style.display = 'block';
+
+                // Wire the actual zip download button inside zip steps
+                const zipDlBtn = document.getElementById('zip-actual-download-btn');
+                if (zipDlBtn && !zipDlBtn._wired) {
+                    zipDlBtn._wired = true;
+                    zipDlBtn.addEventListener('click', function() {
+                        const orig = zipDlBtn.textContent;
+                        zipDlBtn.textContent = 'Fetching...';
+                        fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
+                            .then(r => r.json())
+                            .then(data => {
+                                const asset = data.assets && data.assets.find(a => a.name.endsWith('.zip'));
+                                const url = asset ? asset.browser_download_url : data.zipball_url;
+                                zipDlBtn.textContent = orig;
+                                chrome.tabs.create({ url });
+                            })
+                            .catch(() => {
+                                zipDlBtn.textContent = orig;
+                                chrome.tabs.create({ url: 'https://github.com/meatballsong1/po-extension/releases/latest' });
+                            });
                     });
+                }
             });
         }
     }
 
-    var updateBtn = document.getElementById('update-btn');
+    const updateBtn = document.getElementById('update-btn');
     if (updateBtn) updateBtn.addEventListener('click', checkUpdate);
-
-    var refreshLink = document.getElementById('refresh-link');
-    if (refreshLink) refreshLink.addEventListener('click', showDownloadOption);
 
     // Popout button
     document.getElementById('popoutBtn').addEventListener('click', function() {
@@ -291,15 +321,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setStreamPanel(active) {
         if (active) {
-            streamOptions.style.maxHeight    = streamOptions.scrollHeight + 'px';
-            streamOptions.style.opacity      = '1';
-            streamOptions.style.transform    = 'translateY(0)';
+            streamOptions.style.maxHeight     = streamOptions.scrollHeight + 'px';
+            streamOptions.style.opacity       = '1';
+            streamOptions.style.transform     = 'translateY(0)';
             streamOptions.style.pointerEvents = 'all';
             streamOptions.classList.add('stream-active');
         } else {
-            streamOptions.style.maxHeight    = '0';
-            streamOptions.style.opacity      = '0';
-            streamOptions.style.transform    = 'translateY(-6px)';
+            streamOptions.style.maxHeight     = '0';
+            streamOptions.style.opacity       = '0';
+            streamOptions.style.transform     = 'translateY(-6px)';
             streamOptions.style.pointerEvents = 'none';
             streamOptions.classList.remove('stream-active');
         }
