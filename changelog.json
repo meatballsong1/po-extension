@@ -1,10 +1,10 @@
 {
-  "version": "2.5.8",
-  "title": "welcome to 2.5.8!",
-  "subtitle": "minor patch with autoupdater",
-  "image": "changelog-banner.jpg",
-  "mode": "text",
+  "version": "2.5.9",
+  "title": "welcome 2.5.9",
+  "subtitle": "minor",
+  "image": "",
+  "mode": "bullets",
   "items": [],
   "text": "",
-  "buttonLabel": "Pretty tuff"
+  "buttonLabel": "ok ok i see u mr oofbomb"
 }
