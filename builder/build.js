@@ -72,7 +72,6 @@ function updateUpdatesXml(version, extId) {
 }
 
 function updateChangelogInContentJs(version, title, subtitle, items, mode, image, buttonLabel) {
-    // Write changelog.json — content.js loads this at runtime, no JS patching needed
     const clPath = path.join(EXT_PATH, 'changelog.json');
     const clData = {
         version,
@@ -88,7 +87,6 @@ function updateChangelogInContentJs(version, title, subtitle, items, mode, image
     };
     fs.writeFileSync(clPath, JSON.stringify(clData, null, 2));
 
-    // Update VEIL_CURRENT_VERSION in content.js
     const contentPath = path.join(EXT_PATH, 'content.js');
     if (fs.existsSync(contentPath)) {
         let content = fs.readFileSync(contentPath, 'utf8');
@@ -99,7 +97,6 @@ function updateChangelogInContentJs(version, title, subtitle, items, mode, image
         fs.writeFileSync(contentPath, content);
     }
 
-    // Update VEIL_CURRENT_VERSION in background.js
     const bgPath = path.join(EXT_PATH, 'background.js');
     if (fs.existsSync(bgPath)) {
         let bg = fs.readFileSync(bgPath, 'utf8');
@@ -124,21 +121,31 @@ const https = require('https');
 
 function fetchGithubVersion() {
     return new Promise((resolve) => {
-        const url = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now();
-        https.get(url, (res) => {
+        const opts = {
+            hostname: 'api.github.com',
+            path: '/repos/meatballsong1/po-extension/releases/latest',
+            method: 'GET',
+            headers: {
+                'User-Agent': 'po-extension-builder',
+                'Accept': 'application/vnd.github+json',
+            },
+        };
+        const req = https.request(opts, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
-                try { resolve(JSON.parse(data).version || null); }
-                catch(e) { resolve(null); }
+                try {
+                    const tag = JSON.parse(data).tag_name || null;
+                    // strip leading 'v' so it matches local version format
+                    resolve(tag ? tag.replace(/^v/, '') : null);
+                } catch(e) { resolve(null); }
             });
-        }).on('error', () => resolve(null));
+        });
+        req.on('error', () => resolve(null));
+        req.end();
     });
 }
-
-
-
-// GET current state
+// GET current state — READ ONLY, never writes to disk
 app.get('/api/status', async (req, res) => {
     try {
         const manifest   = readManifest();
@@ -147,28 +154,8 @@ app.get('/api/status', async (req, res) => {
         const commits    = await git.log(['--oneline', '-20']).catch(() => ({ all: [] }));
         const githubVer  = await fetchGithubVersion();
 
-if (githubVer && githubVer !== manifest.version) {
-    manifest.version = githubVer;
-    writeManifest(manifest);
-    updateVersionJson(githubVer);
-    const contentPath = path.join(EXT_PATH, 'content.js');
-    if (fs.existsSync(contentPath)) {
-        let c = fs.readFileSync(contentPath, 'utf8');
-        c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
-        fs.writeFileSync(contentPath, c);
-    }
-    const bgPath = path.join(EXT_PATH, 'background.js');
-    if (fs.existsSync(bgPath)) {
-        let bg = fs.readFileSync(bgPath, 'utf8');
-        bg = bg.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
-        fs.writeFileSync(bgPath, bg);
-    }
-    updateChangelogJsonVersion(githubVer);
-}
-        const finalVersion = githubVer || manifest.version;
-
         res.json({
-            version:        finalVersion,
+            version:        manifest.version,
             githubVersion:  githubVer,
             name:           manifest.name,
             extPath:        EXT_PATH,
@@ -183,21 +170,18 @@ if (githubVer && githubVer !== manifest.version) {
     }
 });
 
-// POST sync-version — pulls version from GitHub and updates all local files
+// POST sync-version — manually triggered only, updates all local files to match GitHub
 app.post('/api/sync-version', async (req, res) => {
     try {
         const version = req.body.version;
         if (!version) return res.status(400).json({ error: 'no version' });
 
-        // Update manifest.json
         const manifest = readManifest();
         manifest.version = version;
         writeManifest(manifest);
 
-        // Update version.json
         updateVersionJson(version);
 
-        // Update VEIL_CURRENT_VERSION in content.js
         const contentPath = path.join(EXT_PATH, 'content.js');
         if (fs.existsSync(contentPath)) {
             let c = fs.readFileSync(contentPath, 'utf8');
@@ -205,7 +189,13 @@ app.post('/api/sync-version', async (req, res) => {
             fs.writeFileSync(contentPath, c);
         }
 
-        // Update changelog.json version field
+        const bgPath = path.join(EXT_PATH, 'background.js');
+        if (fs.existsSync(bgPath)) {
+            let bg = fs.readFileSync(bgPath, 'utf8');
+            bg = bg.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${version}';`);
+            fs.writeFileSync(bgPath, bg);
+        }
+
         updateChangelogJsonVersion(version);
 
         res.json({ success: true, version });
@@ -221,7 +211,6 @@ app.post('/api/upload-image', upload.single('image'), (req, res) => {
     const name = 'changelog-banner' + ext;
     const dest = path.join(UPLOAD_DIR, name);
     fs.renameSync(req.file.path, dest);
-    // Also copy to extension folder so it can be bundled
     fs.copyFileSync(dest, path.join(EXT_PATH, name));
     res.json({ url: '/uploads/' + name, filename: name });
 });
@@ -242,7 +231,6 @@ app.post('/api/publish', async (req, res) => {
     const { bumpType, title, subtitle, items, mode, imageUrl, imageIsUrl, extId, buttonLabel } = req.body;
 
     try {
-        // 1. Read current version — always from manifest (already synced to GitHub on startup)
         const manifest    = readManifest();
         const oldVersion  = manifest.version;
         const newVersion  = bumpVersion(oldVersion, bumpType || 'patch');
@@ -257,7 +245,6 @@ app.post('/api/publish', async (req, res) => {
 
         send(`Starting publish: ${oldVersion} → ${newVersion}`);
 
-        // Pre-clean: commit any leftover dirty files locally (don't push yet — push happens at end)
         const preDirty = await git.status();
         if (!preDirty.isClean()) {
             await git.add('.');
@@ -265,30 +252,24 @@ app.post('/api/publish', async (req, res) => {
             send(`Cleaned up ${preDirty.files.length} leftover file(s) from previous run`);
         }
 
-        // 2. Update manifest version
         manifest.version = newVersion;
         writeManifest(manifest);
         send('Updated manifest.json');
 
-        // 3. Update version.json
         updateVersionJson(newVersion);
         send('Updated version.json');
 
-        // 4. Update updates.xml
         if (extId) {
             updateUpdatesXml(newVersion, extId);
             send('Updated updates.xml');
         }
 
-        // 5. Update changelog in content.js
         const imageField = imageIsUrl ? imageUrl : (imageUrl ? path.basename(imageUrl) : '');
         updateChangelogInContentJs(newVersion, title, subtitle, items || [], mode || 'bullets', imageField, buttonLabel || 'Got it');
         send('Updated changelog in content.js');
 
-        // 6. Stage all and commit — check status AFTER patching files
         await git.add('.');
         const status = await git.status();
-        const stagedCount = status.staged ? status.staged.length : status.files.filter(f => f.index !== ' ' && f.index !== '?').length;
         if (status.files.length === 0) {
             send('No changes detected after patching — already up to date', 'warn');
         } else {
@@ -298,12 +279,10 @@ app.post('/api/publish', async (req, res) => {
             send(`Committed: "${commitMsg}"`);
         }
 
-        // 9. Create zip of extension (simpler than crx, works for distribution)
         const zipPath = path.join(BUILDER_DIR, `extension-v${newVersion}.zip`);
         await new Promise((resolve, reject) => {
             const output  = fs.createWriteStream(zipPath);
             const archive = archiver('zip', { zlib: { level: 9 } });
-            const SKIP    = ['node_modules', '.git', 'builder'];
             archive.pipe(output);
             archive.glob('**/*', {
                 cwd: EXT_PATH,
@@ -315,7 +294,6 @@ app.post('/api/publish', async (req, res) => {
         });
         send(`Created extension-v${newVersion}.zip (${Math.round(fs.statSync(zipPath).size / 1024)}KB)`);
 
-        // 10. Push to GitHub
         try {
             await git.push('origin', 'main');
             send('Pushed to GitHub!', 'success');
@@ -323,7 +301,6 @@ app.post('/api/publish', async (req, res) => {
             send('Push failed (check GitHub auth): ' + pushErr.message, 'warn');
         }
 
-        // 11. Create GitHub Release + upload zip
         try {
             const GITHUB_OWNER = 'meatballsong1';
             const GITHUB_REPO  = 'po-extension';
@@ -360,18 +337,15 @@ app.post('/api/publish', async (req, res) => {
                     req.end();
                 });
 
-                // Check if release already exists for this tag and delete it
                 const existing = await ghRequest('GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${newVersion}`);
                 if (existing.status === 200 && existing.body.id) {
                     await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${existing.body.id}`);
                     send(`Deleted existing release for v${newVersion}`, 'log');
                 }
 
-                // Also delete the tag if it exists (so we can recreate cleanly)
                 const tagDel = await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/tags/v${newVersion}`);
                 if (tagDel.status === 204) send(`Deleted existing tag v${newVersion}`, 'log');
 
-                // Create fresh release
                 const releaseRes = await ghRequest('POST', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
                     tag_name:         `v${newVersion}`,
                     target_commitish: 'main',
@@ -386,7 +360,6 @@ app.post('/api/publish', async (req, res) => {
                 } else {
                     send(`GitHub Release v${newVersion} created!`, 'success');
 
-                    // Upload the zip
                     const uploadUrl  = releaseRes.body.upload_url.replace('{?name,label}', '');
                     const zipName    = `extension-v${newVersion}.zip`;
                     const zipContent = fs.readFileSync(zipPath);
@@ -419,7 +392,6 @@ app.post('/api/publish', async (req, res) => {
             send('GitHub Release error: ' + releaseErr.message, 'warn');
         }
 
-        // 11. Save to history
         const history = readHistory();
         history.unshift({
             version:   newVersion,
@@ -491,7 +463,6 @@ app.listen(PORT, () => {
     console.log(`  Extension:  ${EXT_PATH}`);
     console.log('\n  Open the URL above in your browser.\n');
 
-    // Auto-open browser
     const { platform } = process;
     const cmd = platform === 'win32' ? `start http://localhost:${PORT}` :
                 platform === 'darwin' ? `open http://localhost:${PORT}` :

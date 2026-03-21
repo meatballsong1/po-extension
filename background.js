@@ -1,5 +1,4 @@
-var VEIL_CURRENT_VERSION = '2.5.7';
-var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
+var VEIL_CURRENT_VERSION = '2.5.6';
 var SNOOZE_KEY = 'veil_snooze_until';
 
 function sendUpdateToPoTabs(latestVersion) {
@@ -16,11 +15,14 @@ function sendUpdateToPoTabs(latestVersion) {
 }
 
 function checkForUpdate() {
-    fetch(UPDATE_CHECK_URL + Date.now())
+    fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest', {
+        headers: { 'Accept': 'application/vnd.github+json' }
+    })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            if (!data || !data.version) return;
-            var latestVersion = data.version;
+            if (!data || !data.tag_name) return;
+            // Strip leading 'v' so "v2.5.7" becomes "2.5.7"
+            var latestVersion = data.tag_name.replace(/^v/, '');
             if (latestVersion === VEIL_CURRENT_VERSION) return;
 
             chrome.storage.local.get(SNOOZE_KEY, function(d) {
@@ -43,7 +45,6 @@ chrome.runtime.onMessage.addListener(function(msg) {
 // Check on page refresh — fires every time a PO tab finishes loading
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (changeInfo.status === 'complete' && tab.url && tab.url.indexOf('pocketoption.com') !== -1) {
-        // Small delay so content.js is fully loaded before we message it
         setTimeout(function() { checkForUpdate(); }, 3000);
     }
 });

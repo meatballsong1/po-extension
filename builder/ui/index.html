@@ -346,12 +346,13 @@
     <div class="ver-block">
       <div class="ver-n" id="ver-num">—</div>
       <div class="ver-sub" id="ver-name">loading...</div>
-<div id="github-ver-row" style="margin-top:7px;padding-top:7px;border-top:1px solid #2a1a40;display:flex;align-items:center;justify-content:space-between;">
-  <span style="font-size:10px;color:#555;">GitHub</span>
-  <span id="github-ver" style="font-size:11px;font-family:'Courier New',monospace;color:#555;">checking...</span>
-</div>
-<button id="sync-btn" onclick="manualSync()" style="margin-top:8px;width:100%;padding:5px 0;background:#0d0d18;border:1px solid #3a1f5a;border-radius:7px;color:#bf5af2;font-size:10px;font-weight:bold;cursor:pointer;font-family:'Inter',Arial,sans-serif;letter-spacing:0.3px;transition:all 0.15s;">↻ Sync from GitHub</button>
-<div id="sync-status" style="font-size:10px;color:#555;text-align:center;min-height:14px;margin-top:2px;"></div>
+      <div id="github-ver-row" style="margin-top:7px;padding-top:7px;border-top:1px solid #2a1a40;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:10px;color:#555;">GitHub</span>
+        <span id="github-ver" style="font-size:11px;font-family:'Courier New',monospace;color:#555;">checking...</span>
+      </div>
+      <button id="sync-btn" onclick="manualSync()" style="margin-top:8px;width:100%;padding:5px 0;background:#0d0d18;border:1px solid #3a1f5a;border-radius:7px;color:#bf5af2;font-size:10px;font-weight:bold;cursor:pointer;font-family:'Inter',Arial,sans-serif;letter-spacing:0.3px;transition:all 0.15s;">↻ Sync from GitHub</button>
+      <div id="sync-status" style="font-size:10px;color:#555;text-align:center;min-height:14px;margin-top:2px;"></div>
+    </div>
 
     <div class="s-label">Changed Files</div>
     <div class="file-box">
@@ -488,6 +489,7 @@
 
 <script>
 var S = { version: '1.0.0', bump: 'minor', mode: 'bullets', imageUrl: '', imageIsUrl: false };
+
 async function manualSync() {
   var btn = document.getElementById('sync-btn');
   var status = document.getElementById('sync-status');
@@ -496,8 +498,9 @@ async function manualSync() {
   try {
     var r = await fetch('/api/status');
     var d = await r.json();
-    if (!d.githubVersion) { status.textContent = 'could not reach GitHub'; status.style.color = '#ff453a'; }
-    else {
+    if (!d.githubVersion) {
+      status.textContent = 'could not reach GitHub'; status.style.color = '#ff453a';
+    } else {
       var sr = await fetch('/api/sync-version', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ version: d.githubVersion }) });
       var sd = await sr.json();
       if (sd.success) {
@@ -509,11 +512,17 @@ async function manualSync() {
         updateNV();
         status.textContent = 'synced to v' + d.githubVersion;
         status.style.color = '#24b15b';
-      } else { status.textContent = 'sync failed'; status.style.color = '#ff453a'; }
+      } else {
+        status.textContent = 'sync failed'; status.style.color = '#ff453a';
+      }
     }
-  } catch(e) { status.textContent = 'error: ' + e.message; status.style.color = '#ff453a'; }
-  finally { btn.disabled = false; btn.textContent = '↻ Sync from GitHub'; btn.style.color = '#bf5af2'; }
+  } catch(e) {
+    status.textContent = 'error: ' + e.message; status.style.color = '#ff453a';
+  } finally {
+    btn.disabled = false; btn.textContent = '↻ Sync from GitHub'; btn.style.color = '#bf5af2';
+  }
 }
+
 async function init() {
   await loadStatus();
   loadToken();
@@ -561,7 +570,7 @@ async function loadStatus() {
         ghEl.textContent = 'v' + d.githubVersion + ' — in sync';
         ghEl.style.color = '#24b15b';
       } else {
-        ghEl.textContent = 'synced to v' + d.githubVersion;
+        ghEl.textContent = 'v' + d.githubVersion + ' — out of sync';
         ghEl.style.color = '#ffd60a';
         S.version = d.githubVersion;
         document.getElementById('ver-num').textContent = d.githubVersion;
@@ -703,7 +712,6 @@ function renderHist(history) {
     '</div>';
   }).join('');
 
-  // Wire delete buttons
   el.querySelectorAll('.hist-del').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
