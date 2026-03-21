@@ -72,57 +72,50 @@ function updateUpdatesXml(version, extId) {
 }
 
 function updateChangelogInContentJs(version, title, subtitle, items, mode, image, buttonLabel) {
-    const p = path.join(EXT_PATH, 'content.js');
-    let content = fs.readFileSync(p, 'utf8');
+    // Write changelog.json — content.js loads this at runtime, no JS patching needed
+    const clPath = path.join(EXT_PATH, 'changelog.json');
+    const clData = {
+        version,
+        title:       title       || '',
+        subtitle:    subtitle    || '',
+        image:       image       || '',
+        mode:        mode        || 'bullets',
+        items:       (items || []).map(i =>
+            typeof i === 'string' ? i : (i.text ? (i.url ? { text: i.text, url: i.url } : i.text) : i)
+        ),
+        text:        '',
+        buttonLabel: buttonLabel || 'Got it',
+    };
+    fs.writeFileSync(clPath, JSON.stringify(clData, null, 2));
 
-    // Find the CHANGELOG object block and replace it entirely — no risky field-by-field regexes
-    const itemsStr = (items || []).map(i => {
-        const s = typeof i === 'string' ? i : (i.text ? i.text + (i.url ? ' — ' + i.url : '') : JSON.stringify(i));
-        return `        '${s.replace(/\\/g,'\\\\').replace(/'/g, "\\'")}',`;
-    }).join('\n');
-    const imageStr = (image || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
-    const titleStr = (title || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
-    const subStr   = (subtitle || '').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
-    const btnStr   = (buttonLabel || 'Got it').replace(/\\/g,'\\\\').replace(/'/g, "\\'");
-
-    const newBlock = `var CHANGELOG = {
-    version: '${version}',
-
-    title: '${titleStr}',
-    subtitle: '${subStr}',
-
-    image: '${imageStr}',
-
-    // 'bullets' | 'text' | 'links' | 'none'
-    mode: '${mode || 'bullets'}',
-
-    items: [
-${itemsStr}
-    ],
-
-    text: '',
-
-    buttonLabel: '${btnStr}',
-};`;
-
-    const before = content;
-    content = content.replace(/var CHANGELOG\s*=\s*\{[\s\S]*?\};(\s*\/\/ ={3,})/, newBlock + '$1');
-
-    if (content === before) {
-        // Regex didn't match — try a more lenient replacement
-        content = before.replace(/var CHANGELOG\s*=\s*\{[\s\S]*?\};/, newBlock + ';');
-    }
-    if (content === before) {
-        throw new Error('Could not find CHANGELOG object in content.js — regex did not match. Check the file manually.');
+    // Update VEIL_CURRENT_VERSION in content.js
+    const contentPath = path.join(EXT_PATH, 'content.js');
+    if (fs.existsSync(contentPath)) {
+        let content = fs.readFileSync(contentPath, 'utf8');
+        content = content.replace(
+            /var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/,
+            `var VEIL_CURRENT_VERSION = '${version}';`
+        );
+        fs.writeFileSync(contentPath, content);
     }
 
-    // Update VEIL_CURRENT_VERSION
-    content = content.replace(
-        /var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/,
-        `var VEIL_CURRENT_VERSION = '${version}';`
-    );
+    // Update VEIL_CURRENT_VERSION in background.js
+    const bgPath = path.join(EXT_PATH, 'background.js');
+    if (fs.existsSync(bgPath)) {
+        let bg = fs.readFileSync(bgPath, 'utf8');
+        bg = bg.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${version}';`);
+        fs.writeFileSync(bgPath, bg);
+    }
+}
 
-    fs.writeFileSync(p, content);
+function updateChangelogJsonVersion(version) {
+    const clPath = path.join(EXT_PATH, 'changelog.json');
+    if (!fs.existsSync(clPath)) return;
+    try {
+        const cl = JSON.parse(fs.readFileSync(clPath, 'utf8'));
+        cl.version = version;
+        fs.writeFileSync(clPath, JSON.stringify(cl, null, 2));
+    } catch(e) {}
 }
 
 // ── API ROUTES ────────────────────────────────────────────────────────────
@@ -166,6 +159,13 @@ app.get('/api/status', async (req, res) => {
                 c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
                 fs.writeFileSync(contentPath, c);
             }
+            const bgPath = path.join(EXT_PATH, 'background.js');
+            if (fs.existsSync(bgPath)) {
+                let bg = fs.readFileSync(bgPath, 'utf8');
+                bg = bg.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${githubVer}';`);
+                fs.writeFileSync(bgPath, bg);
+            }
+            updateChangelogJsonVersion(githubVer);
         } else if (!_hasSynced) {
             _hasSynced = true;
         }
@@ -209,6 +209,9 @@ app.post('/api/sync-version', async (req, res) => {
             c = c.replace(/var VEIL_CURRENT_VERSION\s*=\s*'[^']*';/, `var VEIL_CURRENT_VERSION = '${version}';`);
             fs.writeFileSync(contentPath, c);
         }
+
+        // Update changelog.json version field
+        updateChangelogJsonVersion(version);
 
         res.json({ success: true, version });
     } catch(e) {

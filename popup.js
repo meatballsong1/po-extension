@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     result.className = 'update-result has-update';
                     verEl.style.display = 'block';
                     verEl.textContent = 'v' + latest + ' available';
-                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + "";
+                    msgEl.textContent = "you're on v" + current + " but there's a newer version v" + latest + ". updating you now would be sick.";
                     if (link) { link.style.display = 'inline-block'; link.textContent = 'how to update'; }
 
 
@@ -235,13 +235,26 @@ document.addEventListener('DOMContentLoaded', () => {
             openBtn.onclick = openExtPage;
         }
 
-        // Wire download button — after click, auto-open extensions page after 2s
+        // Wire download button — fetch latest release asset URL dynamically
         if (dlBtn && !dlBtn._wired) {
             dlBtn._wired = true;
-            dlBtn.addEventListener('click', function() {
-                setTimeout(function() {
-                    openExtPage();
-                }, 2000);
+            dlBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var origText = dlBtn.textContent;
+                dlBtn.textContent = 'Fetching...';
+                fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        var asset = data.assets && data.assets.find(function(a) { return a.name.endsWith('.zip'); });
+                        var url = asset ? asset.browser_download_url : data.zipball_url;
+                        dlBtn.textContent = origText;
+                        chrome.tabs.create({ url: url });
+                        setTimeout(function() { openExtPage(); }, 2000);
+                    })
+                    .catch(function() {
+                        dlBtn.textContent = origText;
+                        chrome.tabs.create({ url: 'https://github.com/meatballsong1/po-extension/releases/latest' });
+                    });
             });
         }
     }

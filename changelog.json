@@ -1,0 +1,17 @@
+{
+  "version": "2.5.6",
+  "title": "welcome to version 2.5.6!",
+  "subtitle": "autoupdater patch + new features",
+  "image": "https://cdn.discordapp.com/attachments/1478916523820060834/1484004106786967572/image.png?ex=69bca606&is=69bb5486&hm=9910636aad93ba2a08f429dbee3814d84dfa03d74b6bff220fe9f1c28a9ed823&",
+  "mode": "bullets",
+  "items": [
+    "autoupdater now works properly on page refresh",
+    "update popup now shows changelog inline",
+    "remind me later with snooze options",
+    "download from latest github release directly",
+    "background update checking every 5 minutes",
+    "changelog now loaded from file, not hardcoded"
+  ],
+  "text": "",
+  "buttonLabel": "let's go"
+}

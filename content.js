@@ -286,45 +286,46 @@ function performInstantSwap() {
 }
 
 setTimeout(() => { if (document.body) document.body.classList.add('ready'); }, 1000);
-
-// -- STREAM MODE (1ms interval) ----------------------------------------
+// -- STREAM MODE (50ms interval) ----------------------------------------
 const BAL_MASK = '*******';
-const ID_MASK  = '***';
+const ID_MASK  = 'id *********';
 const IP_MASK  = '***.***.***.***';
 
 setInterval(function() {
     if (!CONFIG.isStreamModeEnabled) return;
 
-    // Balance - target the js-hd span which holds the actual number
+    // Balance
     if (CONFIG.streamMaskBalance) {
-        document.querySelectorAll('.js-balance-real-USD, .js-balance-demo-USD, [class*="js-balance-"]').forEach(function(el) {
-            if (el.innerText !== BAL_MASK) el.innerText = BAL_MASK;
+        document.querySelectorAll('.js-balance-real-USD, .js-balance-demo-USD, .js-balance-demo, .balance_current .js-hd').forEach(function(el) {
+            if (el.textContent !== BAL_MASK) el.textContent = BAL_MASK;
         });
     }
 
     // Account ID
     if (CONFIG.streamMaskId) {
-        document.querySelectorAll('.js-user-id, .user-id, .profile-id, .header-profile__id').forEach(function(el) {
-            if (el.innerText.trim() !== ID_MASK) el.innerText = ID_MASK;
+        document.querySelectorAll('.info__id .js-hd, .js-user-id, .user-id, .profile-id').forEach(function(el) {
+            if (el.textContent.trim() !== ID_MASK) el.textContent = ID_MASK;
         });
     }
 
-    // IP
+    // IP (Preserves country flag icon)
     if (CONFIG.streamMaskIp) {
-        document.querySelectorAll('.js-user-ip, .user-ip, .profile-ip').forEach(function(el) {
-            if (el.innerText.trim() !== IP_MASK) el.innerText = IP_MASK;
+        document.querySelectorAll('.info__last-login .js-hd, .js-user-ip, .user-ip').forEach(function(el) {
+            if (!el.textContent.includes(IP_MASK)) {
+                const img = el.querySelector('img');
+                el.innerHTML = IP_MASK + (img ? ' ' + img.outerHTML : '');
+            }
         });
     }
 
     // Email
     if (CONFIG.streamMaskEmail) {
         const alias = CONFIG.streamEmailAlias || 'hidden@domain.com';
-        document.querySelectorAll('.js-user-email, .user-email, .profile-email, .header-profile__email').forEach(function(el) {
-            if (el.innerText.trim() !== alias) el.innerText = alias;
+        document.querySelectorAll('.info__email .js-hd, .js-user-email, .user-email').forEach(function(el) {
+            if (el.textContent.trim() !== alias) el.textContent = alias;
         });
     }
-}, 1);
-
+}, 50); // Changed from 1ms to 50ms to prevent browser lagging while remaining visually instant
 // ==========================================================================
 // -- FLOATING POPOUT WIDGET + IN-PAGE EDITOR --------------------------------
 // ==========================================================================
@@ -1667,15 +1668,32 @@ function showUpdateBanner(currentVersion, latestVersion) {
             // Snooze picker
             '#po-snooze-picker{display:none;flex-direction:column;gap:6px;margin-top:10px;animation:poSlideUp 0.25s cubic-bezier(0.22,1,0.36,1);}',
             '#po-snooze-picker.visible{display:flex !important;}',
-            '.po-snooze-opt{padding:9px 14px !important;border-radius:10px !important;border:1px solid rgba(255,255,255,0.08) !important;background:rgba(255,255,255,0.04) !important;color:rgba(255,255,255,0.7) !important;font-size:12px !important;font-weight:500 !important;cursor:pointer !important;font-family:inherit !important;text-align:left !important;transition:background 0.18s,border-color 0.18s,transform 0.12s !important;display:flex !important;align-items:center !important;justify-content:space-between !important;}',
-            '.po-snooze-opt:hover{background:rgba(191,90,242,0.12) !important;border-color:rgba(191,90,242,0.3) !important;color:#fff !important;transform:translateX(3px) !important;}',
+            '.po-snooze-opt{padding:7px 12px !important;border-radius:9px !important;border:1px solid rgba(255,255,255,0.07) !important;background:rgba(255,255,255,0.03) !important;color:rgba(255,255,255,0.7) !important;font-size:11px !important;font-weight:500 !important;cursor:pointer !important;font-family:inherit !important;text-align:left !important;transition:background 0.18s,border-color 0.18s,transform 0.12s !important;display:flex !important;align-items:center !important;justify-content:space-between !important;}',
+            '.po-snooze-opt:hover{background:rgba(191,90,242,0.1) !important;border-color:rgba(191,90,242,0.25) !important;color:#fff !important;transform:translateX(2px) !important;}',
             '.po-snooze-opt span{font-size:10px !important;color:rgba(255,255,255,0.3) !important;}',
             // Steps view
-            '#po-steps-view{display:none;flex-direction:column;gap:8px;margin-top:10px;animation:poSlideUp 0.28s cubic-bezier(0.22,1,0.36,1);}',
+            '#po-steps-view{display:none;flex-direction:column;gap:6px;margin-top:8px;animation:poSlideUp 0.28s cubic-bezier(0.22,1,0.36,1);}',
             '#po-steps-view.visible{display:flex !important;}',
             '.po-step-row{display:flex !important;align-items:flex-start !important;gap:10px !important;}',
-            '.po-step-num{width:20px !important;height:20px !important;border-radius:50% !important;background:rgba(191,90,242,0.12) !important;border:1px solid rgba(191,90,242,0.3) !important;color:#bf5af2 !important;font-size:9px !important;font-weight:800 !important;display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;margin-top:1px !important;}',
-            '.po-step-txt{font-size:11.5px !important;color:rgba(255,255,255,0.7) !important;line-height:1.5 !important;}',
+            '.po-step-num{width:18px !important;height:18px !important;border-radius:50% !important;background:rgba(0,176,255,0.1) !important;border:1px solid rgba(0,176,255,0.25) !important;color:#00b0ff !important;font-size:8px !important;font-weight:700 !important;display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;margin-top:2px !important;}',
+            '.po-step-txt{font-size:11px !important;color:rgba(255,255,255,0.65) !important;line-height:1.5 !important;}',
+            // Changelog expand panel inside update popup
+            '#po-cl-expand{max-height:0;overflow:hidden;transition:max-height 0.45s cubic-bezier(0.22,1,0.36,1),opacity 0.3s ease;opacity:0;margin-bottom:0;}',
+            '#po-cl-expand.open{max-height:400px;opacity:1;margin-bottom:12px;}',
+            '#po-cl-expand-inner{padding:12px 0 0;border-top:1px solid rgba(255,255,255,0.06);}',
+            '#po-cl-expand-img{width:100%;border-radius:10px;display:block;object-fit:cover;max-height:110px;margin-bottom:10px;}',
+            '#po-cl-expand-title{font-size:13px;font-weight:700;color:#fff;-webkit-text-fill-color:#fff;letter-spacing:-0.2px;margin-bottom:2px;}',
+            '#po-cl-expand-sub{font-size:10.5px;color:rgba(255,255,255,0.35);margin-bottom:10px;font-weight:400;}',
+            '#po-cl-expand-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px;max-height:160px;overflow-y:auto;}',
+            '#po-cl-expand-list::-webkit-scrollbar{width:2px;}',
+            '#po-cl-expand-list::-webkit-scrollbar-thumb{background:rgba(191,90,242,0.35);border-radius:2px;}',
+            '#po-cl-expand-list li{display:flex;align-items:flex-start;gap:7px;font-size:10.5px;color:rgba(255,255,255,0.65);font-weight:500;line-height:1.4;}',
+            '#po-cl-expand-list li::before{content:"";width:3px;height:3px;border-radius:50%;background:linear-gradient(135deg,#bf5af2,#00b0ff);flex-shrink:0;margin-top:5px;box-shadow:0 0 4px rgba(191,90,242,0.7);}',
+            '#po-cl-expand-text{font-size:10.5px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 10px;}',
+            '#po-cl-toggle-btn{width:100%;padding:7px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:9px;color:rgba(255,255,255,0.4);font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;transition:background 0.18s,color 0.18s;margin-bottom:10px;}',
+            '#po-cl-toggle-btn:hover{background:rgba(191,90,242,0.1);color:rgba(191,90,242,0.9);border-color:rgba(191,90,242,0.2);}',
+            '#po-cl-toggle-arrow{display:inline-block;transition:transform 0.3s cubic-bezier(0.22,1,0.36,1);font-size:9px;}',
+            '#po-cl-toggle-btn.open #po-cl-toggle-arrow{transform:rotate(180deg);}',
         ].join('');
         (document.head || document.documentElement).appendChild(us);
     }
@@ -1703,11 +1721,11 @@ function showUpdateBanner(currentVersion, latestVersion) {
     var card = document.createElement('div');
     card.style.cssText = [
         'position:relative !important',
-        'width:340px !important',
+        'width:310px !important',
         'background:rgba(10,8,18,0.98) !important',
-        'border:1px solid rgba(191,90,242,0.2) !important',
-        'border-radius:26px !important',
-        'padding:24px 22px 20px !important',
+        'border:1px solid rgba(191,90,242,0.18) !important',
+        'border-radius:22px !important',
+        'padding:20px 18px 16px !important',
         'box-shadow:0 40px 80px rgba(0,0,0,0.8),0 0 0 0.5px rgba(191,90,242,0.12),inset 0 1px 0 rgba(191,90,242,0.1),0 0 40px rgba(191,90,242,0.08) !important',
         'animation:poUpIn 0.45s cubic-bezier(0.22,1,0.36,1) forwards !important',
         'overflow:hidden !important',
@@ -1719,10 +1737,10 @@ function showUpdateBanner(currentVersion, latestVersion) {
 
     // --- TOPBAR ---
     var topBar = document.createElement('div');
-    topBar.style.cssText = 'display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:16px !important;';
+    topBar.style.cssText = 'display:flex !important;align-items:center !important;justify-content:space-between !important;margin-bottom:12px !important;';
     topBar.innerHTML =
         '<div style="display:flex;align-items:center;gap:9px;">' +
-            '<img src="' + avatarSrc + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.4);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
+            '<img src="' + avatarSrc + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.35);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
             '<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:rgba(191,90,242,0.1);border:1px solid rgba(191,90,242,0.25);border-radius:20px;">' +
                 '<div style="width:5px;height:5px;border-radius:50%;background:linear-gradient(135deg,#bf5af2,#00b0ff);box-shadow:0 0 7px rgba(191,90,242,0.9);flex-shrink:0;"></div>' +
                 '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;background:linear-gradient(90deg,#bf5af2,#00b0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">update available</span>' +
@@ -1736,16 +1754,87 @@ function showUpdateBanner(currentVersion, latestVersion) {
 
     // --- HEADING ---
     var heading = document.createElement('div');
-    heading.style.cssText = 'font-size:21px !important;font-weight:700 !important;color:#fff !important;-webkit-text-fill-color:#fff !important;letter-spacing:-0.5px !important;line-height:1.2 !important;margin-bottom:5px !important;';
+    heading.style.cssText = 'font-size:18px !important;font-weight:700 !important;color:#fff !important;-webkit-text-fill-color:#fff !important;letter-spacing:-0.4px !important;line-height:1.2 !important;margin-bottom:4px !important;';
     heading.textContent = "we\u2019ve detected a new update";
 
     var sub = document.createElement('div');
-    sub.style.cssText = 'font-size:12px !important;color:rgba(255,255,255,0.35) !important;margin-bottom:18px !important;font-weight:400 !important;line-height:1.5 !important;';
+    sub.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.35) !important;margin-bottom:14px !important;font-weight:400 !important;line-height:1.5 !important;';
     sub.textContent = 'version ' + latestVersion + ' is available for your extension';
 
     // --- DIVIDER ---
     var div1 = document.createElement('div');
-    div1.style.cssText = 'height:1px !important;background:rgba(255,255,255,0.06) !important;margin-bottom:16px !important;';
+    div1.style.cssText = 'height:1px !important;background:rgba(255,255,255,0.05) !important;margin-bottom:12px !important;';
+
+    // --- CHANGELOG TOGGLE ---
+
+    var clExpand = document.createElement('div');
+    clExpand.id = 'po-cl-expand';
+
+    var clInner = document.createElement('div');
+    clInner.id = 'po-cl-expand-inner';
+
+    // Build changelog content lazily when user first opens it
+    var clOpen = false;
+    var clBuilt = false;
+
+    function buildClExpand(cl) {
+        if (clBuilt) return;
+        clBuilt = true;
+        if (cl.image) {
+            var clImg = document.createElement('img');
+            clImg.id = 'po-cl-expand-img';
+            var imgSrc = (cl.image.indexOf('http') === 0 || cl.image.indexOf('//') === 0)
+                ? cl.image : chrome.runtime.getURL(cl.image);
+            clImg.src = imgSrc;
+            clImg.onerror = function() { this.style.display = 'none'; };
+            clInner.appendChild(clImg);
+        }
+        var clTitleEl = document.createElement('div');
+        clTitleEl.id = 'po-cl-expand-title';
+        clTitleEl.textContent = cl.title || '';
+        clInner.appendChild(clTitleEl);
+        if (cl.subtitle) {
+            var clSubEl = document.createElement('div');
+            clSubEl.id = 'po-cl-expand-sub';
+            clSubEl.textContent = cl.subtitle;
+            clInner.appendChild(clSubEl);
+        }
+        if (cl.mode === 'bullets' && cl.items && cl.items.length) {
+            var clList = document.createElement('ul');
+            clList.id = 'po-cl-expand-list';
+            cl.items.forEach(function(item) {
+                var li = document.createElement('li');
+                li.textContent = typeof item === 'string' ? item : (item.text || '');
+                clList.appendChild(li);
+            });
+            clInner.appendChild(clList);
+        } else if (cl.mode === 'text' && cl.text) {
+            var clTxtEl = document.createElement('p');
+            clTxtEl.id = 'po-cl-expand-text';
+            clTxtEl.textContent = cl.text;
+            clInner.appendChild(clTxtEl);
+        } else if (cl.mode === 'links' && cl.items && cl.items.length) {
+            var clList2 = document.createElement('ul');
+            clList2.id = 'po-cl-expand-list';
+            cl.items.forEach(function(item) {
+                var li = document.createElement('li');
+                if (typeof item === 'string') { li.textContent = item; }
+                else {
+                    var a = document.createElement('a');
+                    a.href = item.url; a.target = '_blank'; a.rel = 'noopener';
+                    a.textContent = item.text;
+                    a.style.cssText = 'color:#bf5af2;-webkit-text-fill-color:#bf5af2;text-decoration:none;';
+                    li.appendChild(a);
+                }
+                clList2.appendChild(li);
+            });
+            clInner.appendChild(clList2);
+        }
+    }
+
+    clExpand.appendChild(clInner);
+
+
 
     // --- MAIN BUTTONS (default view) ---
     var mainBtns = document.createElement('div');
@@ -1753,21 +1842,21 @@ function showUpdateBanner(currentVersion, latestVersion) {
     mainBtns.style.cssText = 'display:flex !important;gap:8px !important;';
 
     var updateBtn = document.createElement('button');
-    updateBtn.textContent = 'Update me';
+    updateBtn.textContent = 'let’s get started';
     updateBtn.style.cssText = [
         'flex:1 !important',
-        'padding:12px !important',
-        'background:linear-gradient(135deg,#bf5af2,#ff375f) !important',
+        'padding:9px 14px !important',
+        'background:linear-gradient(135deg,#bf5af2,#00b0ff) !important',
         'border:none !important',
-        'border-radius:13px !important',
+        'border-radius:11px !important',
         'color:#fff !important',
         '-webkit-text-fill-color:#fff !important',
-        'font-weight:700 !important',
-        'font-size:13px !important',
+        'font-weight:600 !important',
+        'font-size:12px !important',
         'cursor:pointer !important',
         'font-family:inherit !important',
-        'letter-spacing:-0.2px !important',
-        'box-shadow:0 4px 20px rgba(191,90,242,0.4) !important',
+        'letter-spacing:-0.1px !important',
+        'box-shadow:0 3px 14px rgba(191,90,242,0.35) !important',
         'transition:opacity 0.2s,transform 0.15s,box-shadow 0.2s !important',
     ].join(';');
     updateBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; this.style.boxShadow = '0 8px 28px rgba(191,90,242,0.55)'; });
@@ -1776,16 +1865,16 @@ function showUpdateBanner(currentVersion, latestVersion) {
     updateBtn.addEventListener('mouseup',   function() { this.style.transform = 'translateY(-1px)'; });
 
     var snoozeBtn = document.createElement('button');
-    snoozeBtn.textContent = 'Remind me later';
+    snoozeBtn.textContent = 'remind me later';
     snoozeBtn.style.cssText = [
         'flex:1 !important',
-        'padding:12px !important',
-        'background:rgba(255,255,255,0.06) !important',
-        'border:1px solid rgba(255,255,255,0.1) !important',
-        'border-radius:13px !important',
-        'color:rgba(255,255,255,0.6) !important',
-        'font-weight:600 !important',
-        'font-size:13px !important',
+        'padding:9px 14px !important',
+        'background:rgba(255,255,255,0.05) !important',
+        'border:1px solid rgba(255,255,255,0.08) !important',
+        'border-radius:11px !important',
+        'color:rgba(255,255,255,0.5) !important',
+        'font-weight:500 !important',
+        'font-size:12px !important',
         'cursor:pointer !important',
         'font-family:inherit !important',
         'transition:background 0.2s,color 0.2s,transform 0.12s !important',
@@ -1802,8 +1891,8 @@ function showUpdateBanner(currentVersion, latestVersion) {
     var snoozePicker = document.createElement('div');
     snoozePicker.id = 'po-snooze-picker';
     var snoozeLabel = document.createElement('div');
-    snoozeLabel.style.cssText = 'font-size:11px !important;color:rgba(255,255,255,0.4) !important;margin-bottom:2px !important;font-weight:500 !important;';
-    snoozeLabel.textContent = 'Remind me in…';
+    snoozeLabel.style.cssText = 'font-size:10px !important;color:rgba(255,255,255,0.35) !important;margin-bottom:6px !important;font-weight:500 !important;letter-spacing:0.2px !important;';
+    snoozeLabel.textContent = 'remind me in…';
     var snoozeOpts = [
         { label: '1 hour',  sub: 'remind you in an hour', ms: 3600000 },
         { label: '1 day',   sub: 'tomorrow same time',    ms: 86400000 },
@@ -1816,7 +1905,7 @@ function showUpdateBanner(currentVersion, latestVersion) {
         row.innerHTML = '<span style="-webkit-text-fill-color:rgba(255,255,255,0.7);color:rgba(255,255,255,0.7);">' + opt.label + '</span><span>' + opt.sub + '</span>';
         row.addEventListener('click', function() {
             var snoozeUntil = Date.now() + opt.ms;
-            chrome.storage.local.set({ 'veil_snooze_until': snoozeUntil });
+            chrome.storage.local.set({ 'veil_snooze_until': snoozeUntil, 'veil_last_seen_update': latestVersion });
             closeUpdate(overlay);
             showPageNotif({ desc: "ok we'll remind you in " + opt.label });
         });
@@ -1854,47 +1943,69 @@ function showUpdateBanner(currentVersion, latestVersion) {
 
     // Download + open extensions buttons
     var dlRow = document.createElement('div');
-    dlRow.style.cssText = 'display:flex !important;gap:8px !important;margin-top:4px !important;';
+    dlRow.style.cssText = 'display:flex !important;gap:6px !important;margin-top:6px !important;';
 
     var dlBtn = document.createElement('a');
-    dlBtn.href = 'https://github.com/meatballsong1/po-extension/archive/refs/heads/main.zip';
+    dlBtn.href = '#';
     dlBtn.textContent = 'Download ZIP';
+    dlBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        dlBtn.textContent = 'Fetching...';
+        fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var asset = data.assets && data.assets.find(function(a) { return a.name.endsWith('.zip'); });
+                var url = asset ? asset.browser_download_url : data.zipball_url;
+                dlBtn.textContent = 'Download ZIP';
+                // Trigger download
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = '';
+                a.target = '_blank';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            //    window.open('chrome://extensions', '_blank');
+                setTimeout(function() {
+                    closeUpdate(overlay);
+                    chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url })
+                }, 800);
+            })
+            .catch(function() {
+                dlBtn.textContent = 'Download ZIP';
+                // Fallback to releases page
+                window.open('https://github.com/meatballsong1/po-extension/releases/latest', '_blank');
+            });
+    });
     dlBtn.style.cssText = [
         'flex:1 !important',
-        'padding:11px !important',
-        'background:linear-gradient(135deg,#bf5af2,#ff375f) !important',
+        'padding:9px !important',
+        'background:linear-gradient(135deg,#bf5af2,#00b0ff) !important',
         'border:none !important',
-        'border-radius:12px !important',
+        'border-radius:10px !important',
         'color:#fff !important',
         '-webkit-text-fill-color:#fff !important',
-        'font-weight:700 !important',
-        'font-size:12px !important',
+        'font-weight:600 !important',
+        'font-size:11.5px !important',
         'text-decoration:none !important',
         'text-align:center !important',
         'display:block !important',
-        'box-shadow:0 4px 16px rgba(191,90,242,0.35) !important',
+        'box-shadow:0 3px 12px rgba(191,90,242,0.3) !important',
         'transition:opacity 0.18s,transform 0.12s !important',
     ].join(';');
     dlBtn.addEventListener('mouseover', function() { this.style.opacity = '0.88'; this.style.transform = 'translateY(-1px)'; });
     dlBtn.addEventListener('mouseout',  function() { this.style.opacity = '1'; this.style.transform = 'translateY(0)'; });
-    dlBtn.addEventListener('click', function() {
-        // Close popup after download starts, then open extensions page
-        setTimeout(function() {
-            closeUpdate(overlay);
-            setTimeout(function() { chrome.runtime.sendMessage({ type: 'PO_OPEN_TAB', url: browser.url }); }, 300);
-        }, 800);
-    });
 
     var extBtn = document.createElement('button');
     extBtn.textContent = browser.name + ' Extensions';
     extBtn.style.cssText = [
         'flex:0 0 auto !important',
-        'padding:11px 14px !important',
-        'background:rgba(255,255,255,0.05) !important',
-        'border:1px solid rgba(255,255,255,0.1) !important',
-        'border-radius:12px !important',
-        'color:rgba(255,255,255,0.55) !important',
-        'font-weight:600 !important',
+        'padding:9px 12px !important',
+        'background:rgba(255,255,255,0.04) !important',
+        'border:1px solid rgba(255,255,255,0.08) !important',
+        'border-radius:10px !important',
+        'color:rgba(255,255,255,0.45) !important',
+        'font-weight:500 !important',
         'font-size:11px !important',
         'cursor:pointer !important',
         'font-family:inherit !important',
@@ -1945,11 +2056,11 @@ function showUpdateBanner(currentVersion, latestVersion) {
 
     // Assemble
     card.appendChild(shimmer);
-    card.appendChild(closeBtn);
     card.appendChild(topBar);
     card.appendChild(heading);
     card.appendChild(sub);
     card.appendChild(div1);
+    card.appendChild(clExpand);
     card.appendChild(mainBtns);
     card.appendChild(snoozePicker);
     card.appendChild(stepsView);
@@ -1960,150 +2071,59 @@ function showUpdateBanner(currentVersion, latestVersion) {
 
 
 // ---- POPUP QUEUE ----
-// changelog shows first; if an update is pending it fires ~10s after changelog closes
-var _pendingUpdateVersions = null; // { current, latest } stored here until changelog dismissed
+// changelog shows first; update popup fires ~5s after changelog is dismissed
+var _pendingUpdateVersions = null;
 
 function _maybeFireQueuedUpdate() {
     if (!_pendingUpdateVersions) return;
     var v = _pendingUpdateVersions;
     _pendingUpdateVersions = null;
-    setTimeout(function() { showUpdateBanner(v.current, v.latest); }, 10000);
+    showUpdateBanner(v.current, v.latest);
 }
 
-var _updateCheckCount = 0;
-
-function checkForUpdate() {
-    fetch(UPDATE_CHECK_URL + Date.now())
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (!data || !data.version) return;
-            var latestVersion = data.version;
-            chrome.storage.local.get(['veil_last_seen_update', 'veil_snooze_until'], function(d) {
-                if (chrome.runtime.lastError) return;
-                var lastSeen    = d['veil_last_seen_update'] || '';
-                var snoozeUntil = d['veil_snooze_until'] || 0;
-
-                // Respect snooze timer — skip entirely if snoozed
-                if (snoozeUntil && Date.now() < snoozeUntil) {
-                    _updateCheckCount++;
-                    return;
-                }
-
-                if (latestVersion !== VEIL_CURRENT_VERSION && latestVersion !== lastSeen) {
-                    chrome.storage.local.set({ 'veil_last_seen_update': latestVersion });
-                    if (_updateCheckCount === 0) {
-                        // If changelog popup is showing, queue the update for after it closes
-                        if (document.getElementById('po-cl-overlay')) {
-                            _pendingUpdateVersions = { current: VEIL_CURRENT_VERSION, latest: latestVersion };
-                        } else {
-                            showUpdateBanner(VEIL_CURRENT_VERSION, latestVersion);
-                        }
-                    }
-                }
-                _updateCheckCount++;
-            });
-        })
-        .catch(function() {});
-}
-
-// First check 5s after page load, then every 20s
-if (window.location.href.indexOf('pocketoption.com') !== -1) {
-    setTimeout(function() {
-        checkForUpdate();
-        setInterval(checkForUpdate, 20000);
-    }, 5000);
-}
+// Update checking handled by background service worker (background.js)
+// It sends PO_UPDATE_AVAILABLE to this tab when it detects a newer version
 
 
 // -- CHANGELOG ---------------------------------------------------------
+// Changelog is loaded from changelog.json at runtime — edit that file
+// or use the builder to update it. Do not hardcode values here.
 // ============================================================
-// EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
-// ============================================================
-var CHANGELOG = {
-    version: '2.5.6',
+var CHANGELOG = null; // loaded async from changelog.json
+var _changelogLoaded = false;
+var _changelogCallbacks = [];
 
-    title: 'version 2.5.6 - autoupdater patch',
-    subtitle: 'chill update',
-
-    image: 'changelog-banner.jpg',
-
-    // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'none',
-
-    items: [
-
-    ],
-
-    text: '',
-
-    buttonLabel: 'h',
-};
+function loadChangelog(cb) {
+    if (_changelogLoaded && CHANGELOG) { cb(CHANGELOG); return; }
+    _changelogCallbacks.push(cb);
+    if (_changelogCallbacks.length > 1) return; // already fetching
+    fetch(chrome.runtime.getURL('changelog.json') + '?t=' + Date.now())
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            CHANGELOG = data;
+            _changelogLoaded = true;
+            _changelogCallbacks.forEach(function(fn) { fn(CHANGELOG); });
+            _changelogCallbacks = [];
+        })
+        .catch(function(e) {
+            console.warn('[veil] Failed to load changelog.json:', e);
+            // Fallback so popup doesn't break
+            CHANGELOG = { version: '0', title: '', subtitle: '', image: '', mode: 'none', items: [], text: '', buttonLabel: 'Got it' };
+            _changelogLoaded = true;
+            _changelogCallbacks.forEach(function(fn) { fn(CHANGELOG); });
+            _changelogCallbacks = [];
+        });
+}
 // ============================================================
 
 var CL_KEY = 'po_seen_version';
 
 function showUpdateToast(version) {
-    var existing = document.getElementById('po-update-toast');
-    if (existing) existing.parentNode.removeChild(existing);
-
-    var toast = document.createElement('div');
-    toast.id = 'po-update-toast';
-    toast.style.cssText = [
-        'position:fixed !important',
-        'bottom:24px !important',
-        'right:24px !important',
-        'z-index:2147483647 !important',
-        'background:rgba(8,24,40,0.97) !important',
-        'border:1px solid rgba(0,176,255,0.35) !important',
-        'border-radius:14px !important',
-        'padding:13px 16px !important',
-        'display:flex !important',
-        'align-items:center !important',
-        'gap:10px !important',
-        'box-shadow:0 8px 32px rgba(0,0,0,0.7),0 0 24px rgba(0,176,255,0.12) !important',
-        'font-family:-apple-system,BlinkMacSystemFont,sans-serif !important',
-        'max-width:320px !important',
-        'backdrop-filter:blur(20px) !important',
-        'opacity:0 !important',
-        'transform:translateY(12px) !important',
-        'transition:opacity 0.35s ease,transform 0.35s cubic-bezier(0.22,1,0.36,1) !important',
-    ].join(';');
-
-    var icon = document.createElement('div');
-    icon.style.cssText = 'width:28px;height:28px;border-radius:50%;background:rgba(0,176,255,0.15);border:1px solid rgba(0,176,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
-    icon.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#00b0ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-    var text = document.createElement('div');
-    text.style.cssText = 'flex:1;';
-
-    var line1 = document.createElement('div');
-    line1.style.cssText = 'font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:#00b0ff;margin-bottom:3px;';
-    line1.textContent = 'extension updated';
-
-    var line2 = document.createElement('div');
-    line2.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.85);font-weight:500;line-height:1.4;';
-    line2.textContent = 'Your extension has been updated to v' + version + '. Enjoy.';
-
-    text.appendChild(line1);
-    text.appendChild(line2);
-    toast.appendChild(icon);
-    toast.appendChild(text);
-    (document.body || document.documentElement).appendChild(toast);
-
-    // Animate in
-    requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-            toast.style.opacity = '1';
-            toast.style.transform = 'translateY(0)';
-        });
+    // Uses the existing po-notif-root notification stack — matches extension style exactly
+    showPageNotif({
+        title: 'pocket option config',
+        desc: 'updated to v' + version + ' — enjoy.',
     });
-
-    // Auto dismiss after 5s
-    setTimeout(function() {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(12px)';
-        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 400);
-    }, 5000);
 }
 
 function showChangelog() {
@@ -2111,84 +2131,85 @@ function showChangelog() {
     if (!document.body) { document.addEventListener('DOMContentLoaded', showChangelog); return; }
     if (document.getElementById('po-cl-overlay')) return;
 
-    // Read old version from storage so we can show old → new in the header
-    chrome.storage.local.get(CL_KEY, function(stored) {
-        var oldVersion = stored[CL_KEY] || null;
+    loadChangelog(function(cl) {
+        chrome.storage.local.get(CL_KEY, function(stored) {
+            var oldVersion = stored[CL_KEY] || null;
 
-        var bodyHTML = '';
-        if (CHANGELOG.mode === 'bullets' && CHANGELOG.items && CHANGELOG.items.length) {
-            var lis = CHANGELOG.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
-            bodyHTML = '<ul id="po-cl-list">' + lis + '</ul>';
-        } else if (CHANGELOG.mode === 'text' && CHANGELOG.text) {
-            bodyHTML = '<p id="po-cl-text">' + CHANGELOG.text + '</p>';
-        } else if (CHANGELOG.mode === 'links' && CHANGELOG.items && CHANGELOG.items.length) {
-            var rows = CHANGELOG.items.map(function(item) {
-                if (typeof item === 'string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">' + item + '</span></li>';
-                return '<li class="po-cl-link-row"><a class="po-cl-link" href="' + item.url + '" target="_blank" rel="noopener"><span class="po-cl-link-text">' + item.text + '</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>';
-            }).join('');
-            bodyHTML = '<ul id="po-cl-links">' + rows + '</ul>';
-        }
+            var bodyHTML = '';
+            if (cl.mode === 'bullets' && cl.items && cl.items.length) {
+                var lis = cl.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
+                bodyHTML = '<ul id="po-cl-list">' + lis + '</ul>';
+            } else if (cl.mode === 'text' && cl.text) {
+                bodyHTML = '<p id="po-cl-text">' + cl.text + '</p>';
+            } else if (cl.mode === 'links' && cl.items && cl.items.length) {
+                var rows = cl.items.map(function(item) {
+                    if (typeof item === 'string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">' + item + '</span></li>';
+                    return '<li class="po-cl-link-row"><a class="po-cl-link" href="' + item.url + '" target="_blank" rel="noopener"><span class="po-cl-link-text">' + item.text + '</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>';
+                }).join('');
+                bodyHTML = '<ul id="po-cl-links">' + rows + '</ul>';
+            }
 
-        // Banner image
-        var imgHTML = '';
-        if (CHANGELOG.image) {
-            var src = (CHANGELOG.image.indexOf('http') === 0 || CHANGELOG.image.indexOf('//') === 0)
-                ? CHANGELOG.image
-                : chrome.runtime.getURL(CHANGELOG.image);
-            imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">';
-        }
+            var imgHTML = '';
+            if (cl.image) {
+                var src = (cl.image.indexOf('http') === 0 || cl.image.indexOf('//') === 0)
+                    ? cl.image : chrome.runtime.getURL(cl.image);
+                imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">';
+            }
 
-        // Avatar: image.jpg from extension folder
-        var avatarSrc = chrome.runtime.getURL('image.jpg');
+            var avatarSrc = chrome.runtime.getURL('image.jpg');
+            var verHTML = oldVersion
+                ? 'v' + oldVersion + ' <span style="-webkit-text-fill-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.3);margin:0 4px;">→</span> <b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>'
+                : '<b style="-webkit-text-fill-color:#fff;color:#fff;">v' + cl.version + '</b>';
 
-        // Version display: "v2.4 → v2.5" or just "v2.5" if first install
-        var verHTML = oldVersion
-            ? 'v' + oldVersion + ' <span style="-webkit-text-fill-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.3);margin:0 4px;">→</span> <b style="-webkit-text-fill-color:#fff;color:#fff;">v' + CHANGELOG.version + '</b>'
-            : '<b style="-webkit-text-fill-color:#fff;color:#fff;">v' + CHANGELOG.version + '</b>';
+            var topBar =
+                '<div id="po-cl-topbar">' +
+                    '<div style="display:flex;align-items:center;gap:8px;">' +
+                        '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.45);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
+                        '<div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">new update</span></div>' +
+                    '</div>' +
+                    '<div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:500;">' + verHTML + '</div>' +
+                '</div>';
 
-        // Top bar: [avatar + "new update" pill] [version]
-        var topBar =
-            '<div id="po-cl-topbar">' +
-                '<div style="display:flex;align-items:center;gap:8px;">' +
-                    '<img src="' + avatarSrc + '" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(191,90,242,0.45);flex-shrink:0;" onerror="this.style.display=\'none\'">' +
-                    '<div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">new update</span></div>' +
-                '</div>' +
-                '<div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:500;">' + verHTML + '</div>' +
-            '</div>';
+            var overlay = document.createElement('div');
+            overlay.id = 'po-cl-overlay';
+            overlay.innerHTML =
+                '<div id="po-cl-blur"></div>' +
+                '<div id="po-cl-card">' +
+                    topBar + imgHTML +
+                    '<div id="po-cl-title">' + cl.title + '</div>' +
+                    '<div id="po-cl-sub">' + cl.subtitle + '</div>' +
+                    bodyHTML +
+                    '<button id="po-cl-dismiss">' + (cl.buttonLabel || 'Got it') + '</button>' +
+                '</div>';
 
-        var overlay = document.createElement('div');
-        overlay.id = 'po-cl-overlay';
-        overlay.innerHTML =
-            '<div id="po-cl-blur"></div>' +
-            '<div id="po-cl-card">' +
-                topBar +
-                imgHTML +
-                '<div id="po-cl-title">' + CHANGELOG.title + '</div>' +
-                '<div id="po-cl-sub">' + CHANGELOG.subtitle + '</div>' +
-                bodyHTML +
-                '<button id="po-cl-dismiss">' + (CHANGELOG.buttonLabel || 'Got it') + '</button>' +
-            '</div>';
+            document.body.appendChild(overlay);
 
-        document.body.appendChild(overlay);
-
-        function dismiss() {
-            overlay.style.opacity = '0';
-            overlay.style.transition = 'opacity 0.25s ease';
-            setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 250);
-            var s = {}; s[CL_KEY] = CHANGELOG.version; chrome.storage.local.set(s);
-            setTimeout(function() { showUpdateToast(CHANGELOG.version); }, 400);
-            // Fire queued update banner if one is waiting
-            _maybeFireQueuedUpdate();
-        }
-        document.getElementById('po-cl-dismiss').addEventListener('click', dismiss);
-        document.getElementById('po-cl-blur').addEventListener('click', dismiss);
+            function dismiss() {
+                var clCard = overlay.querySelector('#po-cl-card');
+                if (clCard) {
+                    clCard.style.transition = 'opacity 0.22s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)';
+                    clCard.style.opacity = '0';
+                    clCard.style.transform = 'scale(0.92) translateY(12px)';
+                }
+                var clBlur = overlay.querySelector('#po-cl-blur');
+                if (clBlur) { clBlur.style.transition = 'opacity 0.3s ease'; clBlur.style.opacity = '0'; }
+                setTimeout(function() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300);
+                var s = {}; s[CL_KEY] = cl.version; chrome.storage.local.set(s);
+                setTimeout(function() { showUpdateToast(cl.version); }, 350);
+                setTimeout(function() { _maybeFireQueuedUpdate(); }, 5000);
+            }
+            overlay.querySelector('#po-cl-dismiss').addEventListener('click', dismiss);
+            overlay.querySelector('#po-cl-blur').addEventListener('click', dismiss);
+        });
     });
 }
 
 function maybeShowChangelog() {
-    chrome.storage.local.get(CL_KEY, function(d) {
-        if (chrome.runtime.lastError) return;
-        if ((d[CL_KEY] || '') !== CHANGELOG.version) setTimeout(showChangelog, 1200);
+    loadChangelog(function(cl) {
+        chrome.storage.local.get(CL_KEY, function(d) {
+            if (chrome.runtime.lastError) return;
+            if ((d[CL_KEY] || '') !== cl.version) setTimeout(showChangelog, 1200);
+        });
     });
 }
 
@@ -2202,7 +2223,15 @@ chrome.runtime.onMessage.addListener(function(msg) {
     if (msg.type === 'PO_NOTIFY')          showPageNotif({ title: msg.title, desc: msg.desc, isError: !!msg.isError });
     if (msg.type === 'PO_POPOUT')          buildPopoutWidget();
     if (msg.type === 'PO_EDIT_START')      startEditor();
-    if (msg.type === 'PO_UPDATE_AVAILABLE') showUpdateBanner(msg.current, msg.latest);
+    if (msg.type === 'PO_UPDATE_AVAILABLE') {
+        // If changelog is open, queue the update popup to appear after it's dismissed
+        if (document.getElementById('po-cl-overlay')) {
+            _pendingUpdateVersions = { current: msg.current, latest: msg.latest };
+        } else {
+            showUpdateBanner(msg.current, msg.latest);
+        }
+    }
+    if (msg.type === 'PO_FORCE_UPDATE')    showUpdateBanner(VEIL_CURRENT_VERSION, msg.latest || 'latest');
 });
 
 })();

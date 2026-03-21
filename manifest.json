@@ -11,7 +11,8 @@
     "storage",
     "activeTab",
     "scripting",
-    "tabs"
+    "tabs",
+    "alarms"
   ],
   "action": {
     "default_popup": "popup.html"
@@ -33,5 +34,16 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "image.jpg",
+        "changelog.json"
+      ],
+      "matches": [
+        "*://*.pocketoption.com/*"
+      ]
+    }
+  ]
 }
