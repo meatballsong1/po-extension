@@ -1,4 +1,4 @@
-var VEIL_CURRENT_VERSION = '2.5.9';
+var VEIL_CURRENT_VERSION = '2.6.0';
 var SNOOZE_KEY = 'veil_snooze_until';
 
 function sendUpdateToPoTabs(latestVersion) {
