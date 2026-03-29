@@ -282,6 +282,84 @@ exit /b 0
 
 const https = require('https');
 
+// ── GITHUB CONSTANTS ──────────────────────────────────────────────────────
+const GITHUB_OWNER = 'meatballsong1';
+const GITHUB_REPO  = 'po-extension';
+
+function getGithubToken() {
+    const p = path.join(BUILDER_DIR, 'github-token.txt');
+    if (!fs.existsSync(p)) return null;
+    return fs.readFileSync(p, 'utf8').trim();
+}
+
+// Generic GitHub API request
+function ghRequest(token, method, reqPath, body) {
+    return new Promise((resolve, reject) => {
+        const bodyStr = body ? JSON.stringify(body) : null;
+        const opts = {
+            hostname: 'api.github.com',
+            path: reqPath,
+            method,
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type':  'application/json',
+                'User-Agent':    'po-extension-builder',
+                'Accept':        'application/vnd.github+json',
+                ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr) } : {}),
+            },
+        };
+        const req = https.request(opts, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+                catch(e) { resolve({ status: res.statusCode, body: data }); }
+            });
+        });
+        req.on('error', reject);
+        if (bodyStr) req.write(bodyStr);
+        req.end();
+    });
+}
+
+// Upload an asset to a GitHub release
+function ghUpload(token, uploadUrl, assetName, fileBuffer, contentType) {
+    return new Promise((resolve, reject) => {
+        const baseUrl = uploadUrl.replace('{?name,label}', '');
+        const parsed  = new URL(baseUrl);
+        const opts = {
+            hostname: 'uploads.github.com',
+            path:     parsed.pathname + `?name=${encodeURIComponent(assetName)}`,
+            method:   'POST',
+            headers:  {
+                'Authorization':  `token ${token}`,
+                'Content-Type':   contentType,
+                'User-Agent':     'po-extension-builder',
+                'Accept':         'application/vnd.github+json',
+                'Content-Length': fileBuffer.length,
+            },
+        };
+        const req = https.request(opts, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+                catch(e) { resolve({ status: res.statusCode, body: data }); }
+            });
+        });
+        req.on('error', reject);
+        req.write(fileBuffer);
+        req.end();
+    });
+}
+
+// Get the upload_url for an existing release tag (returns null if not found)
+async function getReleaseUploadUrl(token, version) {
+    const res = await ghRequest(token, 'GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${version}`);
+    if (res.status === 200 && res.body && res.body.upload_url) return res.body.upload_url;
+    return null;
+}
+
 function fetchGithubVersion() {
     return new Promise((resolve) => {
         const opts = {
@@ -501,84 +579,25 @@ app.post('/api/publish', async (req, res) => {
 
         // ── GITHUB RELEASE ────────────────────────────────────────────────
         try {
-            const GITHUB_OWNER = 'meatballsong1';
-            const GITHUB_REPO  = 'po-extension';
             const tokenPath    = path.join(BUILDER_DIR, 'github-token.txt');
 
             if (!fs.existsSync(tokenPath)) {
                 send('No github-token.txt found — skipping GitHub Release.', 'warn');
             } else {
                 const GITHUB_TOKEN = fs.readFileSync(tokenPath, 'utf8').trim();
-
-                // Generic GitHub API request helper
-                const ghRequest = (method, reqPath, body) => new Promise((resolve, reject) => {
-                    const bodyStr = body ? JSON.stringify(body) : null;
-                    const opts = {
-                        hostname: 'api.github.com',
-                        path: reqPath,
-                        method,
-                        headers: {
-                            'Authorization': `token ${GITHUB_TOKEN}`,
-                            'Content-Type':  'application/json',
-                            'User-Agent':    'po-extension-builder',
-                            'Accept':        'application/vnd.github+json',
-                            ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr) } : {}),
-                        },
-                    };
-                    const req = https.request(opts, (res) => {
-                        let data = '';
-                        res.on('data', c => data += c);
-                        res.on('end', () => {
-                            try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-                            catch(e) { resolve({ status: res.statusCode, body: data }); }
-                        });
-                    });
-                    req.on('error', reject);
-                    if (bodyStr) req.write(bodyStr);
-                    req.end();
-                });
-
-                // Asset upload helper — uses uploads.github.com
-                const ghUpload = (uploadUrl, assetName, fileBuffer, contentType) => new Promise((resolve, reject) => {
-                    // Strip the {?name,label} template and rebuild with encoded name
-                    const baseUrl = uploadUrl.replace('{?name,label}', '');
-                    const parsed  = new URL(baseUrl);
-                    const opts = {
-                        hostname: 'uploads.github.com',
-                        path:     parsed.pathname + `?name=${encodeURIComponent(assetName)}`,
-                        method:   'POST',
-                        headers:  {
-                            'Authorization':  `token ${GITHUB_TOKEN}`,
-                            'Content-Type':   contentType,
-                            'User-Agent':     'po-extension-builder',
-                            'Accept':         'application/vnd.github+json',
-                            'Content-Length': fileBuffer.length,
-                        },
-                    };
-                    const req = https.request(opts, (res) => {
-                        let data = '';
-                        res.on('data', c => data += c);
-                        res.on('end', () => {
-                            try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-                            catch(e) { resolve({ status: res.statusCode, body: data }); }
-                        });
-                    });
-                    req.on('error', reject);
-                    req.write(fileBuffer);
-                    req.end();
-                });
+                // Use top-level ghRequest / ghUpload helpers
 
                 // Clean up any existing release + tag for this version
-                const existing = await ghRequest('GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${newVersion}`);
+                const existing = await ghRequest(GITHUB_TOKEN, 'GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${newVersion}`);
                 if (existing.status === 200 && existing.body.id) {
-                    await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${existing.body.id}`);
+                    await ghRequest(GITHUB_TOKEN, 'DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${existing.body.id}`);
                     send(`Deleted existing release for v${newVersion}`);
                 }
-                const tagDel = await ghRequest('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/tags/v${newVersion}`);
+                const tagDel = await ghRequest(GITHUB_TOKEN, 'DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/tags/v${newVersion}`);
                 if (tagDel.status === 204) send(`Deleted existing tag v${newVersion}`);
 
                 // Create the release
-                const releaseRes = await ghRequest('POST', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
+                const releaseRes = await ghRequest(GITHUB_TOKEN, 'POST', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
                     tag_name:         `v${newVersion}`,
                     target_commitish: 'main',
                     name:             `v${newVersion} — ${title}`,
@@ -596,7 +615,7 @@ app.post('/api/publish', async (req, res) => {
 
                     // Upload ZIP asset
                     const zipBuffer = fs.readFileSync(zipPath);
-                    const zipUpRes  = await ghUpload(uploadUrl, zipName, zipBuffer, 'application/zip');
+                    const zipUpRes  = await ghUpload(GITHUB_TOKEN, uploadUrl, zipName, zipBuffer, 'application/zip');
                     if (zipUpRes.status === 201) {
                         send(`ZIP uploaded: ${zipName}`, 'success');
                     } else {
@@ -605,7 +624,7 @@ app.post('/api/publish', async (req, res) => {
 
                     // Upload BAT installer asset — locked to this version's download URL
                     const batBuffer = fs.readFileSync(batPath);
-                    const batUpRes  = await ghUpload(uploadUrl, batName, batBuffer, 'application/octet-stream');
+                    const batUpRes  = await ghUpload(GITHUB_TOKEN, uploadUrl, batName, batBuffer, 'application/octet-stream');
                     if (batUpRes.status === 201) {
                         send(`BAT installer uploaded: ${batName}`, 'success');
                     } else {
@@ -799,6 +818,149 @@ app.post('/api/bats/generate', (req, res) => {
             filename: `install-v${version}.bat`,
             version,
             sizeBytes: stat.size,
+        });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ── BAT GITHUB UPLOAD ROUTES ─────────────────────────────────────────────
+
+// POST upload a single bat to its GitHub release
+app.post('/api/bats/upload/:version', async (req, res) => {
+    const version = req.params.version;
+    try {
+        const token = getGithubToken();
+        if (!token) return res.status(400).json({ error: 'No github-token.txt found' });
+
+        const batName = `install-v${version}.bat`;
+        const batPath = path.join(BUILDER_DIR, batName);
+        if (!fs.existsSync(batPath)) return res.status(404).json({ error: `${batName} not found locally` });
+
+        const uploadUrl = await getReleaseUploadUrl(token, version);
+        if (!uploadUrl) return res.status(404).json({ error: `No GitHub release found for v${version}` });
+
+        // Delete existing bat asset if present so we can re-upload
+        const assetsRes = await ghRequest(token, 'GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/assets`);
+        // Get release id first
+        const releaseRes = await ghRequest(token, 'GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${version}`);
+        if (releaseRes.status === 200 && releaseRes.body.assets) {
+            for (const asset of releaseRes.body.assets) {
+                if (asset.name === batName) {
+                    await ghRequest(token, 'DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/assets/${asset.id}`);
+                    break;
+                }
+            }
+        }
+
+        const batBuffer = fs.readFileSync(batPath);
+        const result = await ghUpload(token, uploadUrl, batName, batBuffer, 'application/octet-stream');
+
+        if (result.status === 201) {
+            res.json({ success: true, version, filename: batName, url: result.body.browser_download_url });
+        } else {
+            res.status(500).json({ error: `Upload failed with status ${result.status}`, detail: result.body });
+        }
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST regenerate + upload a single bat
+app.post('/api/bats/regen-upload/:version', async (req, res) => {
+    const version = req.params.version;
+    try {
+        const token = getGithubToken();
+        if (!token) return res.status(400).json({ error: 'No github-token.txt found' });
+
+        // Regenerate locally first
+        const batName = `install-v${version}.bat`;
+        const batPath = path.join(BUILDER_DIR, batName);
+        fs.writeFileSync(batPath, generateInstallerBat(version), { encoding: 'utf8' });
+
+        const uploadUrl = await getReleaseUploadUrl(token, version);
+        if (!uploadUrl) return res.status(404).json({ error: `No GitHub release found for v${version} — bat was regenerated locally but not uploaded` });
+
+        // Remove old asset
+        const releaseRes = await ghRequest(token, 'GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${version}`);
+        if (releaseRes.status === 200 && releaseRes.body.assets) {
+            for (const asset of releaseRes.body.assets) {
+                if (asset.name === batName) {
+                    await ghRequest(token, 'DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/assets/${asset.id}`);
+                    break;
+                }
+            }
+        }
+
+        const batBuffer = fs.readFileSync(batPath);
+        const result = await ghUpload(token, uploadUrl, batName, batBuffer, 'application/octet-stream');
+
+        if (result.status === 201) {
+            res.json({ success: true, version, filename: batName, url: result.body.browser_download_url, regenerated: true });
+        } else {
+            res.status(500).json({ error: `Upload failed with status ${result.status}`, regenerated: true });
+        }
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST regenerate ALL bats + upload each to its GitHub release
+app.post('/api/bats/regen-upload-all', async (req, res) => {
+    try {
+        const token = getGithubToken();
+        if (!token) return res.status(400).json({ error: 'No github-token.txt found' });
+
+        const zips = fs.readdirSync(BUILDER_DIR)
+            .filter(f => f.startsWith('extension-v') && f.endsWith('.zip'));
+
+        const results = [];
+
+        for (const zipFile of zips) {
+            const version = zipFile.replace('extension-v', '').replace('.zip', '');
+            const batName = `install-v${version}.bat`;
+            const batPath = path.join(BUILDER_DIR, batName);
+
+            // Regenerate
+            fs.writeFileSync(batPath, generateInstallerBat(version), { encoding: 'utf8' });
+            const entry = { version, filename: batName, regenerated: true, uploaded: false, error: null };
+
+            // Upload
+            try {
+                const uploadUrl = await getReleaseUploadUrl(token, version);
+                if (!uploadUrl) {
+                    entry.error = 'no GitHub release found';
+                    results.push(entry);
+                    continue;
+                }
+
+                // Remove old asset
+                const releaseRes = await ghRequest(token, 'GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/v${version}`);
+                if (releaseRes.status === 200 && releaseRes.body.assets) {
+                    for (const asset of releaseRes.body.assets) {
+                        if (asset.name === batName) {
+                            await ghRequest(token, 'DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/assets/${asset.id}`);
+                            break;
+                        }
+                    }
+                }
+
+                const batBuffer = fs.readFileSync(batPath);
+                const result = await ghUpload(token, uploadUrl, batName, batBuffer, 'application/octet-stream');
+                entry.uploaded = result.status === 201;
+                if (result.status !== 201) entry.error = `status ${result.status}`;
+            } catch(uploadErr) {
+                entry.error = uploadErr.message;
+            }
+
+            results.push(entry);
+        }
+
+        res.json({
+            success: true,
+            results,
+            uploaded: results.filter(r => r.uploaded).length,
+            failed:   results.filter(r => r.error).length,
         });
     } catch(e) {
         res.status(500).json({ error: e.message });

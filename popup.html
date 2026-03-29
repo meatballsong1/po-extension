@@ -15,6 +15,7 @@
     --p: #bf5af2;
     --pk: #ff375f;
     --r: 12px;
+    --st: #00d4aa;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { overflow: hidden; }
@@ -58,11 +59,7 @@
     transition: background 0.2s, box-shadow 0.2s;
     flex-shrink: 0;
   }
-  #popoutBtn:hover {
-    background: rgba(191,90,242,0.15);
-    box-shadow: 0 0 10px rgba(191,90,242,0.3);
-    transform: none;
-  }
+  #popoutBtn:hover { background: rgba(191,90,242,0.15); box-shadow: 0 0 10px rgba(191,90,242,0.3); transform: none; }
   #popoutBtn svg { width: 13px; height: 13px; }
 
   /* ------ TABS ------ */
@@ -109,6 +106,16 @@
     border-radius: 2px 2px 0 0;
     box-shadow: 0 0 8px rgba(191,90,242,0.7);
   }
+  /* SignalTrack tab active override */
+  .tab[data-tab="signaltrack"].active { color: var(--st); }
+  .tab[data-tab="signaltrack"].active::before {
+    background: linear-gradient(90deg, var(--st), #00a07a) !important;
+    box-shadow: 0 0 8px rgba(0,212,170,0.7) !important;
+  }
+  .tab[data-tab="signaltrack"].active::after {
+    background: radial-gradient(ellipse at 50% 120%, rgba(0,212,170,0.18) 0%, transparent 70%) !important;
+    opacity: 1 !important;
+  }
   .tab-bar-line {
     height: 1px;
     background: var(--border);
@@ -151,10 +158,7 @@
     border: 1px solid var(--card-b);
     transition: border-color 0.2s, background 0.2s;
   }
-  .row:hover {
-    background: rgba(255,255,255,0.065);
-    border-color: rgba(255,255,255,0.13);
-  }
+  .row:hover { background: rgba(255,255,255,0.065); border-color: rgba(255,255,255,0.13); }
   .row span { font-size: 12.5px; font-weight: 500; color: var(--mid); }
 
   /* ------ SWITCH ------ */
@@ -176,11 +180,7 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.35);
     transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
   }
-  input:checked + .slider {
-    background: linear-gradient(135deg, var(--p), var(--accent));
-    border-color: transparent;
-    box-shadow: 0 0 10px rgba(191,90,242,0.3);
-  }
+  input:checked + .slider { background: linear-gradient(135deg, var(--p), var(--accent)); border-color: transparent; box-shadow: 0 0 10px rgba(191,90,242,0.3); }
   input:checked + .slider:before { transform: translateX(18px); }
 
   /* ------ FIELDS ------ */
@@ -242,12 +242,7 @@
     letter-spacing: 0.3px;
     box-shadow: 0 0 20px rgba(191,90,242,0.12);
   }
-  #enableEditingBtn:hover {
-    background: linear-gradient(135deg, rgba(191,90,242,0.28), rgba(255,55,95,0.18));
-    border-color: rgba(191,90,242,0.6);
-    box-shadow: 0 0 28px rgba(191,90,242,0.3);
-    transform: translateY(-1px);
-  }
+  #enableEditingBtn:hover { background: linear-gradient(135deg, rgba(191,90,242,0.28), rgba(255,55,95,0.18)); border-color: rgba(191,90,242,0.6); box-shadow: 0 0 28px rgba(191,90,242,0.3); transform: translateY(-1px); }
   #enableEditingBtn:active { transform: scale(0.97); }
   .cust-note { margin-top: 10px; font-size: 10px; color: var(--dim); text-align: center; line-height: 1.5; }
 
@@ -272,244 +267,124 @@
   .about-stat:hover { border-color: rgba(191,90,242,0.22); }
   .about-stat .as-key { font-size: 10px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
   .about-stat .as-val { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums; }
-  .about-stat .as-val.grad {
-    background: linear-gradient(90deg, var(--p), var(--pk));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  }
+  .about-stat .as-val.grad { background: linear-gradient(90deg, var(--p), var(--pk)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .about-divider { height: 1px; background: var(--border); margin: 10px 0; }
   .about-credit { text-align: center; font-size: 10px; color: var(--dim); line-height: 1.7; margin-top: 10px; }
   .about-credit b { color: rgba(255,255,255,0.6); -webkit-text-fill-color: rgba(255,255,255,0.6); }
-
-  /* ------ UPDATE SECTION HEADER ------ */
-  .update-section-hdr {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 14px;
-    margin-bottom: 8px;
-  }
-  .update-section-hdr-label {
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--dim);
-  }
-  .update-new-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 20px;
-    border: 1px solid rgba(191,90,242,0.4);
-    font-size: 8px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    background: linear-gradient(90deg, #bf5af2, #ff375f);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: tagGlow 2.5s ease infinite;
-    position: relative;
-  }
-  .update-new-tag::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    background: linear-gradient(135deg, rgba(191,90,242,0.08), rgba(255,55,95,0.05));
-  }
-  .update-new-tag span {
-    position: relative;
-    background: linear-gradient(90deg, #bf5af2, #ff375f);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  @keyframes tagGlow {
-    0%,100% {
-      border-color: rgba(191,90,242,0.35);
-      box-shadow: 0 0 6px rgba(191,90,242,0.15), 0 0 12px rgba(255,55,95,0.08);
-    }
-    50% {
-      border-color: rgba(191,90,242,0.7);
-      box-shadow: 0 0 12px rgba(191,90,242,0.4), 0 0 24px rgba(255,55,95,0.2);
-    }
-  }
-
-  /* ------ UPDATE CHECK BUTTON ------ */
+  .update-section-hdr { display: flex; align-items: center; gap: 8px; margin-top: 14px; margin-bottom: 8px; }
+  .update-section-hdr-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--dim); }
   #update-btn {
     width: 100%; padding: 10px;
-    background: rgba(191,90,242,0.08);
-    border: 1px solid rgba(191,90,242,0.22);
-    color: rgba(191,90,242,0.9);
-    -webkit-text-fill-color: rgba(191,90,242,0.9);
-    font-weight: 700; font-size: 11.5px;
-    border-radius: var(--r); cursor: pointer;
+    background: rgba(191,90,242,0.08); border: 1px solid rgba(191,90,242,0.22);
+    color: rgba(191,90,242,0.9); -webkit-text-fill-color: rgba(191,90,242,0.9);
+    font-weight: 700; font-size: 11.5px; border-radius: var(--r); cursor: pointer;
     transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
   }
-  #update-btn:hover {
-    background: rgba(191,90,242,0.16);
-    border-color: rgba(191,90,242,0.5);
-    box-shadow: 0 0 14px rgba(191,90,242,0.2);
-    -webkit-text-fill-color: #fff;
-  }
-  #update-btn:active { transform: scale(0.97); }
-  #update-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-  /* ------ UPDATE RESULT ------ */
-  #update-result {
-    margin-top: 8px; border-radius: var(--r);
-    padding: 10px 12px; font-size: 11px; line-height: 1.5;
-    display: none;
-  }
-  #update-result.up-to-date {
-    background: rgba(36,177,91,0.08); border: 1px solid rgba(36,177,91,0.2);
-    color: rgba(36,177,91,0.9); -webkit-text-fill-color: rgba(36,177,91,0.9);
-  }
-  #update-result.has-update {
-    background: rgba(191,90,242,0.07); border: 1px solid rgba(191,90,242,0.2);
-    color: rgba(255,255,255,0.75); -webkit-text-fill-color: rgba(255,255,255,0.75);
-  }
-  #update-result.update-error {
-    background: rgba(255,69,58,0.08); border: 1px solid rgba(255,69,58,0.2);
-    color: rgba(255,69,58,0.85); -webkit-text-fill-color: rgba(255,69,58,0.85);
-  }
-  #update-result-ver {
-    font-weight: 800; font-size: 13px; margin-bottom: 4px;
-    background: linear-gradient(90deg, var(--p), var(--pk));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  }
-
-  /* ------ BAT + ZIP ROW ------ */
-  #bat-download-row {
-    display: none;
-    gap: 6px;
-    margin-top: 8px;
-  }
-  #bat-download-btn {
-    flex: 1; padding: 9px 8px;
-    background: linear-gradient(135deg, rgba(191,90,242,0.12), rgba(255,55,95,0.08));
-    border: 1px solid rgba(191,90,242,0.35);
-    color: #fff; -webkit-text-fill-color: #fff;
-    font-weight: 700; font-size: 11px;
-    border-radius: var(--r); cursor: pointer;
-    transition: all 0.2s; font-family: inherit;
-    text-align: center;
-    box-shadow: 0 0 10px rgba(191,90,242,0.1);
-  }
-  #bat-download-btn:hover {
-    background: linear-gradient(135deg, rgba(191,90,242,0.22), rgba(255,55,95,0.14));
-    border-color: rgba(191,90,242,0.6);
-    box-shadow: 0 0 18px rgba(191,90,242,0.3);
-  }
-
-  /* bat-label row: "recommended" text + new tag inline */
-  .bat-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    font-size: 7.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    background: linear-gradient(90deg, var(--p), var(--pk));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 2px;
-  }
-
-  /* new tag specifically on the bat button */
-  .bat-new-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 1px 5px;
-    border-radius: 20px;
-    border: 1px solid rgba(191,90,242,0.5);
-    font-size: 6.5px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    background: linear-gradient(90deg, #bf5af2, #ff375f);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: tagGlow 2.5s ease infinite;
-    position: relative;
-  }
-  .bat-new-tag::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    background: rgba(191,90,242,0.08);
-  }
-  .bat-new-tag span {
-    position: relative;
-    background: linear-gradient(90deg, #bf5af2, #ff375f);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  #zip-download-btn {
-    flex: 0 0 auto; padding: 9px 12px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.09);
-    color: rgba(255,255,255,0.4); -webkit-text-fill-color: rgba(255,255,255,0.4);
-    font-weight: 600; font-size: 11px;
-    border-radius: var(--r); cursor: pointer;
-    transition: all 0.2s; font-family: inherit;
-    white-space: nowrap;
-  }
-  #zip-download-btn:hover {
-    background: rgba(255,255,255,0.09);
-    color: rgba(255,255,255,0.75); -webkit-text-fill-color: rgba(255,255,255,0.75);
-  }
-
-  /* ------ INSTALL STEPS ------ */
-  .install-steps {
-    margin-top: 8px; padding: 10px 12px;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: var(--r); font-size: 10.5px;
-    color: var(--dim); line-height: 1.85; display: none;
-  }
+  #update-btn:hover { background: rgba(191,90,242,0.16); border-color: rgba(191,90,242,0.5); -webkit-text-fill-color: #fff; }
+  #update-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  #update-result { margin-top: 8px; border-radius: var(--r); padding: 10px 12px; font-size: 11px; line-height: 1.5; display: none; }
+  #update-result.up-to-date { background: rgba(36,177,91,0.08); border: 1px solid rgba(36,177,91,0.2); color: rgba(36,177,91,0.9); -webkit-text-fill-color: rgba(36,177,91,0.9); }
+  #update-result.has-update { background: rgba(191,90,242,0.07); border: 1px solid rgba(191,90,242,0.2); color: rgba(255,255,255,0.75); -webkit-text-fill-color: rgba(255,255,255,0.75); }
+  #update-result.update-error { background: rgba(255,69,58,0.08); border: 1px solid rgba(255,69,58,0.2); color: rgba(255,69,58,0.85); -webkit-text-fill-color: rgba(255,69,58,0.85); }
+  #update-result-ver { font-weight: 800; font-size: 13px; margin-bottom: 4px; background: linear-gradient(90deg, var(--p), var(--pk)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  #bat-download-row { display: none; gap: 6px; margin-top: 8px; }
+  #bat-download-btn { flex: 1; padding: 9px 8px; background: linear-gradient(135deg, rgba(191,90,242,0.12), rgba(255,55,95,0.08)); border: 1px solid rgba(191,90,242,0.35); color: #fff; -webkit-text-fill-color: #fff; font-weight: 700; font-size: 11px; border-radius: var(--r); cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
+  #zip-download-btn { flex: 0 0 auto; padding: 9px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); color: rgba(255,255,255,0.4); -webkit-text-fill-color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; border-radius: var(--r); cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap; }
+  .install-steps { margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r); font-size: 10.5px; color: var(--dim); line-height: 1.85; display: none; }
   .install-steps b { color: rgba(255,255,255,0.6); -webkit-text-fill-color: rgba(255,255,255,0.6); }
   .install-steps ol { padding-left: 16px; }
+  .steps-action-btn { width: 100%; margin-top: 8px; padding: 7px; background: rgba(191,90,242,0.08); border: 1px solid rgba(191,90,242,0.22); color: rgba(191,90,242,0.85); -webkit-text-fill-color: rgba(191,90,242,0.85); font-weight: 700; font-size: 11px; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  #zip-actual-download-btn { width: 100%; margin-top: 6px; padding: 9px; background: linear-gradient(135deg, rgba(191,90,242,0.12), rgba(255,55,95,0.08)); border: 1px solid rgba(191,90,242,0.35); color: #fff; -webkit-text-fill-color: #fff; font-weight: 700; font-size: 11.5px; border-radius: var(--r); cursor: pointer; font-family: inherit; transition: all 0.2s; }
 
-  .steps-action-btn {
-    width: 100%; margin-top: 8px; padding: 7px;
-    background: rgba(191,90,242,0.08);
-    border: 1px solid rgba(191,90,242,0.22);
-    color: rgba(191,90,242,0.85); -webkit-text-fill-color: rgba(191,90,242,0.85);
-    font-weight: 700; font-size: 11px;
-    border-radius: 8px; cursor: pointer; font-family: inherit;
-    transition: all 0.2s;
+  /* ═══════════════════════════════════════════════════════════════
+     SIGNALTRACK TAB
+  ═══════════════════════════════════════════════════════════════ */
+  #signaltrack.active {
+    background: linear-gradient(180deg, rgba(0,212,170,0.04) 0%, transparent 60%);
+    border-radius: 10px;
+    padding: 4px 0 0;
   }
-  .steps-action-btn:hover {
-    background: rgba(191,90,242,0.16);
-    border-color: rgba(191,90,242,0.5);
-    -webkit-text-fill-color: #fff;
-  }
+  .st-header { text-align: center; margin-bottom: 14px; padding: 10px 0 6px; }
+  .st-logo { font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: #e8edf5; }
+  .st-logo span { color: var(--st); }
+  .st-sub { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-top: 3px; }
 
-  /* zip actual download -- matches bat style */
-  #zip-actual-download-btn {
-    width: 100%; margin-top: 6px; padding: 9px;
-    background: linear-gradient(135deg, rgba(191,90,242,0.12), rgba(255,55,95,0.08));
-    border: 1px solid rgba(191,90,242,0.35);
-    color: #fff; -webkit-text-fill-color: #fff;
-    font-weight: 700; font-size: 11.5px;
-    border-radius: var(--r); cursor: pointer;
-    font-family: inherit; transition: all 0.2s;
+  .st-status-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; margin-bottom: 10px;
+    transition: border-color 0.3s;
   }
-  #zip-actual-download-btn:hover {
-    background: linear-gradient(135deg, rgba(191,90,242,0.22), rgba(255,55,95,0.14));
-    border-color: rgba(191,90,242,0.6);
-    box-shadow: 0 0 14px rgba(191,90,242,0.25);
+  .st-status-row.connected { border-color: rgba(0,212,170,0.3); background: rgba(0,212,170,0.05); }
+  .st-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); flex-shrink: 0; transition: all 0.4s; }
+  .st-dot.connected { background: var(--st); box-shadow: 0 0 8px rgba(0,212,170,0.8); animation: stBlink 2s infinite; }
+  .st-dot.error { background: #ff3b5c; }
+  @keyframes stBlink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .st-status-text { font-size: 11.5px; color: rgba(255,255,255,0.55); font-weight: 500; transition: color 0.3s; }
+  .st-status-text.connected { color: var(--st); }
+
+  .st-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 11px; border-radius: 10px; font-size: 12px; font-weight: 700;
+    font-family: inherit; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.3px; margin-bottom: 8px;
   }
+  .st-btn.primary { background: linear-gradient(135deg, var(--st), #00a07a); border: none; color: #000; box-shadow: 0 4px 16px rgba(0,212,170,0.3); }
+  .st-btn.primary:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 22px rgba(0,212,170,0.45); }
+  .st-btn.secondary { background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.3); color: var(--st); }
+  .st-btn.secondary:hover:not(:disabled) { background: rgba(0,212,170,0.16); border-color: rgba(0,212,170,0.55); }
+  .st-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .st-btn:active:not(:disabled) { transform: scale(0.97) !important; }
+
+  .st-token-preview {
+    background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+  }
+  .st-token-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--st); margin-bottom: 5px; }
+  .st-token-val { font-size: 9.5px; color: rgba(255,255,255,0.55); word-break: break-all; line-height: 1.5; font-family: monospace; max-height: 48px; overflow: hidden; }
+
+  .st-note { font-size: 10px; color: rgba(255,255,255,0.3); line-height: 1.6; text-align: center; margin-bottom: 12px; }
+  .st-note b { color: rgba(255,255,255,0.55); }
+  .st-divider { height: 1px; background: rgba(255,255,255,0.06); margin-bottom: 12px; }
+  .st-footer { text-align: center; padding-bottom: 4px; }
+  .st-footer-brand { font-size: 13px; font-weight: 800; color: #e8edf5; letter-spacing: .04em; }
+  .st-footer-brand span { color: var(--st); }
+  .st-footer-made { font-size: 8px; letter-spacing: .12em; color: rgba(255,255,255,0.2); text-transform: uppercase; margin-top: 3px; }
+
+  .st-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(0,212,170,0.05);
+    border: 1px solid rgba(0,212,170,0.18);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .st-toggle-row:hover { border-color: rgba(0,212,170,0.35); background: rgba(0,212,170,0.08); }
+  .st-toggle-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75); }
+  .st-toggle-sub { font-size: 9px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+  /* ST switch — teal accent */
+  .st-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .st-switch input { opacity: 0; width: 0; height: 0; }
+  .st-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 22px;
+    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .st-slider:before {
+    position: absolute; content: "";
+    height: 16px; width: 16px; left: 2px; bottom: 2px;
+    background: #fff; border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    transition: all 0.28s cubic-bezier(0.4,0,0.2,1);
+  }
+  .st-switch input:checked + .st-slider { background: linear-gradient(135deg, var(--st), #00a07a); border-color: transparent; box-shadow: 0 0 10px rgba(0,212,170,0.35); }
+  .st-switch input:checked + .st-slider:before { transform: translateX(18px); }
 
   #po-notif-stack { display: none; }
 </style>
@@ -536,6 +411,7 @@
   <div class="tab" data-tab="stream">Stream</div>
   <div class="tab" data-tab="customize">Customize</div>
   <div class="tab" data-tab="about">About</div>
+  <div class="tab" data-tab="signaltrack">ST</div>
 </div>
 <div class="tab-bar-line"></div>
 
@@ -544,14 +420,8 @@
   <!-- MAIN TAB -->
   <div id="main" class="tab-content active">
     <div class="title">pocket option config</div>
-    <div class="row">
-      <span>Enable Swap Script</span>
-      <label class="switch"><input type="checkbox" id="masterToggle"><span class="slider"></span></label>
-    </div>
-    <div class="row">
-      <span>Add Guru Title</span>
-      <label class="switch"><input type="checkbox" id="guruToggle"><span class="slider"></span></label>
-    </div>
+    <div class="row"><span>Enable Swap Script</span><label class="switch"><input type="checkbox" id="masterToggle"><span class="slider"></span></label></div>
+    <div class="row"><span>Add Guru Title</span><label class="switch"><input type="checkbox" id="guruToggle"><span class="slider"></span></label></div>
     <div class="field-group" style="margin-top:4px;">
       <div class="field-label">Display Alias</div>
       <input type="text" id="customName" placeholder="QT Real">
@@ -561,14 +431,8 @@
   <!-- STATS TAB -->
   <div id="spoof" class="tab-content">
     <div class="title">stat injector</div>
-    <div class="row">
-      <span style="color:#ffd60a;">Enable Stat Spoof</span>
-      <label class="switch"><input type="checkbox" id="spoofToggle"><span class="slider"></span></label>
-    </div>
-    <div class="row">
-      <span style="color:#ffd60a;">Spoof Verified</span>
-      <label class="switch"><input type="checkbox" id="verifiedToggle"><span class="slider"></span></label>
-    </div>
+    <div class="row"><span style="color:#ffd60a;">Enable Stat Spoof</span><label class="switch"><input type="checkbox" id="spoofToggle"><span class="slider"></span></label></div>
+    <div class="row"><span style="color:#ffd60a;">Spoof Verified</span><label class="switch"><input type="checkbox" id="verifiedToggle"><span class="slider"></span></label></div>
     <div class="field-group grid" style="margin-top:4px;">
       <div><div class="field-label">Branch Level</div><input type="number" id="spBranch" value="13"></div>
       <div><div class="field-label">Disp Level</div><input type="number" id="spLevel" value="87"></div>
@@ -577,45 +441,21 @@
       <div><div class="field-label">Current XP</div><input type="text" id="spExp" value="14,530"></div>
       <div><div class="field-label">Total Trades</div><input type="number" id="spTrades" value="113"></div>
     </div>
-    <div class="field-group">
-      <div class="field-label">Turnover</div>
-      <input type="text" id="spTurnover" value="$21,300.00">
-    </div>
-    <div class="field-group">
-      <div class="field-label">Profit</div>
-      <input type="text" id="spProfit" value="$4,225.00">
-    </div>
+    <div class="field-group"><div class="field-label">Turnover</div><input type="text" id="spTurnover" value="$21,300.00"></div>
+    <div class="field-group"><div class="field-label">Profit</div><input type="text" id="spProfit" value="$4,225.00"></div>
   </div>
 
   <!-- STREAM TAB -->
   <div id="stream" class="tab-content">
     <div class="title">stream mode</div>
-    <div class="row">
-      <span>Stream Mode</span>
-      <label class="switch"><input type="checkbox" id="streamModeToggle"><span class="slider"></span></label>
-    </div>
+    <div class="row"><span>Stream Mode</span><label class="switch"><input type="checkbox" id="streamModeToggle"><span class="slider"></span></label></div>
     <div id="streamOptions">
       <div class="field-label" style="margin: 8px 0 6px; padding-left:2px;">Mask Options</div>
-      <div class="row" style="margin-bottom:6px;">
-        <span style="font-size:12px;">Hide Balance</span>
-        <label class="switch"><input type="checkbox" id="streamMaskBalance" checked><span class="slider"></span></label>
-      </div>
-      <div class="row" style="margin-bottom:6px;">
-        <span style="font-size:12px;">Mask Account ID</span>
-        <label class="switch"><input type="checkbox" id="streamMaskId" checked><span class="slider"></span></label>
-      </div>
-      <div class="row" style="margin-bottom:6px;">
-        <span style="font-size:12px;">Mask IP Address</span>
-        <label class="switch"><input type="checkbox" id="streamMaskIp" checked><span class="slider"></span></label>
-      </div>
-      <div class="row" style="margin-bottom:10px;">
-        <span style="font-size:12px;">Replace Email</span>
-        <label class="switch"><input type="checkbox" id="streamMaskEmail" checked><span class="slider"></span></label>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Email Alias</div>
-        <input type="text" id="streamEmailAlias" placeholder="hidden@domain.com">
-      </div>
+      <div class="row" style="margin-bottom:6px;"><span style="font-size:12px;">Hide Balance</span><label class="switch"><input type="checkbox" id="streamMaskBalance" checked><span class="slider"></span></label></div>
+      <div class="row" style="margin-bottom:6px;"><span style="font-size:12px;">Mask Account ID</span><label class="switch"><input type="checkbox" id="streamMaskId" checked><span class="slider"></span></label></div>
+      <div class="row" style="margin-bottom:6px;"><span style="font-size:12px;">Mask IP Address</span><label class="switch"><input type="checkbox" id="streamMaskIp" checked><span class="slider"></span></label></div>
+      <div class="row" style="margin-bottom:10px;"><span style="font-size:12px;">Replace Email</span><label class="switch"><input type="checkbox" id="streamMaskEmail" checked><span class="slider"></span></label></div>
+      <div class="field-group"><div class="field-label">Email Alias</div><input type="text" id="streamEmailAlias" placeholder="hidden@domain.com"></div>
       <div class="stream-info">Self explanatory.</div>
     </div>
   </div>
@@ -623,9 +463,7 @@
   <!-- CUSTOMIZE TAB -->
   <div id="customize" class="tab-content">
     <div class="title">customize</div>
-    <div class="cust-desc">
-      <b>Edit Mode</b> lets you click any element on the Pocket Option page to edit its text, drag it to reposition, and save your layout. Your changes persist across sessions.
-    </div>
+    <div class="cust-desc"><b>Edit Mode</b> lets you click any element on the Pocket Option page to edit its text, drag it to reposition, and save your layout. Your changes persist across sessions.</div>
     <button id="enableEditingBtn">Enable Editing Mode</button>
     <div class="cust-note">closes the popup and injects the editor onto the page</div>
   </div>
@@ -633,105 +471,109 @@
   <!-- ABOUT TAB -->
   <div id="about" class="tab-content">
     <div class="title">about</div>
-    <div class="about-stat">
-      <span class="as-key">Extension Name</span>
-      <span class="as-val" id="ab-name">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Version</span>
-      <span class="as-val grad" id="ab-version">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Manifest Version</span>
-      <span class="as-val" id="ab-mv">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Browser</span>
-      <span class="as-val" id="ab-browser">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Active Tab</span>
-      <span class="as-val" id="ab-url">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Stream Mode</span>
-      <span class="as-val" id="ab-stream">-</span>
-    </div>
-    <div class="about-stat">
-      <span class="as-key">Swap Script</span>
-      <span class="as-val" id="ab-swap">-</span>
-    </div>
-
+    <div class="about-stat"><span class="as-key">Extension Name</span><span class="as-val" id="ab-name">-</span></div>
+    <div class="about-stat"><span class="as-key">Version</span><span class="as-val grad" id="ab-version">-</span></div>
+    <div class="about-stat"><span class="as-key">Manifest Version</span><span class="as-val" id="ab-mv">-</span></div>
+    <div class="about-stat"><span class="as-key">Browser</span><span class="as-val" id="ab-browser">-</span></div>
+    <div class="about-stat"><span class="as-key">Active Tab</span><span class="as-val" id="ab-url">-</span></div>
+    <div class="about-stat"><span class="as-key">Stream Mode</span><span class="as-val" id="ab-stream">-</span></div>
+    <div class="about-stat"><span class="as-key">Swap Script</span><span class="as-val" id="ab-swap">-</span></div>
     <div class="about-divider"></div>
-    <div class="about-credit">
-      built for <b>pocket option</b> streaming<br>
-      made with love by <b>oofbomb</b>
-    </div>
-
-    <!-- UPDATE SECTION -- tag lives next to the heading, not the tab -->
-    <div class="update-section-hdr">
-      <span class="update-section-hdr-label">Updates</span>
-      <span class="update-new-tag"><span>new</span></span>
-    </div>
-
+    <div class="about-credit">built for <b>pocket option</b> streaming<br>made with love by <b>oofbomb</b></div>
+    <div class="update-section-hdr"><span class="update-section-hdr-label">Updates</span></div>
     <button id="update-btn">Check for Updates</button>
-
-    <div id="update-result">
-      <div id="update-result-ver"></div>
-      <div id="update-result-msg"></div>
-    </div>
-
-    <!-- BAT + ZIP toggle buttons -- shown when update is found -->
+    <div id="update-result"><div id="update-result-ver"></div><div id="update-result-msg"></div></div>
     <div id="bat-download-row">
-      <button id="bat-download-btn">
-        <div class="bat-label">
-          recommended
-          <span class="bat-new-tag"><span>new</span></span>
-        </div>
-        Auto Installer (.bat)
-      </button>
+      <button id="bat-download-btn">Auto Installer (.bat)</button>
       <button id="zip-download-btn">ZIP</button>
     </div>
-
-    <!-- Steps panel -- bat and zip views swap in here -->
     <div class="install-steps" id="install-steps">
-
-      <!-- BAT steps -- shown by default -->
       <div id="steps-bat">
         <ol>
           <li>Click <b>Auto Installer (.bat)</b> above</li>
-          <li>Run the .bat -- it downloads + extracts automatically</li>
-          <li>A folder opens in Explorer -- that is the extension</li>
+          <li>Run the .bat — it downloads + extracts automatically</li>
+          <li>A folder opens in Explorer — that is the extension</li>
           <li>Go to <b id="ext-page-name">chrome://extensions</b></li>
           <li>Enable <b>Developer Mode</b> (top right toggle)</li>
-          <li>Click <b>Load Unpacked</b> -- select that folder</li>
+          <li>Click <b>Load Unpacked</b> — select that folder</li>
           <li>Remove the old version if still listed</li>
         </ol>
         <button id="open-ext-page-btn" class="steps-action-btn">Open Extensions Page</button>
       </div>
-
-      <!-- ZIP steps -- shown when ZIP is clicked -->
       <div id="steps-zip" style="display:none;">
         <ol>
           <li>Click <b>Download ZIP</b> below</li>
           <li>Unzip the file anywhere on your computer</li>
           <li>Go to <b id="ext-page-name-zip">chrome://extensions</b></li>
-          <li>Enable <b>Developer Mode</b> (top right toggle)</li>
+          <li>Enable <b>Developer Mode</b></li>
           <li>Click <b>Load Unpacked</b> and select the unzipped folder</li>
           <li>Remove the old version if still listed</li>
         </ol>
         <button id="open-ext-page-btn-zip" class="steps-action-btn">Open Extensions Page</button>
         <button id="zip-actual-download-btn">Download ZIP</button>
       </div>
+    </div>
+  </div>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       SIGNALTRACK TAB
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="signaltrack" class="tab-content">
+    <div class="st-header">
+      <div class="st-logo">signal<span>track</span></div>
+      <div class="st-sub">an oofbomb product</div>
+    </div>
+
+    <div class="st-status-row" id="st-status-row">
+      <div class="st-dot" id="st-dot"></div>
+      <span class="st-status-text" id="st-status-text">SignalTrack not detected</span>
+    </div>
+
+    <button class="st-btn primary" id="st-grab-btn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M7 4.5v5M4.5 7h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      Grab Session Token
+    </button>
+
+    <div class="st-token-preview" id="st-token-preview" style="display:none">
+      <div class="st-token-label">✓ Token captured</div>
+      <div class="st-token-val" id="st-token-val"></div>
+    </div>
+
+    <button class="st-btn secondary" id="st-login-btn" disabled>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M9 2h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H9M6 10l4-3-4-3M10 7H2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Auto Login to SignalTrack
+    </button>
+
+    <div class="st-toggle-row">
+      <div>
+        <div class="st-toggle-label">Auto Login</div>
+        <div class="st-toggle-sub">Automatically connect when token is found</div>
+      </div>
+      <label class="st-switch">
+        <input type="checkbox" id="st-autologin-toggle" checked>
+        <span class="st-slider"></span>
+      </label>
+    </div>
+    <div class="st-note">
+      Open PocketOption first, then <b>Grab Session Token</b>.<br>
+      SignalTrack must be open at <b>localhost:8080</b>.
+    </div>
+
+    <div class="st-divider"></div>
+    <div class="st-footer">
+      <div class="st-footer-brand">signal<span>track</span></div>
+      <div class="st-footer-made">AN OOFBOMB PRODUCT</div>
     </div>
   </div>
 
   <button id="saveBtn">Apply Settings</button>
 
-  <div class="footer-note">
-    <b>Note:</b> only use on demo /cabinet/ pages.
-  </div>
+  <div class="footer-note"><b>Note:</b> only use on demo /cabinet/ pages.</div>
   <div class="watermark-container">
     <img src="image.jpg" alt="" class="watermark-avatar" onerror="this.style.display='none'">
     <span class="watermark-text">created by oofbomb</span>
