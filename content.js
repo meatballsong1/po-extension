@@ -36,11 +36,14 @@ let CONFIG = {
     spTurnover: '$21,300.00', spProfit: '$4,225.00'
 };
 
-const observer = new MutationObserver(() => {
-    observer.disconnect();
-    performInstantSwap();
-    observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-});
+// ── Debounce helper — prevents observer thrashing ──────────────────────
+let _swapTimeout = null;
+function scheduleSwap() {
+    if (_swapTimeout) return;
+    _swapTimeout = setTimeout(() => { _swapTimeout = null; performInstantSwap(); }, 30);
+}
+
+const observer = new MutationObserver(scheduleSwap);
 
 chrome.storage.local.get(null, (data) => {
     Object.assign(CONFIG, data);
@@ -58,18 +61,63 @@ chrome.storage.onChanged.addListener((changes) => {
 
 function performInstantSwap() {
     try {
-        if (CONFIG.isEnabled === false) {
-            if (document.body) { document.body.classList.remove('is-guru-active', 'is-verified-active'); document.body.classList.add('ready'); }
-            return;
-        }
-        const isDemoActive = window.location.href.includes('demo');
+        // ── Body classes ───────────────────────────────────────────────
         if (document.body) {
-            if (CONFIG.isGuruEnabled) document.body.classList.add('is-guru-active');
-            else document.body.classList.remove('is-guru-active');
-            if (CONFIG.isVerifiedEnabled) document.body.classList.add('is-verified-active');
-            else document.body.classList.remove('is-verified-active');
+            document.body.classList.toggle('is-guru-active',     !!(CONFIG.isEnabled && CONFIG.isGuruEnabled));
+            document.body.classList.toggle('is-verified-active', !!(CONFIG.isEnabled && CONFIG.isVerifiedEnabled));
+            document.body.classList.add('ready');
         }
-        if (document.body) document.body.classList.add('ready');
+
+        if (CONFIG.isEnabled === false) return;
+
+        // ── Custom name swap ───────────────────────────────────────────
+        // Replaces the account label text with CONFIG.customName
+        if (CONFIG.customName) {
+            const nameCandidates = document.querySelectorAll(
+                '.balance-info-block__label, .js-balance-name, .user-name, .profile__name, .header__name'
+            );
+            nameCandidates.forEach(el => {
+                if (el.dataset.qtOriginal === undefined) {
+                    el.dataset.qtOriginal = el.textContent.trim();
+                }
+                if (el.textContent.trim() !== CONFIG.customName) {
+                    el.textContent = CONFIG.customName;
+                }
+            });
+        }
+
+        // ── Real/Demo icon swap ────────────────────────────────────────
+        // Swaps the account type SVG icon in the balance block
+        const isDemoActive = window.location.href.includes('demo');
+        const svgContainers = document.querySelectorAll(
+            '.balance-info-block__icon, .balance-item__icon, .js-account-type-icon'
+        );
+        svgContainers.forEach(el => {
+            const current = el.innerHTML.trim();
+            const targetSVG = isDemoActive ? SVG_DEMO : SVG_REAL;
+            // Only update if the SVG has actually changed
+            if (!current.includes(isDemoActive ? 'qt-demo' : 'qt-real')) {
+                el.innerHTML = targetSVG;
+            }
+        });
+
+        // ── Spoof stats ────────────────────────────────────────────────
+        if (CONFIG.isSpoofEnabled) {
+            const spoof = [
+                ['.js-branch, .profile-branch, [data-stat="branch"]',   CONFIG.spBranch],
+                ['.js-level,  .profile-level-num',                       CONFIG.spLevel],
+                ['.js-exp,    .profile-exp',                             CONFIG.spExp],
+                ['.js-trades, .profile-trades',                          CONFIG.spTrades],
+                ['.js-turnover,.profile-turnover',                       CONFIG.spTurnover],
+                ['.js-profit,  .profile-profit',                         CONFIG.spProfit],
+            ];
+            spoof.forEach(([sel, val]) => {
+                document.querySelectorAll(sel).forEach(el => {
+                    if (el.textContent.trim() !== val) el.textContent = val;
+                });
+            });
+        }
+
     } catch (e) {
         if (document.body) document.body.classList.add('ready');
     }
@@ -77,78 +125,115 @@ function performInstantSwap() {
 
 setTimeout(() => { if (document.body) document.body.classList.add('ready'); }, 1000);
 
+// ── Stream mode masking (50ms interval) ──────────────────────────────
 const BAL_MASK = '*******';
 const ID_MASK  = 'id *********';
 const IP_MASK  = '***.***.***.***';
 
 setInterval(function() {
     if (!CONFIG.isStreamModeEnabled) return;
+
     if (CONFIG.streamMaskBalance) {
-        document.querySelectorAll('.js-balance-real-USD, .js-balance-demo-USD, .js-balance-demo, .balance_current .js-hd').forEach(function(el) {
+        document.querySelectorAll(
+            '.js-balance-real-USD, .js-balance-demo-USD, .js-balance-demo, .balance_current .js-hd, ' +
+            '.balance-info-block__value, .js-balance-value'
+        ).forEach(el => {
             if (el.textContent !== BAL_MASK) el.textContent = BAL_MASK;
         });
     }
+
     if (CONFIG.streamMaskId) {
-        document.querySelectorAll('.info__id .js-hd, .js-user-id, .user-id, .profile-id').forEach(function(el) {
+        document.querySelectorAll(
+            '.info__id .js-hd, .js-user-id, .user-id, .profile-id, .js-uid'
+        ).forEach(el => {
             if (el.textContent.trim() !== ID_MASK) el.textContent = ID_MASK;
         });
     }
+
     if (CONFIG.streamMaskIp) {
-        document.querySelectorAll('.info__last-login .js-hd, .js-user-ip, .user-ip').forEach(function(el) {
+        document.querySelectorAll(
+            '.info__last-login .js-hd, .js-user-ip, .user-ip'
+        ).forEach(el => {
             if (!el.textContent.includes(IP_MASK)) {
                 const img = el.querySelector('img');
                 el.innerHTML = IP_MASK + (img ? ' ' + img.outerHTML : '');
             }
         });
     }
+
     if (CONFIG.streamMaskEmail) {
         const alias = CONFIG.streamEmailAlias || 'hidden@domain.com';
-        document.querySelectorAll('.info__email .js-hd, .js-user-email, .user-email').forEach(function(el) {
+        document.querySelectorAll(
+            '.info__email .js-hd, .js-user-email, .user-email'
+        ).forEach(el => {
             if (el.textContent.trim() !== alias) el.textContent = alias;
         });
     }
 }, 50);
 
+// ── Notification helper ───────────────────────────────────────────────
+function showPageNotif(opts) {
+    const existing = document.getElementById('qt-notif');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.id = 'qt-notif';
+    el.style.cssText = [
+        'position:fixed', 'top:16px', 'right:16px', 'z-index:999999',
+        'background:' + (opts.isError ? '#ef5350' : '#26a69a'),
+        'color:#fff', 'font-family:monospace', 'font-size:13px',
+        'padding:10px 16px', 'border-radius:8px',
+        'box-shadow:0 4px 16px rgba(0,0,0,0.3)',
+        'max-width:320px', 'transition:opacity .3s',
+    ].join(';');
+    el.innerHTML = (opts.title ? `<strong>${opts.title}</strong><br>` : '') + (opts.desc || '');
+    document.body.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+function buildPopoutWidget() {
+    // stub — implement popout UI here if needed
+}
+
+function startEditor() {
+    // stub — implement editor here if needed
+}
+
+function showUpdateBanner(current, latest) {
+    showPageNotif({
+        title: 'Update Available',
+        desc: `v${current} → v${latest}. Reload to apply.`,
+        isError: false,
+    });
+}
+
 chrome.runtime.onMessage.addListener(function(msg) {
     if (!msg) return;
-    if (msg.type === 'PO_NOTIFY') showPageNotif({ title: msg.title, desc: msg.desc, isError: !!msg.isError });
-    if (msg.type === 'PO_POPOUT') buildPopoutWidget();
-    if (msg.type === 'PO_EDIT_START') startEditor();
+    if (msg.type === 'PO_NOTIFY')          showPageNotif({ title: msg.title, desc: msg.desc, isError: !!msg.isError });
+    if (msg.type === 'PO_POPOUT')          buildPopoutWidget();
+    if (msg.type === 'PO_EDIT_START')      startEditor();
     if (msg.type === 'PO_UPDATE_AVAILABLE') showUpdateBanner(msg.current, msg.latest);
-    if (msg.type === 'PO_FORCE_UPDATE') showUpdateBanner('current', msg.latest || 'latest');
+    if (msg.type === 'PO_FORCE_UPDATE')    showUpdateBanner('current', msg.latest || 'latest');
 });
-
-// ── Minimal stubs for functions referenced above (your full extension has these) ──
-function showPageNotif(opts) {}   // your full version has this
-function buildPopoutWidget() {}   // your full version has this  
-function startEditor() {}         // your full version has this
-function showUpdateBanner() {}    // your full version has this
 
 // ═════════════════════════════════════════════════════════════════════
 // ── SIGNALTRACK EXTENSION BRIDGE ─────────────────────────────────────
 // ═════════════════════════════════════════════════════════════════════
 (function initSTBridge() {
 
-  // ── POCKETOPTION: inject WS hook via file URL (bypasses CSP) ──────
   if (window.location.hostname.includes('pocketoption.com')) {
 
-    // Inject ws-hook.js as a <script src="..."> — chrome-extension:// URLs
-    // are whitelisted via web_accessible_resources so CSP allows them
     const script = document.createElement('script');
     script.src = chrome.runtime.getURL('ws-hook.js');
     script.onload = function() { script.remove(); };
     (document.head || document.documentElement).appendChild(script);
 
-    // Listen for token captured by ws-hook.js
     let lastCapturedToken = null;
     window.addEventListener('__st_token_captured', function(e) {
       lastCapturedToken = e.detail.token;
       chrome.storage.local.set({ st_session_token: lastCapturedToken, st_token_ts: Date.now() });
-      // Notify background.js so it can auto-login ST if open
       chrome.runtime.sendMessage({ type: 'ST_TOKEN_READY', token: lastCapturedToken });
     });
 
-    // Respond to popup or background asking for the current token
     chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
       if (msg.type === 'ST_GET_TOKEN') {
         const live = window.__st_last_token || lastCapturedToken;
@@ -156,21 +241,18 @@ function showUpdateBanner() {}    // your full version has this
         chrome.storage.local.get('st_session_token', function(d) {
           sendResponse({ token: d.st_session_token || null });
         });
-        return true; // async
+        return true;
       }
     });
   }
 
-  // ── SIGNALTRACK (localhost): receive auto-login + signal extension ─
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
 
-    // Signal to the page that the extension is present
     function signalReady() {
       window.__st_extension_present = true;
       window.dispatchEvent(new CustomEvent('__st_extension_ready'));
     }
     signalReady();
-    // Keep firing briefly in case the page listener registers late
     let ticks = 0;
     const iv = setInterval(function() {
       signalReady();
@@ -194,7 +276,7 @@ function showUpdateBanner() {}    // your full version has this
         else { sendResponse({ ok: false, reason: 'no connect btn' }); }
       }, 300);
 
-      return true; // async
+      return true;
     });
   }
 
