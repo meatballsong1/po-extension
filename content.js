@@ -20,6 +20,12 @@ style.innerHTML = `
     body.is-guru-active .user-avatar, body.is-guru-active .profile-level, body.is-guru-active .profile-level__icon, body.is-guru-active .user-avatar.user-avatar--level-0 { color: #DE9C2B !important; }
     body.is-guru-active .your-level-badge { background-color: rgba(222, 156, 43, 0.1) !important; border: 1px solid #DE9C2B !important; }
     body.is-guru-active .your-level-badge a { color: #DE9C2B !important; font-weight: bold !important; }
+
+    /* Hide "Trading on demo account" banner */
+    .demo-account-banner, .demo-banner, .js-demo-banner,
+    .trading-on-demo, .alert--demo, .demo-alert,
+    [class*="demo-account-banner"], [class*="demo-warning"],
+    .notification--demo, .header-demo-notice { display: none !important; }
 `;
 document.documentElement.appendChild(style);
 
@@ -104,12 +110,12 @@ function performInstantSwap() {
         // ── Spoof stats ────────────────────────────────────────────────
         if (CONFIG.isSpoofEnabled) {
             const spoof = [
-                ['.js-branch, .profile-branch, [data-stat="branch"]',   CONFIG.spBranch],
-                ['.js-level,  .profile-level-num',                       CONFIG.spLevel],
-                ['.js-exp,    .profile-exp',                             CONFIG.spExp],
-                ['.js-trades, .profile-trades',                          CONFIG.spTrades],
-                ['.js-turnover,.profile-turnover',                       CONFIG.spTurnover],
-                ['.js-profit,  .profile-profit',                         CONFIG.spProfit],
+                ['.your-level-badge a, .profile-level__name, .js-level-name',  CONFIG.spBranch],
+                ['.profile-level__number, .js-level, .user-level',              CONFIG.spLevel],
+                ['.profile-level__exp .js-hd, .js-exp-value',                  CONFIG.spExp],
+                ['.trading-info__trades .js-hd, .js-trades-count',             CONFIG.spTrades],
+                ['.trading-info__turnover .js-hd, .js-turnover',               CONFIG.spTurnover],
+                ['.trading-info__profit .js-hd, .js-profit',                   CONFIG.spProfit],
             ];
             spoof.forEach(([sel, val]) => {
                 document.querySelectorAll(sel).forEach(el => {
@@ -172,23 +178,7 @@ setInterval(function() {
 }, 50);
 
 // ── Notification helper ───────────────────────────────────────────────
-function showPageNotif(opts) {
-    const existing = document.getElementById('qt-notif');
-    if (existing) existing.remove();
-    const el = document.createElement('div');
-    el.id = 'qt-notif';
-    el.style.cssText = [
-        'position:fixed', 'top:16px', 'right:16px', 'z-index:999999',
-        'background:' + (opts.isError ? '#ef5350' : '#26a69a'),
-        'color:#fff', 'font-family:monospace', 'font-size:13px',
-        'padding:10px 16px', 'border-radius:8px',
-        'box-shadow:0 4px 16px rgba(0,0,0,0.3)',
-        'max-width:320px', 'transition:opacity .3s',
-    ].join(';');
-    el.innerHTML = (opts.title ? `<strong>${opts.title}</strong><br>` : '') + (opts.desc || '');
-    document.body.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3500);
-}
+function showPageNotif(opts) {}   // your full version has this
 
 function buildPopoutWidget() {
     // stub — implement popout UI here if needed
@@ -198,13 +188,7 @@ function startEditor() {
     // stub — implement editor here if needed
 }
 
-function showUpdateBanner(current, latest) {
-    showPageNotif({
-        title: 'Update Available',
-        desc: `v${current} → v${latest}. Reload to apply.`,
-        isError: false,
-    });
-}
+function showUpdateBanner() {}    // your full version has this
 
 chrome.runtime.onMessage.addListener(function(msg) {
     if (!msg) return;
