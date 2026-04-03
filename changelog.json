@@ -1,17 +1,10 @@
 {
-  "version": "2.6.3",
-  "title": "welcome to 2.6.3!",
-  "subtitle": "added numerous bug fixes",
-  "image": "changelog-banner.png",
-  "mode": "bullets",
-  "items": [
-    "numerous bug fixes",
-    "new signaltrack token grabbing system to integrate the two systems to systemize the system deez nuts",
-    "DIDDY has been added to stabilize the epstein systems",
-    "the customizable window has been changed up a ltitle bit so elemtns willl actually stay (kinda?)",
-    "aaaand thats literally it lol",
-    "\"fuck my butt dude\" - rjktrades 2026"
-  ],
+  "version": "2.6.4",
+  "title": "welcome to version 2.6.4",
+  "subtitle": "nothing new, just a major patch",
+  "image": "",
+  "mode": "text",
+  "items": [],
   "text": "",
-  "buttonLabel": "i like it!"
+  "buttonLabel": "thanks!"
 }
