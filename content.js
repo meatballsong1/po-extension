@@ -1599,7 +1599,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.1';
+var VEIL_CURRENT_VERSION = '2.6.6';
 
 function getUpdateBrowserInfo() {
     var ua = navigator.userAgent;
