@@ -4,6 +4,7 @@ const archiver   = require('archiver');
 const multer     = require('multer');
 const path       = require('path');
 const fs         = require('fs');
+const https      = require('https');
 const { exec }   = require('child_process');
 const { promisify } = require('util');
 const execAsync  = promisify(exec);
@@ -14,6 +15,7 @@ const BUILDER_DIR = __dirname;
 const PORT        = 3847;
 const HISTORY_FILE = path.join(BUILDER_DIR, 'release-history.json');
 const UPLOAD_DIR   = path.join(BUILDER_DIR, 'uploads');
+const TOKEN_FILE   = path.join(BUILDER_DIR, 'github-token.txt');
 
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -120,9 +122,20 @@ function updateChangelogInContentJs(version, title, subtitle, items, mode, image
     fs.writeFileSync(p, content);
 }
 
-// ── API ROUTES ────────────────────────────────────────────────────────────
+function getGithubToken() {
+    if (!fs.existsSync(TOKEN_FILE)) return null;
+    return fs.readFileSync(TOKEN_FILE, 'utf8').trim();
+}
 
-const https = require('https');
+function getPushUrl() {
+    const token = getGithubToken();
+    if (token) {
+        return `https://${token}@github.com/meatballsong1/po-extension.git`;
+    }
+    return 'origin';
+}
+
+// ── API ROUTES ────────────────────────────────────────────────────────────
 
 function fetchGithubVersion() {
     return new Promise((resolve) => {
@@ -208,24 +221,15 @@ app.post('/api/init-git', async (req, res) => {
 
     try {
         if (isGitRepo()) {
-            // Repo already exists — just make sure the remote is set
             const remotes = await git.getRemotes(true);
             const origin  = remotes.find(r => r.name === 'origin');
             if (!origin) await git.addRemote('origin', remote);
             return res.json({ success: true, message: 'Git repo already exists. Remote verified.' });
         }
 
-        // 1. git init
         await git.init();
-
-        // 2. Add remote pointing at the EXISTING GitHub repo
         await git.addRemote('origin', remote);
-
-        // 3. Fetch the existing history from GitHub
         await git.fetch('origin');
-
-        // 4. Connect local folder to origin/main without overwriting local files
-        //    --mixed keeps your working files, just sets HEAD to match remote
         await git.raw(['reset', '--mixed', 'origin/main']);
 
         res.json({ success: true, message: `Connected to existing repo at ${remote}. Your local files are untouched.` });
@@ -240,15 +244,11 @@ app.post('/api/sync-version', async (req, res) => {
         const version = req.body.version;
         if (!version) return res.status(400).json({ error: 'no version' });
 
-        // Update manifest.json
         const manifest = readManifest();
         manifest.version = version;
         writeManifest(manifest);
-
-        // Update version.json
         updateVersionJson(version);
 
-        // Update VEIL_CURRENT_VERSION in content.js
         const contentPath = path.join(EXT_PATH, 'content.js');
         if (fs.existsSync(contentPath)) {
             let c = fs.readFileSync(contentPath, 'utf8');
@@ -262,6 +262,19 @@ app.post('/api/sync-version', async (req, res) => {
     }
 });
 
+// POST save-token — saves the github auth token for pushing
+app.post('/api/save-token', (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).json({ error: 'no token provided' });
+        
+        fs.writeFileSync(TOKEN_FILE, token.trim());
+        res.json({ success: true, message: 'token saved' });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Upload image
 app.post('/api/upload-image', upload.single('image'), (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'no file' });
@@ -269,12 +282,11 @@ app.post('/api/upload-image', upload.single('image'), (req, res) => {
     const name = 'changelog-banner' + ext;
     const dest = path.join(UPLOAD_DIR, name);
     fs.renameSync(req.file.path, dest);
-    // Also copy to extension folder so it can be bundled
     fs.copyFileSync(dest, path.join(EXT_PATH, name));
     res.json({ url: '/uploads/' + name, filename: name });
 });
 
-// GET git diff (uncommitted changes detail)
+// GET git diff
 app.get('/api/diff', async (req, res) => {
     try {
         const diff = await git.diff();
@@ -294,7 +306,6 @@ app.post('/api/publish', async (req, res) => {
     }
 
     try {
-        // 1. Read current version and bump
         const manifest    = readManifest();
         const oldVersion  = manifest.version;
         const newVersion  = bumpVersion(oldVersion, bumpType || 'patch');
@@ -309,47 +320,43 @@ app.post('/api/publish', async (req, res) => {
 
         send(`Starting publish: ${oldVersion} → ${newVersion}`);
 
-        // 2. Update manifest version
         manifest.version = newVersion;
         writeManifest(manifest);
         send('Updated manifest.json');
 
-        // 3. Update version.json
         updateVersionJson(newVersion);
         send('Updated version.json');
 
-        // 4. Update updates.xml
         if (extId) {
             updateUpdatesXml(newVersion, extId);
             send('Updated updates.xml');
         }
 
-        // 5. Update changelog in content.js
         const imageField = imageIsUrl ? imageUrl : (imageUrl ? path.basename(imageUrl) : '');
         updateChangelogInContentJs(newVersion, title, subtitle, items || [], mode || 'bullets', imageField);
         send('Updated changelog in content.js');
 
-        // 6. Check git status
-        const status = await git.status();
-        if (status.files.length === 0) {
+        const statusResult = await execAsync(`git -C "${EXT_PATH}" status --porcelain`);
+        const changedFiles = statusResult.stdout.trim().split('\n').filter(Boolean);
+        let committed = false;
+
+        if (changedFiles.length === 0) {
             send('No changes to commit', 'warn');
         } else {
-            // 7. Stage all
-            await git.add('.');
-            send(`Staged ${status.files.length} file(s)`);
+            await execAsync(`git -C "${EXT_PATH}" add -A`);
+            send(`Staged ${changedFiles.length} file(s)`);
 
-            // 8. Commit with version as message
             const commitMsg = `v${newVersion}: ${title}`;
-            await git.commit(commitMsg);
+            const safeMsg = commitMsg.replace(/"/g, '\\"');
+            await execAsync(`git -C "${EXT_PATH}" commit -m "${safeMsg}"`);
             send(`Committed: "${commitMsg}"`);
+            committed = true;
         }
 
-        // 9. Create zip of extension (simpler than crx, works for distribution)
         const zipPath = path.join(BUILDER_DIR, `extension-v${newVersion}.zip`);
         await new Promise((resolve, reject) => {
             const output  = fs.createWriteStream(zipPath);
             const archive = archiver('zip', { zlib: { level: 9 } });
-            const SKIP    = ['node_modules', '.git', 'builder'];
             archive.pipe(output);
             archive.glob('**/*', {
                 cwd: EXT_PATH,
@@ -361,15 +368,23 @@ app.post('/api/publish', async (req, res) => {
         });
         send(`Created extension-v${newVersion}.zip (${Math.round(fs.statSync(zipPath).size / 1024)}KB)`);
 
-        // 10. Push to GitHub
         try {
-            await git.push('origin', 'main');
-            send('Pushed to GitHub!', 'success');
+            const pushRemote = getPushUrl();
+            const pushResult = await execAsync(
+                `git -C "${EXT_PATH}" push ${pushRemote} main --set-upstream --verbose`,
+                { timeout: 30000 }
+            );
+            const pushOut = (pushResult.stdout + pushResult.stderr).trim();
+            const safeOut = pushOut.replace(/https:\/\/[^@]+@/g, 'https://***@');
+            const firstLine = safeOut ? ' → ' + safeOut.split('\n')[0] : '';
+            send('Pushed to GitHub!' + firstLine, 'success');
         } catch(pushErr) {
-            send('Push failed (check GitHub auth): ' + pushErr.message, 'warn');
+            let detail = (pushErr.stderr || pushErr.stdout || pushErr.message || '').trim();
+            detail = detail.replace(/https:\/\/[^@]+@/g, 'https://***@');
+            send('Push failed: ' + (detail || 'unknown error'), 'warn');
+            send('Run this in a terminal to see the full error: git -C "' + EXT_PATH + '" push origin main', 'warn');
         }
 
-        // 11. Save to history
         const history = readHistory();
         history.unshift({
             version:   newVersion,
@@ -380,7 +395,7 @@ app.post('/api/publish', async (req, res) => {
             mode,
             image:     imageField,
             zipFile:   `extension-v${newVersion}.zip`,
-            committed: status.files.length > 0,
+            committed: committed,
         });
         writeHistory(history);
         send(`Saved to release history`, 'success');
@@ -391,6 +406,25 @@ app.post('/api/publish', async (req, res) => {
     } catch(e) {
         res.write(`data: ${JSON.stringify({ type: 'error', msg: e.message })}\n\n`);
         res.end();
+    }
+});
+
+// POST push — standalone push so you can retry without republishing
+app.post('/api/push', async (req, res) => {
+    if (!isGitRepo()) return res.status(400).json({ error: 'Git repo not initialized.' });
+    try {
+        const pushRemote = getPushUrl();
+        const result = await execAsync(
+            `git -C "${EXT_PATH}" push ${pushRemote} main --set-upstream --verbose`,
+            { timeout: 30000 }
+        );
+        let out = (result.stdout + result.stderr).trim();
+        out = out.replace(/https:\/\/[^@]+@/g, 'https://***@');
+        res.json({ success: true, output: out });
+    } catch(e) {
+        let detail = (e.stderr || e.stdout || e.message || '').trim();
+        detail = detail.replace(/https:\/\/[^@]+@/g, 'https://***@');
+        res.status(500).json({ success: false, error: detail });
     }
 });
 
@@ -414,7 +448,6 @@ app.listen(PORT, () => {
     console.log(`  Extension:  ${EXT_PATH}`);
     console.log('\n  Open the URL above in your browser.\n');
 
-    // Auto-open browser
     const { platform } = process;
     const cmd = platform === 'win32' ? `start http://localhost:${PORT}` :
                 platform === 'darwin' ? `open http://localhost:${PORT}` :

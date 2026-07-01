@@ -1740,7 +1740,7 @@ edStop = function() {
 var UPDATE_MESSAGES = ['a'];
 // -------------------------------------------------------------------------
 
-var VEIL_CURRENT_VERSION = '2.6.7';
+var VEIL_CURRENT_VERSION = '2.6.8';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 
@@ -1842,15 +1842,15 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.7',
+    version: '2.6.8',
 
-    title: 'welcome to 2.6.6',
-    subtitle: 'big big update son',
+    title: 'welcome to 2.6.8',
+    subtitle: 'minimal patches',
 
-    image: '',
+    image: 'changelog-banner.png',
 
     // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'text',
+    mode: 'bullets',
 
     items: [
         'icons are FULLY fixed so you can effortlessly swap',
