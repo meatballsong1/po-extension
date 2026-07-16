@@ -79,7 +79,7 @@ function openExtPage() {
                 const btn = document.getElementById('open-ext-page-btn');
                 if (btn) {
                     btn.textContent = 'Copied ' + browser.url + ' -- paste in address bar';
-                    btn.style.color = '#24b15b';
+                    btn.style.color = '#22c55e';
                 }
             });
         }
@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const btn = document.getElementById('saveBtn');
                 btn.innerText = 'Saved!';
-                btn.style.background = '#24B15B';
+                btn.style.background = '#22c55e';
                 setTimeout(() => { btn.innerText = 'Apply Settings'; btn.style.background = 'var(--accent)'; }, 1000);
             });
         });

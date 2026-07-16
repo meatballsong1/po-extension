@@ -1948,7 +1948,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.13';
+var VEIL_CURRENT_VERSION = '2.6.14';
 
 // Disabled update available banner as requested
 function showUpdateBanner(currentVersion, latestVersion) {}
@@ -1960,12 +1960,12 @@ function checkForUpdate() {}
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.13',
+    version: '2.6.14',
 
-    title: 'welcome to 2.6.13',
-    subtitle: 'idk what to put here',
+    title: 'version 2.6.14 - BETA FOR 2.7.0',
+    subtitle: 'test',
 
-    image: '',
+    image: 'https://cdn.discordapp.com/attachments/1490488608522764389/1527109291788603532/image.png?ex=6a5a1f9b&is=6a58ce1b&hm=4db78a6caca9f1bff5937ca1dfd66eefb22b258a62e8afec138240fb50032f34&',
 
     // 'bullets' | 'text' | 'links' | 'none'
     mode: 'bullets',

@@ -325,9 +325,18 @@ if %ERRORLEVEL% neq 0 (
 echo 3. Cleaning up zip file...
 del "%ZIP_FILE%"
 
-echo 4. Opening Chrome Extensions page...
-start chrome://extensions/
-start chrome chrome://extensions/
+echo 4. Opening Extensions page...
+start chrome chrome://extensions/ 2>nul
+start brave chrome://extensions/ 2>nul
+if %ERRORLEVEL% neq 0 (
+    if exist "%LOCALAPPDATA%\\\\BraveSoftware\\\\Brave-Browser\\\\Application\\\\brave.exe" (
+        start "" "%LOCALAPPDATA%\\\\BraveSoftware\\\\Brave-Browser\\\\Application\\\\brave.exe" chrome://extensions/
+    ) else if exist "%ProgramFiles%\\\\BraveSoftware\\\\Brave-Browser\\\\Application\\\\brave.exe" (
+        start "" "%ProgramFiles%\\\\BraveSoftware\\\\Brave-Browser\\\\Application\\\\brave.exe" chrome://extensions/
+    ) else if exist "%ProgramFiles(x86)%\\\\BraveSoftware\\\\Brave-Browser\\\\Application\\\\brave.exe" (
+        start "" "%ProgramFiles(x86)%\\\\BraveSoftware\\\\Brave-Browser\\\\Application\\\\brave.exe" chrome://extensions/
+    )
+)
 
 echo.
 echo ====================================================
