@@ -381,6 +381,9 @@ function injectStyles() {
         '#po-cl-dismiss{width:100% !important;padding:11px !important;background:#22c55e !important;border:none !important;border-radius:11px !important;color:#0b1120 !important;font-weight:700 !important;font-size:12.5px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:0.3px !important;box-shadow:0 4px 18px rgba(34,197,94,0.3) !important;transition:opacity 0.2s,transform 0.15s !important;}',
         '#po-cl-dismiss:hover{opacity:0.87 !important;transform:translateY(-1px) !important;box-shadow:0 6px 24px rgba(34,197,94,0.45) !important;}',
         '#po-cl-dismiss:active{transform:scale(0.97) !important;}',
+        '#po-cl-download{width:100% !important;padding:11px !important;background:linear-gradient(135deg,#22c55e,#4ade80) !important;border:none !important;border-radius:11px !important;color:#0b1120 !important;font-weight:700 !important;font-size:12.5px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:0.3px !important;box-shadow:0 4px 18px rgba(34,197,94,0.3) !important;transition:opacity 0.2s,transform 0.15s !important;margin-bottom:8px !important;display:block !important;text-align:center !important;}',
+        '#po-cl-download:hover{opacity:0.87 !important;transform:translateY(-1px) !important;box-shadow:0 6px 24px rgba(34,197,94,0.45) !important;}',
+        '#po-cl-download:active{transform:scale(0.97) !important;}',
         '#po-cl-links{list-style:none !important;padding:0 !important;margin:0 0 16px !important;display:flex !important;flex-direction:column !important;gap:6px !important;}',
         '.po-cl-link-row{display:flex !important;}',
         '.po-cl-link{display:flex !important;align-items:center !important;justify-content:space-between !important;gap:8px !important;width:100% !important;padding:9px 12px !important;background:rgba(34,197,94,0.07) !important;border:1px solid rgba(34,197,94,0.18) !important;border-radius:10px !important;text-decoration:none !important;color:#e2e8f0 !important;font-size:11.5px !important;font-weight:600 !important;transition:background 0.2s,border-color 0.2s,box-shadow 0.2s !important;}',
@@ -726,7 +729,8 @@ function inEditUI(el) {
         el.closest('#po-edit-bar') || el.closest('#po-explorer') ||
         el.closest('#po-float') || el.closest('#po-notif-root') ||
         el.closest('#po-ctx') || el.closest('#po-img-modal') ||
-        el.closest('#po-code-modal')
+        el.closest('#po-code-modal') || el.closest('#po-vel-panel') ||
+        el.closest('#po-float-edit')
     ));
 }
 
@@ -797,6 +801,15 @@ function showCtxMenu(x, y, el) {
     var isText = el && el.innerText && el.innerText.trim().length > 0 && !isImg;
 
     var items = [];
+    var overlayEl = el.closest('[data-veil-overlay]');
+    if (overlayEl) {
+        var isLocked = overlayEl.dataset.lockRatio !== 'false';
+        items.push({ico:'🔒', label:'Lock Aspect Ratio: ' + (isLocked ? 'ON' : 'OFF'), fn: function() {
+            var nextLocked = !isLocked;
+            overlayEl.dataset.lockRatio = nextLocked ? 'true' : 'false';
+            showPageNotif({ desc: 'Aspect ratio lock: ' + (nextLocked ? 'ON' : 'OFF') });
+        }});
+    }
     if (isText) {
         items.push({ico:'T', label:'Edit Text', fn: function() { ctxEditText(el); }});
         items.push({ico:'A+', label:'Font Size +', fn: function() { var cur = parseInt(window.getComputedStyle(el).fontSize) || 14; el.style.fontSize = (cur + 2) + 'px'; }});
@@ -1240,6 +1253,7 @@ function startEditor() {
         '<button class="peb" id="peb-save">Save Changes</button>' +
         '<button class="peb" id="peb-reset">Reset</button>' +
         '<button class="peb" id="peb-explorer">Open Explorer</button>' +
+        '<button class="peb" id="peb-toggle-float">Float Button: ON</button>' +
         '<button class="peb" id="peb-cancel">Cancel Editing</button>';
     document.body.appendChild(bar);
     document.body.style.paddingTop  = '50px';
@@ -1254,6 +1268,41 @@ function startEditor() {
     document.getElementById('peb-reset').addEventListener('click', edReset);
     document.getElementById('peb-cancel').addEventListener('click', edStop);
     document.getElementById('peb-explorer').addEventListener('click', toggleExplorer);
+
+    var toggleBtn = document.getElementById('peb-toggle-float');
+    if (toggleBtn) {
+        chrome.storage.local.get('po_show_float_edit', function(res) {
+            var show = res.po_show_float_edit !== false;
+            if (show) {
+                toggleBtn.style.cssText = 'background:rgba(34,197,94,0.12) !important;border:1px solid rgba(34,197,94,0.3) !important;color:#22c55e !important;';
+                toggleBtn.textContent = 'Float Button: ON';
+            } else {
+                toggleBtn.style.cssText = 'background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.1) !important;color:rgba(255,255,255,0.6) !important;';
+                toggleBtn.textContent = 'Float Button: OFF';
+            }
+        });
+        toggleBtn.addEventListener('click', function() {
+            chrome.storage.local.get('po_show_float_edit', function(res) {
+                var show = res.po_show_float_edit !== false;
+                var nextShow = !show;
+                chrome.storage.local.set({ po_show_float_edit: nextShow }, function() {
+                    if (nextShow) {
+                        toggleBtn.style.cssText = 'background:rgba(34,197,94,0.12) !important;border:1px solid rgba(34,197,94,0.3) !important;color:#22c55e !important;';
+                        toggleBtn.textContent = 'Float Button: ON';
+                    } else {
+                        toggleBtn.style.cssText = 'background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.1) !important;color:rgba(255,255,255,0.6) !important;';
+                        toggleBtn.textContent = 'Float Button: OFF';
+                    }
+                    var fb = document.getElementById('po-float-edit');
+                    if (fb) {
+                        fb.style.setProperty('display', nextShow ? 'flex' : 'none', 'important');
+                    } else if (nextShow) {
+                        createEditFloatingBtn();
+                    }
+                });
+            });
+        });
+    }
 }
 
 function edStop() {
@@ -1335,7 +1384,8 @@ function edSave() {
             content: el.getAttribute('data-veil-content') || el.innerText,
             x:       el.style.left,
             y:       el.style.top,
-            style:   el.getAttribute('style') || '',
+            style:   el.style.cssText || '',
+            lockRatio: el.dataset.lockRatio !== 'false'
         });
     });
     editChanges['__veil_overlays__'] = overlayEls;
@@ -1463,12 +1513,14 @@ function injectVeilElementsCSS() {
         // ------ WIN RATE TRACKER ------
         '#po-wrt{font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif !important;background:#121b2f !important;backdrop-filter:blur(20px) !important;border:1px solid #1e293b !important;border-radius:16px !important;padding:14px 16px 12px !important;display:flex !important;flex-direction:column !important;align-items:center !important;gap:8px !important;min-width:160px !important;box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.05) !important;}',
         '#po-wrt-label{font-size:8.5px !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:1.2px !important;color:#94a3b8 !important;}',
-        '#po-wrt-ring{position:relative !important;width:110px !important;height:110px !important;}',
-        '#po-wrt-svg{transform:rotate(-90deg) !important;}',
-        '#po-wrt-track{fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:8 !important;}',
-        '#po-wrt-fill{fill:none !important;stroke:#22c55e !important;stroke-width:8 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s cubic-bezier(0.22,1,0.36,1),stroke 0.45s ease,filter 0.45s ease !important;}',
+        '#po-wrt #po-wrt-ring{position:relative !important;width:140px !important;height:140px !important;margin:8px 0 !important;overflow:visible !important;}',
+        '#po-wrt #po-wrt-svg{transform:rotate(-90deg) !important;overflow:visible !important;width:140px !important;height:140px !important;}',
+        '#po-wrt-ad #po-wrt-ring{position:relative !important;width:110px !important;height:110px !important;margin:8px 0 !important;overflow:visible !important;}',
+        '#po-wrt-ad #po-wrt-svg{transform:rotate(-90deg) !important;overflow:visible !important;width:110px !important;height:110px !important;}',
+        '#po-wrt-track{fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:10 !important;}',
+        '#po-wrt-fill{fill:none !important;stroke:#22c55e !important;stroke-width:10 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s cubic-bezier(0.22,1,0.36,1),stroke 0.45s ease,filter 0.45s ease !important;}',
         '#po-wrt-pct{position:absolute !important;inset:0 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;}',
-        '#po-wrt-num{font-size:24px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;transition:color 0.45s ease !important;font-family:\'Fira Code\',monospace !important;}',
+        '#po-wrt-num{font-size:32px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;transition:color 0.45s ease !important;font-family:\'Fira Code\',monospace !important;}',
         '#po-wrt-wl{display:flex !important;gap:22px !important;align-items:center !important;}',
         '.po-wrt-stat{display:flex !important;flex-direction:column !important;align-items:center !important;gap:2px !important;}',
         '.po-wrt-stat-val{font-size:20px !important;font-weight:800 !important;line-height:1 !important;font-family:\'Fira Code\',monospace !important;}',
@@ -1513,13 +1565,18 @@ function restoreVeilElements() {
                 var def = VEIL_ELEMENTS.find(function(e) { return e.id === data.type; });
                 if (!def) return;
                 if (data.type === 'win-rate-tracker') {
-                    spawnWinRateTracker(data.x, data.y, true);
+                    wrap = spawnWinRateTracker(data.x, data.y, true);
                 } else if (data.type === 'winrate-v2-ad') {
-                    spawnWinRateTrackerAd(data.x, data.y, true);
+                    wrap = spawnWinRateTrackerAd(data.x, data.y, true);
                 } else if (data.type === 'profit-calc') {
-                    spawnProfitCalculator(data.x, data.y, true);
+                    wrap = spawnProfitCalculator(data.x, data.y, true);
                 } else {
-                    spawnVeilElement(def, data.x, data.y, true);
+                    wrap = spawnVeilElement(def, data.x, data.y, true);
+                }
+                if (wrap && data.style) {
+                    wrap.dataset.lockRatio = data.lockRatio !== false ? 'true' : 'false';
+                    wrap.style.cssText = data.style;
+                    applyScalingIfResized(wrap);
                 }
             });
         } catch(e) {}
@@ -1538,6 +1595,61 @@ function getActiveTime() {
 }
 
 // ---- SPAWN ELEMENT ONTO PAGE ----
+function applyScalingIfResized(wrap) {
+    if (wrap.offsetWidth === 0) {
+        requestAnimationFrame(function() { applyScalingIfResized(wrap); });
+        return;
+    }
+    var w = wrap.style.width;
+    var h = wrap.style.height;
+    if (w && h) {
+        var nW = parseInt(w);
+        var nH = parseInt(h);
+        if (!wrap.dataset.origW) {
+            var prevW = wrap.style.width;
+            var prevH = wrap.style.height;
+            var prevOverflow = wrap.style.overflow;
+            wrap.style.width = '';
+            wrap.style.height = '';
+            wrap.style.overflow = '';
+            var origW = wrap.offsetWidth;
+            var origH = wrap.offsetHeight;
+            wrap.style.width = prevW;
+            wrap.style.height = prevH;
+            wrap.style.overflow = prevOverflow;
+            wrap.dataset.origW = origW;
+            wrap.dataset.origH = origH;
+            var handle = wrap.querySelector('.po-veil-resize');
+            var contentWrap = wrap.querySelector('.po-veil-scale-content');
+            if (!contentWrap) {
+                contentWrap = document.createElement('div');
+                contentWrap.className = 'po-veil-scale-content';
+                contentWrap.style.cssText = 'transform-origin: 0 0 !important; width: ' + origW + 'px !important; height: ' + origH + 'px !important; position: absolute !important; top: 0 !important; left: 0 !important;';
+                while (wrap.firstChild && wrap.firstChild !== handle) {
+                    contentWrap.appendChild(wrap.firstChild);
+                }
+                wrap.insertBefore(contentWrap, handle);
+            }
+        }
+        var origW = parseFloat(wrap.dataset.origW);
+        var origH = parseFloat(wrap.dataset.origH);
+        var lock = wrap.dataset.lockRatio !== 'false';
+        if (lock) {
+            var scale = nW / origW;
+            nW = origW * scale;
+            nH = origH * scale;
+            wrap.style.width = nW + 'px';
+            wrap.style.height = nH + 'px';
+        }
+        var scaleX = nW / origW;
+        var scaleY = nH / origH;
+        var content = wrap.querySelector('.po-veil-scale-content');
+        if (content) {
+            content.style.transform = 'scale(' + scaleX + ',' + scaleY + ')';
+        }
+    }
+}
+
 function addResizeHandle(wrap) {
     if (wrap.querySelector('.po-veil-resize')) return;
     var handle = document.createElement('div');
@@ -1549,12 +1661,39 @@ function addResizeHandle(wrap) {
         var startY = e.clientY;
         var startW = wrap.offsetWidth;
         var startH = wrap.offsetHeight;
+        if (!wrap.dataset.origW) {
+            wrap.dataset.origW = startW;
+            wrap.dataset.origH = startH;
+            var contentWrap = wrap.querySelector('.po-veil-scale-content');
+            if (!contentWrap) {
+                contentWrap = document.createElement('div');
+                contentWrap.className = 'po-veil-scale-content';
+                contentWrap.style.cssText = 'transform-origin: 0 0 !important; width: ' + startW + 'px !important; height: ' + startH + 'px !important; position: absolute !important; top: 0 !important; left: 0 !important;';
+                while (wrap.firstChild && wrap.firstChild !== handle) {
+                    contentWrap.appendChild(wrap.firstChild);
+                }
+                wrap.insertBefore(contentWrap, handle);
+            }
+        }
+        var origW = parseFloat(wrap.dataset.origW);
+        var origH = parseFloat(wrap.dataset.origH);
         function onMove(ev) {
             var nW = Math.max(50, startW + (ev.clientX - startX));
             var nH = Math.max(30, startH + (ev.clientY - startY));
+            var lock = wrap.dataset.lockRatio !== 'false';
+            if (lock) {
+                var scale = nW / origW;
+                nW = origW * scale;
+                nH = origH * scale;
+            }
             wrap.style.width = nW + 'px';
             wrap.style.height = nH + 'px';
-            wrap.style.overflow = 'hidden';
+            var scaleX = nW / origW;
+            var scaleY = nH / origH;
+            var content = wrap.querySelector('.po-veil-scale-content');
+            if (content) {
+                content.style.transform = 'scale(' + scaleX + ',' + scaleY + ')';
+            }
         }
         function onUp() {
             document.removeEventListener('mousemove', onMove);
@@ -1575,6 +1714,7 @@ function addResizeHandle(wrap) {
                 m.addedNodes.forEach(function(n) {
                     if (n.nodeType === 1 && n.getAttribute && n.getAttribute('data-veil-overlay') && !n.querySelector('.po-veil-resize')) {
                         addResizeHandle(n);
+                        applyScalingIfResized(n);
                     }
                 });
             });
@@ -1623,7 +1763,7 @@ function spawnVeilElement(def, x, y, restored) {
 
 function spawnWinRateTracker(x, y, restored) {
     injectVeilElementsCSS();
-    var CIRC = 2 * Math.PI * 45; // 282.74
+    var CIRC = 2 * Math.PI * 50; // 314.16
 
     var wrap = document.createElement('div');
     wrap.setAttribute('data-veil-overlay', '1');
@@ -1638,16 +1778,16 @@ function spawnWinRateTracker(x, y, restored) {
                     '<path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
                     '<circle cx="26" cy="7" r="2.4" fill="#22c55e"/>',
                 '</svg>',
-                '<span style="font-size:11px;font-weight:800;letter-spacing:-0.2px;color:#fff;font-family:\'Fira Sans\',sans-serif;">RJK <span style="color:#22c55e;">Signals</span></span>',
+                '<span style="font-size:14px;font-weight:800;letter-spacing:-0.2px;color:#fff;font-family:\'Fira Sans\',sans-serif;">RJK <span style="color:#22c55e;">Signals</span></span>',
             '</div>',
             '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:\'Fira Code\',monospace;">',
-                '<div class="po-wrt-pair-text" style="font-size:9.5px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">EUR/USD (OTC)</div>',
-                '<div class="po-wrt-time-text" style="font-size:8px;color:#94a3b8;">13:48:01 UTC +0</div>',
+                '<div class="po-wrt-pair-text" style="font-size:14px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">EUR/USD (OTC)</div>',
+                '<div class="po-wrt-time-text" style="font-size:11px;color:#94a3b8;">13:48:01 UTC +0</div>',
             '</div>',
             '<div id="po-wrt-ring">',
-                '<svg id="po-wrt-svg" width="110" height="110" viewBox="0 0 110 110">',
-                    '<circle id="po-wrt-track" cx="55" cy="55" r="45"/>',
-                    '<circle id="po-wrt-fill" cx="55" cy="55" r="45"',
+                '<svg id="po-wrt-svg" width="140" height="140" viewBox="0 0 140 140" style="overflow:visible !important;">',
+                    '<circle id="po-wrt-track" cx="70" cy="70" r="50"/>',
+                    '<circle id="po-wrt-fill" cx="70" cy="70" r="50"',
                         ' stroke-dasharray="' + CIRC.toFixed(2) + '"',
                         ' stroke-dashoffset="' + CIRC.toFixed(2) + '"/',
                     '>',
@@ -1777,7 +1917,7 @@ function spawnWinRateTracker(x, y, restored) {
 // ---- WIN RATE TRACKER V2 AD SPAWN ----
 function spawnWinRateTrackerAd(x, y, restored) {
     injectVeilElementsCSS();
-    var CIRC = 2 * Math.PI * 32; // 201.06
+    var CIRC = 2 * Math.PI * 40; // 251.33
 
     var wrap = document.createElement('div');
     wrap.setAttribute('data-veil-overlay', '1');
@@ -1792,20 +1932,20 @@ function spawnWinRateTrackerAd(x, y, restored) {
                     '<path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
                     '<circle cx="26" cy="7" r="2.4" fill="#22c55e"/>',
                 '</svg>',
-                '<span style="font-size:11px;font-weight:800;letter-spacing:-0.2px;color:#fff;font-family:\'Fira Sans\',sans-serif;">RJK <span style="color:#22c55e;">Signals</span></span>',
+                '<span style="font-size:14px;font-weight:800;letter-spacing:-0.2px;color:#fff;font-family:\'Fira Sans\',sans-serif;">RJK <span style="color:#22c55e;">Signals</span></span>',
             '</div>',
             '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:\'Fira Code\',monospace;">',
-                '<div class="po-wrt-pair-text" style="font-size:9.5px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">EUR/USD (OTC)</div>',
-                '<div class="po-wrt-time-text" style="font-size:8px;color:#94a3b8;">13:48:01 UTC +0</div>',
+                '<div class="po-wrt-pair-text" style="font-size:14px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">EUR/USD (OTC)</div>',
+                '<div class="po-wrt-time-text" style="font-size:11px;color:#94a3b8;">13:48:01 UTC +0</div>',
             '</div>',
             '<div style="font-size:10px;line-height:1.4;color:#e2e8f0;font-weight:500;text-align:center;margin:2px 0;">Stop guessing. <span style="color:#22c55e;font-weight:700;">Trade with an </span><span style="background:linear-gradient(90deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800;">edge.</span></div>',
-            '<div id="po-wrt-ring" style="position:relative !important;width:80px !important;height:80px !important;">',
-                '<svg id="po-wrt-svg" width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg) !important;display:block !important;">',
-                    '<circle id="po-wrt-track" cx="40" cy="40" r="32" style="fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:6 !important;"/>',
-                    '<circle id="po-wrt-fill" cx="40" cy="40" r="32" style="fill:none !important;stroke:#22c55e !important;stroke-width:6 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s ease,stroke 0.45s ease,filter 0.45s ease !important;" stroke-dasharray="' + CIRC.toFixed(2) + '" stroke-dashoffset="' + CIRC.toFixed(2) + '"/>',
+            '<div id="po-wrt-ring" style="position:relative !important;width:110px !important;height:110px !important;overflow:visible !important;">',
+                '<svg id="po-wrt-svg" width="110" height="110" viewBox="0 0 110 110" style="transform:rotate(-90deg) !important;display:block !important;overflow:visible !important;">',
+                    '<circle id="po-wrt-track" cx="55" cy="55" r="40" style="fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:8 !important;"/>',
+                    '<circle id="po-wrt-fill" cx="55" cy="55" r="40" style="fill:none !important;stroke:#22c55e !important;stroke-width:8 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s ease,stroke 0.45s ease,filter 0.45s ease !important;" stroke-dasharray="' + CIRC.toFixed(2) + '" stroke-dashoffset="' + CIRC.toFixed(2) + '"/>',
                 '</svg>',
                 '<div id="po-wrt-pct" style="position:absolute !important;inset:0 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;">',
-                    '<div id="po-wrt-num" style="font-size:16px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;font-family:\'Fira Code\',monospace !important;">0.0%</div>',
+                    '<div id="po-wrt-num" style="font-size:22px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;font-family:\'Fira Code\',monospace !important;">0.0%</div>',
                 '</div>',
             '</div>',
             '<div id="po-wrt-wl" style="display:flex !important;gap:12px !important;margin:2px 0 !important;">',
@@ -2186,15 +2326,43 @@ function buildElementsPanel() {
 }
 
 
+function updateFloatingBtnIcon() {
+    var btn = document.getElementById('po-float-edit');
+    if (!btn) return;
+    chrome.storage.local.get('po_show_float_edit', function(res) {
+        var show = res.po_show_float_edit !== false;
+        btn.style.setProperty('display', show ? 'flex' : 'none', 'important');
+        if (editActive) {
+            btn.title = 'Close Edit Mode';
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+            btn.style.background = 'linear-gradient(135deg,#ef4444,#f87171) !important';
+            btn.style.boxShadow = '0 4px 20px rgba(239,68,68,0.4) !important';
+        } else {
+            btn.title = 'Open Edit Mode';
+            btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+            btn.style.background = 'linear-gradient(135deg,#22c55e,#4ade80) !important';
+            btn.style.boxShadow = '0 4px 20px rgba(34,197,94,0.4) !important';
+        }
+    });
+}
+
 function createEditFloatingBtn() {
-    if (document.getElementById('po-float-edit')) return;
+    if (document.getElementById('po-float-edit')) {
+        updateFloatingBtnIcon();
+        return;
+    }
     injectVeilElementsCSS();
     var btn = document.createElement('div');
     btn.id = 'po-float-edit';
-    btn.title = 'Open Edit Mode';
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-    btn.addEventListener('click', function() { startEditor(); });
+    btn.addEventListener('click', function() {
+        if (editActive) {
+            edStop();
+        } else {
+            startEditor();
+        }
+    });
     document.body.appendChild(btn);
+    updateFloatingBtnIcon();
 }
 
 // ---- WIRE ELEMENTS PANEL INTO EDITOR ----
@@ -2202,7 +2370,7 @@ var _origStartEditor = startEditor;
 startEditor = function() {
     _origStartEditor();
     buildElementsPanel();
-    var _fb = document.getElementById('po-float-edit'); if (_fb) _fb.style.display = 'none';
+    updateFloatingBtnIcon();
     // Add "Add Elements" button to top bar
     var bar = document.getElementById('po-edit-bar');
     if (bar && !document.getElementById('peb-elements')) {
@@ -2230,7 +2398,7 @@ edStop = function() {
     _origEdStop();
     var velPanel = document.getElementById('po-vel-panel');
     if (velPanel) velPanel.parentNode.removeChild(velPanel);
-    var _fb = document.getElementById('po-float-edit'); if (_fb) _fb.style.display = 'flex';
+    updateFloatingBtnIcon();
 };
 
 // =========================================================================
@@ -2238,7 +2406,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.19';
+var VEIL_CURRENT_VERSION = '2.6.20';
 
 // Disabled update available banner as requested
 function showUpdateBanner(currentVersion, latestVersion) {}
@@ -2250,15 +2418,15 @@ function checkForUpdate() {}
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.19',
+    version: '2.6.20',
 
-    title: 'version 2.6.19',
-    subtitle: 'update notes:',
+    title: '2.6.20 - FINAL BETA TEST',
+    subtitle: 'aaaa',
 
     image: '',
 
     // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'none',
+    mode: 'bullets',
 
     items: [
         'more bug fixessss auotupdater is fixed lol',
