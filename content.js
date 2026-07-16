@@ -1351,7 +1351,7 @@ var VEIL_ELEMENTS = [
     { cat: 'Streaming', id: 'win-rate-tracker', label: 'RJK Win Rate Tracker', special: true },
     { cat: 'Streaming', id: 'winrate-v2-ad',    label: 'Winrate v2 Ad',         special: true },
     { cat: 'Streaming', id: 'profit-calc',      label: 'RJK Profit Calculator',  special: true },
-    { cat: 'Streaming', id: 'ad1',              label: 'RJK Signals Ad',        html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><svg width="24" height="24" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:13px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span></div><span style="font-size:9.5px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:6px;padding:1px 6px;text-transform:uppercase;letter-spacing:0.5px;font-family:\'Fira Code\',monospace;">v2</span></div><div style="font-size:11px;line-height:1.45;color:#e2e8f0;font-weight:500;">Stop guessing. Trade with an edge.</div><div style="text-align:center;font-size:10px;font-family:\'Fira Code\',monospace;color:#22c55e;font-weight:700;margin-top:2px;letter-spacing:0.5px;user-select:all;">rjktrades.com</div></div>' },
+    { cat: 'Streaming', id: 'ad1',              label: 'RJK Signals Ad',        html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><svg width="24" height="24" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:13px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span></div><span style="font-size:9.5px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:6px;padding:1px 6px;text-transform:uppercase;letter-spacing:0.5px;font-family:\'Fira Code\',monospace;">v2</span></div><div style="font-size:11px;line-height:1.45;color:#e2e8f0;font-weight:500;">Stop guessing. <span style="background:linear-gradient(90deg,#22c55e,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;">Trade with an edge.</span></div><div style="text-align:center;font-size:10px;font-family:\'Fira Code\',monospace;color:#22c55e;font-weight:700;margin-top:2px;letter-spacing:0.5px;user-select:all;">rjktrades.com</div></div>' },
     { cat: 'Streaming', id: 'disclaimer',       label: 'RJK Risk Disclaimer',   html: '<div style="background:#121b2f;border:1px solid #1e293b;border-radius:12px;padding:10px 14px;font-family:\'Fira Sans\',sans-serif;width:240px;color:#94a3b8;font-size:9.5px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 16px rgba(34,197,94,0.05);line-height:1.5;"><span style="color:#ef4444;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px;">⚠️ Risk Disclaimer</span>Trading involves risk. Past performance does not guarantee future results.</div>' },
 
     // TEXT ELEMENTS
@@ -1491,6 +1491,45 @@ function getActiveTime() {
     var el = document.querySelector('.current-time__time');
     return el ? (el.textContent.trim() + ' UTC +0') : (new Date().toLocaleTimeString() + ' UTC +0');
 }
+
+// ---- SPAWN ELEMENT ONTO PAGE ----
+function spawnVeilElement(def, x, y, restored) {
+    injectVeilElementsCSS();
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-veil-overlay', '1');
+    wrap.setAttribute('data-veil-type', def.id);
+    if (restored) wrap.setAttribute('data-veil-restored', '1');
+    wrap.innerHTML = def.html;
+    wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '100px') + ';top:' + (y || '100px') + ';';
+
+    // Delete on double-click
+    wrap.addEventListener('dblclick', function(e) {
+        if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+        wrap.parentNode.removeChild(wrap);
+    });
+
+    // Drag to reposition
+    wrap.addEventListener('mousedown', function(e) {
+        if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+        e.preventDefault();
+        var startX = e.clientX - wrap.offsetLeft;
+        var startY = e.clientY - wrap.offsetTop;
+        function onMove(ev) {
+            wrap.style.left = (ev.clientX - startX) + 'px';
+            wrap.style.top  = (ev.clientY - startY) + 'px';
+        }
+        function onUp() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+
+    document.body.appendChild(wrap);
+    return wrap;
+}
+
 
 function spawnWinRateTracker(x, y, restored) {
     injectVeilElementsCSS();
@@ -1669,7 +1708,7 @@ function spawnWinRateTrackerAd(x, y, restored) {
                 '<div class="po-wrt-pair-text" style="font-size:9.5px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">EUR/USD (OTC)</div>',
                 '<div class="po-wrt-time-text" style="font-size:8px;color:#94a3b8;">13:48:01 UTC +0</div>',
             '</div>',
-            '<div style="font-size:10px;line-height:1.4;color:#e2e8f0;font-weight:500;text-align:center;margin:2px 0;">Stop guessing. Trade with an edge.</div>',
+            '<div style="font-size:10px;line-height:1.4;color:#e2e8f0;font-weight:500;text-align:center;margin:2px 0;">Stop guessing. <span style="background:linear-gradient(90deg,#22c55e,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700;">Trade with an edge.</span></div>',
             '<div id="po-wrt-ring" style="position:relative !important;width:80px !important;height:80px !important;">',
                 '<svg id="po-wrt-svg" width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg) !important;display:block !important;">',
                     '<circle id="po-wrt-track" cx="40" cy="40" r="32" style="fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:6 !important;"/>',
@@ -2096,7 +2135,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.16';
+var VEIL_CURRENT_VERSION = '2.6.17';
 
 // Disabled update available banner as requested
 function showUpdateBanner(currentVersion, latestVersion) {}
@@ -2108,9 +2147,9 @@ function checkForUpdate() {}
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.16',
+    version: '2.6.17',
 
-    title: 'version 2.6.16 - BETA FOR 2.7.0',
+    title: 'version 2.6.17 - BETA FOR 2.7.0',
     subtitle: '',
 
     image: 'https://cdn.discordapp.com/attachments/1490488608522764389/1527109291788603532/image.png?ex=6a5a1f9b&is=6a58ce1b&hm=4db78a6caca9f1bff5937ca1dfd66eefb22b258a62e8afec138240fb50032f34&',
@@ -2119,13 +2158,9 @@ var CHANGELOG = {
     mode: 'bullets',
 
     items: [
-        'icons are FULLY fixed so you can effortlessly swap',
-        'Stability and random crashes have been fixed',
-        'Diddy has been added to improve stability',
-        'FULL customization to your pocket option page so you can FAKE WHATEVER THE FUCK YOU WANT!',
-        'New stream mode so you can hide certain aspects of pocket option like your balance',
-        'An about tab that you probably dont give a shit about',
-        'This new changelog popup obviously',
+        'more bug fixessss auotupdater is fixed lol',
+        'added winrate feature and new stream catagory for u rjk',
+        'beta 3 version for 2.7.0 (2.6.16 internal)'
     ],
 
     text: '',
@@ -2284,28 +2319,87 @@ function showChangelog() {
     if (!document.body) { document.addEventListener('DOMContentLoaded', showChangelog); return; }
     if (document.getElementById('po-cl-overlay')) return;
 
-    var bodyHTML = '';
-    if (CHANGELOG.mode === 'bullets' && CHANGELOG.items && CHANGELOG.items.length) {
-        var lis = CHANGELOG.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
-        bodyHTML = '<ul id="po-cl-list">' + lis + '</ul>';
-    } else if (CHANGELOG.mode === 'text' && CHANGELOG.text) {
-        bodyHTML = '<p id="po-cl-text">' + CHANGELOG.text + '</p>';
-    } else if (CHANGELOG.mode === 'links' && CHANGELOG.items && CHANGELOG.items.length) {
-        var rows = CHANGELOG.items.map(function(item) {
-            if (typeof item === 'string') return '<li class="po-cl-link-row"><span class="po-cl-link-plain">' + item + '</span></li>';
-            return '<li class="po-cl-link-row"><a class="po-cl-link" href="' + item.url + '" target="_blank" rel="noopener"><span class="po-cl-link-text">' + item.text + '</span><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>';
-        }).join('');
-        bodyHTML = '<ul id="po-cl-links">' + rows + '</ul>';
-    }
+    fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
+        .then(function(res) {
+            if (!res.ok) throw new Error('Not OK');
+            return res.json();
+        })
+        .then(function(data) {
+            if (!data || !data.tag_name) throw new Error('Invalid data');
+            var latestVersion = data.tag_name;
+            if (latestVersion.startsWith('v')) latestVersion = latestVersion.slice(1);
 
-    var imgHTML = '';
-    if (CHANGELOG.image) {
-        var src = (CHANGELOG.image.indexOf('http') === 0 || CHANGELOG.image.indexOf('//') === 0)
-            ? CHANGELOG.image
-            : chrome.runtime.getURL(CHANGELOG.image);
-        imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">';
-    }
+            var notes = data.body || '';
+            var imgUrl = null;
 
+            // Extract markdown image or generic image URLs from release body notes
+            var mdImgRegex = /!\[.*?\]\((https?:\/\/.*?)\)/i;
+            var mdMatch = notes.match(mdImgRegex);
+            if (mdMatch) {
+                imgUrl = mdMatch[1];
+                notes = notes.replace(mdImgRegex, '');
+            } else {
+                var rawImgRegex = /(https?:\/\/[^\s\)]+?\.(?:png|jpg|jpeg|gif|webp)(?:\?[^\s\)]*)?)/i;
+                var rawMatch = notes.match(rawImgRegex);
+                if (rawMatch) {
+                    imgUrl = rawMatch[1];
+                    notes = notes.replace(rawImgRegex, '');
+                }
+            }
+
+            var lines = notes.split(/\r?\n/);
+            var cleanItems = [];
+            lines.forEach(function(line) {
+                var l = line.trim();
+                if (!l) return;
+                // Filter out download links/zips and leftover CDN queries
+                if (l.toLowerCase().indexOf('download') !== -1 || l.toLowerCase().indexOf('extension.zip') !== -1) return;
+                if (l.indexOf('ex=') === 0 || l.indexOf('&is=') !== -1 || l.indexOf('&hm=') !== -1) return;
+                // Clear bullet prefix and bold/italic markdown
+                l = l.replace(/^[\s\-\*\+\u2022\d\.\)]+\s*/, '');
+                l = l.replace(/\*\*|__|\*|_/g, '');
+                l = l.trim();
+                if (l && l.length > 2) {
+                    cleanItems.push(l);
+                }
+            });
+
+            var bodyHTML = '';
+            if (cleanItems.length > 0) {
+                var lis = cleanItems.map(function(t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
+                bodyHTML = '<ul id="po-cl-list" style="max-height:120px;overflow-y:auto;padding-right:4px;">' + lis + '</ul>';
+            } else {
+                bodyHTML = '<p id="po-cl-text">Bug fixes and enhancements.</p>';
+            }
+
+            var imgHTML = '';
+            if (imgUrl) {
+                imgHTML = '<img id="po-cl-img" src="' + imgUrl + '" alt="" onerror="this.style.display=\'none\'">';
+            }
+
+            renderChangelogPopup(latestVersion, bodyHTML, imgHTML);
+        })
+        .catch(function() {
+            var bodyHTML = '';
+            if (CHANGELOG.items && CHANGELOG.items.length) {
+                var lis = CHANGELOG.items.map(function(t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
+                bodyHTML = '<ul id="po-cl-list" style="max-height:120px;overflow-y:auto;padding-right:4px;">' + lis + '</ul>';
+            } else {
+                bodyHTML = '<p id="po-cl-text">Bug fixes and enhancements.</p>';
+            }
+            var imgHTML = '';
+            if (CHANGELOG.image) {
+                var src = (CHANGELOG.image.indexOf('http') === 0 || CHANGELOG.image.indexOf('//') === 0)
+                    ? CHANGELOG.image
+                    : chrome.runtime.getURL(CHANGELOG.image);
+                imgHTML = '<img id="po-cl-img" src="' + src + '" alt="" onerror="this.style.display=\'none\'">';
+            }
+            renderChangelogPopup(CHANGELOG.version, bodyHTML, imgHTML);
+        });
+}
+
+function renderChangelogPopup(version, bodyHTML, imgHTML) {
+    if (document.getElementById('po-cl-overlay')) return;
     var overlay = document.createElement('div');
     overlay.id = 'po-cl-overlay';
     overlay.innerHTML =
@@ -2313,8 +2407,8 @@ function showChangelog() {
         '<div id="po-cl-card">' +
             imgHTML +
             '<div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">New Update</span></div>' +
-            '<div id="po-cl-title">' + CHANGELOG.title + '</div>' +
-            '<div id="po-cl-sub">' + CHANGELOG.subtitle + '</div>' +
+            '<div id="po-cl-title">Version v' + version + '</div>' +
+            '<div id="po-cl-sub">Welcome to the latest version of pocket option config!</div>' +
             bodyHTML +
             '<button id="po-cl-dismiss">' + (CHANGELOG.buttonLabel || 'Got it') + '</button>' +
         '</div>';
@@ -2330,6 +2424,7 @@ function showChangelog() {
     document.getElementById('po-cl-dismiss').addEventListener('click', dismiss);
     document.getElementById('po-cl-blur').addEventListener('click', dismiss);
 }
+
 
 function maybeShowChangelog() {
     chrome.storage.local.get(CL_KEY, function(d) {
