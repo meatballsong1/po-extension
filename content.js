@@ -1740,7 +1740,7 @@ edStop = function() {
 var UPDATE_MESSAGES = ['a'];
 // -------------------------------------------------------------------------
 
-var VEIL_CURRENT_VERSION = '2.6.8';
+var VEIL_CURRENT_VERSION = '2.6.9';
 var UPDATE_CHECK_URL = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=';
 
 
@@ -1842,12 +1842,12 @@ if (window.location.href.indexOf('pocketoption.com') !== -1) {
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.8',
+    version: '2.6.9',
 
-    title: 'welcome to 2.6.8',
-    subtitle: 'minimal patches',
+    title: 'welcome too 2.6.9',
+    subtitle: 'bug fixes for rjktrades looooooooooool',
 
-    image: 'changelog-banner.png',
+    image: '',
 
     // 'bullets' | 'text' | 'links' | 'none'
     mode: 'bullets',

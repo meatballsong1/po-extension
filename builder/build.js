@@ -15,6 +15,7 @@ const BUILDER_DIR = __dirname;
 const PORT        = 3847;
 const HISTORY_FILE = path.join(BUILDER_DIR, 'release-history.json');
 const UPLOAD_DIR   = path.join(BUILDER_DIR, 'uploads');
+let   isPublishing = false;  // Lock to prevent auto-sync during publish
 const TOKEN_FILE   = path.join(BUILDER_DIR, 'github-token.txt');
 
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -55,6 +56,18 @@ function bumpVersion(version, type) {
     else if (type === 'minor') { parts[1]++; parts[2] = 0; }
     else { parts[2]++; }
     return parts.join('.');
+}
+
+function compareVersions(a, b) {
+    // Returns >0 if a > b, <0 if a < b, 0 if equal
+    const pa = (a || '0').split('.').map(Number);
+    const pb = (b || '0').split('.').map(Number);
+    while (pa.length < 3) pa.push(0);
+    while (pb.length < 3) pb.push(0);
+    for (let i = 0; i < 3; i++) {
+        if (pa[i] !== pb[i]) return pa[i] - pb[i];
+    }
+    return 0;
 }
 
 function updateVersionJson(version) {
@@ -127,12 +140,33 @@ function getGithubToken() {
     return fs.readFileSync(TOKEN_FILE, 'utf8').trim();
 }
 
-function getPushUrl() {
+function getTokenUrl() {
     const token = getGithubToken();
     if (token) {
         return `https://${token}@github.com/meatballsong1/po-extension.git`;
     }
-    return 'origin';
+    return null;
+}
+
+async function pushWithToken(cwd) {
+    const tokenUrl = getTokenUrl();
+    const cleanUrl = 'https://github.com/meatballsong1/po-extension.git';
+    if (tokenUrl) {
+        // Temporarily set origin URL with token for auth, then reset
+        await execAsync(`git -C "${cwd}" remote set-url origin "${tokenUrl}"`);
+    }
+    try {
+        const result = await execAsync(
+            `git -C "${cwd}" push origin main --verbose`,
+            { timeout: 30000 }
+        );
+        return { success: true, stdout: result.stdout, stderr: result.stderr };
+    } finally {
+        if (tokenUrl) {
+            // Always reset the URL to remove the token from git config
+            await execAsync(`git -C "${cwd}" remote set-url origin "${cleanUrl}"`).catch(() => {});
+        }
+    }
 }
 
 // ── API ROUTES ────────────────────────────────────────────────────────────
@@ -182,8 +216,9 @@ app.get('/api/status', async (req, res) => {
         const gitStatus = await git.status();
         const commits   = await git.log(['--oneline', '-20']).catch(() => ({ all: [] }));
 
-        // Auto-sync all local version references to GitHub if they differ
-        if (githubVer && githubVer !== manifest.version) {
+        // Auto-sync: only pull GitHub version forward if local is BEHIND
+        // Never sync during a publish (would revert the version bump)
+        if (!isPublishing && githubVer && compareVersions(githubVer, manifest.version) > 0) {
             manifest.version = githubVer;
             writeManifest(manifest);
             updateVersionJson(githubVer);
@@ -305,6 +340,9 @@ app.post('/api/publish', async (req, res) => {
         return res.status(400).json({ error: 'Git repo not initialized. Call /api/init-git first.' });
     }
 
+    // Lock to prevent auto-sync from reverting our version bump
+    isPublishing = true;
+
     try {
         const manifest    = readManifest();
         const oldVersion  = manifest.version;
@@ -368,21 +406,20 @@ app.post('/api/publish', async (req, res) => {
         });
         send(`Created extension-v${newVersion}.zip (${Math.round(fs.statSync(zipPath).size / 1024)}KB)`);
 
+        let pushOk = false;
         try {
-            const pushRemote = getPushUrl();
-            const pushResult = await execAsync(
-                `git -C "${EXT_PATH}" push ${pushRemote} main --set-upstream --verbose`,
-                { timeout: 30000 }
-            );
+            const pushResult = await pushWithToken(EXT_PATH);
             const pushOut = (pushResult.stdout + pushResult.stderr).trim();
             const safeOut = pushOut.replace(/https:\/\/[^@]+@/g, 'https://***@');
             const firstLine = safeOut ? ' → ' + safeOut.split('\n')[0] : '';
             send('Pushed to GitHub!' + firstLine, 'success');
+            pushOk = true;
         } catch(pushErr) {
             let detail = (pushErr.stderr || pushErr.stdout || pushErr.message || '').trim();
             detail = detail.replace(/https:\/\/[^@]+@/g, 'https://***@');
-            send('Push failed: ' + (detail || 'unknown error'), 'warn');
-            send('Run this in a terminal to see the full error: git -C "' + EXT_PATH + '" push origin main', 'warn');
+            send('⚠️ PUSH FAILED: ' + (detail || 'unknown error'), 'error');
+            send('Your build was created locally but NOT pushed to GitHub.', 'warn');
+            send('Click "Retry Push" or run: git -C "' + EXT_PATH + '" push origin main', 'warn');
         }
 
         const history = readHistory();
@@ -396,16 +433,24 @@ app.post('/api/publish', async (req, res) => {
             image:     imageField,
             zipFile:   `extension-v${newVersion}.zip`,
             committed: committed,
+            pushed:    pushOk,
         });
         writeHistory(history);
         send(`Saved to release history`, 'success');
-        send(`DONE: v${newVersion} published!`, 'done');
+
+        if (pushOk) {
+            send(`DONE: v${newVersion} published and pushed!`, 'done');
+        } else {
+            send(`DONE: v${newVersion} built locally (push failed — retry below)`, 'done');
+        }
 
         res.end();
 
     } catch(e) {
         res.write(`data: ${JSON.stringify({ type: 'error', msg: e.message })}\n\n`);
         res.end();
+    } finally {
+        isPublishing = false;
     }
 });
 
@@ -413,11 +458,7 @@ app.post('/api/publish', async (req, res) => {
 app.post('/api/push', async (req, res) => {
     if (!isGitRepo()) return res.status(400).json({ error: 'Git repo not initialized.' });
     try {
-        const pushRemote = getPushUrl();
-        const result = await execAsync(
-            `git -C "${EXT_PATH}" push ${pushRemote} main --set-upstream --verbose`,
-            { timeout: 30000 }
-        );
+        const result = await pushWithToken(EXT_PATH);
         let out = (result.stdout + result.stderr).trim();
         out = out.replace(/https:\/\/[^@]+@/g, 'https://***@');
         res.json({ success: true, output: out });
