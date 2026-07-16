@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <style>
   :root {
-    --bg: #0c0c10;
-    --card: rgba(255,255,255,0.045);
-    --card-b: rgba(255,255,255,0.08);
-    --accent: #00b0ff;
-    --border: rgba(255,255,255,0.07);
-    --dim: rgba(255,255,255,0.38);
-    --mid: rgba(255,255,255,0.72);
-    --err: #ff453a;
-    --p: #bf5af2;
-    --pk: #ff375f;
+    --bg: #0b1120;
+    --card: #121b2f;
+    --card-b: #1e293b;
+    --accent: #22c55e;
+    --border: #1e293b;
+    --dim: #94a3b8;
+    --mid: #e2e8f0;
+    --err: #ef4444;
+    --p: #22c55e;
+    --pk: #4ade80;
     --r: 12px;
-    --st: #00d4aa;
+    --st: #22c55e;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { overflow: hidden; }
@@ -59,7 +59,7 @@
     transition: background 0.2s, box-shadow 0.2s;
     flex-shrink: 0;
   }
-  #popoutBtn:hover { background: rgba(191,90,242,0.15); box-shadow: 0 0 10px rgba(191,90,242,0.3); transform: none; }
+  #popoutBtn:hover { background: rgba(34,197,94,0.15); box-shadow: 0 0 10px rgba(34,197,94,0.3); transform: none; }
   #popoutBtn svg { width: 13px; height: 13px; }
 
   /* ------ TABS ------ */
@@ -89,7 +89,7 @@
     inset: 0;
     border-radius: 8px 8px 0 0;
     opacity: 0;
-    background: radial-gradient(ellipse at 50% 120%, rgba(191,90,242,0.22) 0%, rgba(255,55,95,0.1) 45%, transparent 70%);
+    background: radial-gradient(ellipse at 50% 120%, rgba(34,197,94,0.22) 0%, rgba(74,222,128,0.1) 45%, transparent 70%);
     transition: opacity 0.25s ease;
     pointer-events: none;
   }
@@ -104,16 +104,16 @@
     height: 2px;
     background: linear-gradient(90deg, var(--p), var(--pk));
     border-radius: 2px 2px 0 0;
-    box-shadow: 0 0 8px rgba(191,90,242,0.7);
+    box-shadow: 0 0 8px rgba(34,197,94,0.7);
   }
   /* SignalTrack tab active override */
   .tab[data-tab="signaltrack"].active { color: var(--st); }
   .tab[data-tab="signaltrack"].active::before {
-    background: linear-gradient(90deg, var(--st), #00a07a) !important;
-    box-shadow: 0 0 8px rgba(0,212,170,0.7) !important;
+    background: linear-gradient(90deg, var(--st), #4ade80) !important;
+    box-shadow: 0 0 8px rgba(34,197,94,0.7) !important;
   }
   .tab[data-tab="signaltrack"].active::after {
-    background: radial-gradient(ellipse at 50% 120%, rgba(0,212,170,0.18) 0%, transparent 70%) !important;
+    background: radial-gradient(ellipse at 50% 120%, rgba(34,197,94,0.18) 0%, transparent 70%) !important;
     opacity: 1 !important;
   }
   .tab-bar-line {
@@ -193,8 +193,8 @@
     border-radius: var(--r); outline: none; transition: all 0.2s;
   }
   input[type="text"]:focus, input[type="number"]:focus {
-    border-color: rgba(191,90,242,0.45);
-    box-shadow: 0 0 0 3px rgba(191,90,242,0.1);
+    border-color: rgba(34,197,94,0.45);
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
     background: rgba(255,255,255,0.06);
   }
 
@@ -205,8 +205,8 @@
     transition: max-height 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease, transform 0.3s ease;
   }
   .stream-info {
-    background: rgba(191,90,242,0.05);
-    border: 1px solid rgba(191,90,242,0.14);
+    background: rgba(34,197,94,0.05);
+    border: 1px solid rgba(34,197,94,0.14);
     border-radius: var(--r); padding: 9px 11px; margin-bottom: 9px;
     font-size: 10px; color: var(--dim); line-height: 1.6;
   }
@@ -219,9 +219,9 @@
     border-radius: var(--r); cursor: pointer;
     transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
     letter-spacing: 0.4px; font-family: inherit;
-    box-shadow: 0 4px 16px rgba(191,90,242,0.25);
+    box-shadow: 0 4px 16px rgba(34,197,94,0.25);
   }
-  #saveBtn:hover { opacity: 0.88; box-shadow: 0 6px 22px rgba(191,90,242,0.4); transform: translateY(-1px); }
+  #saveBtn:hover { opacity: 0.88; box-shadow: 0 6px 22px rgba(34,197,94,0.4); transform: translateY(-1px); }
   #saveBtn:active { transform: scale(0.97); }
 
   /* ------ CUSTOMIZE TAB ------ */
@@ -234,15 +234,15 @@
   .cust-desc b { color: var(--mid); -webkit-text-fill-color: var(--mid); font-weight: 600; }
   #enableEditingBtn {
     width: 100%; padding: 13px;
-    background: linear-gradient(135deg, rgba(191,90,242,0.15), rgba(255,55,95,0.1));
-    border: 1px solid rgba(191,90,242,0.35);
+    background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(74,222,128,0.1));
+    border: 1px solid rgba(34,197,94,0.35);
     color: #fff; font-weight: 700; font-size: 12.5px;
     border-radius: var(--r); cursor: pointer;
     transition: all 0.25s; font-family: inherit;
     letter-spacing: 0.3px;
-    box-shadow: 0 0 20px rgba(191,90,242,0.12);
+    box-shadow: 0 0 20px rgba(34,197,94,0.12);
   }
-  #enableEditingBtn:hover { background: linear-gradient(135deg, rgba(191,90,242,0.28), rgba(255,55,95,0.18)); border-color: rgba(191,90,242,0.6); box-shadow: 0 0 28px rgba(191,90,242,0.3); transform: translateY(-1px); }
+  #enableEditingBtn:hover { background: linear-gradient(135deg, rgba(34,197,94,0.28), rgba(74,222,128,0.18)); border-color: rgba(34,197,94,0.6); box-shadow: 0 0 28px rgba(34,197,94,0.3); transform: translateY(-1px); }
   #enableEditingBtn:active { transform: scale(0.97); }
   .cust-note { margin-top: 10px; font-size: 10px; color: var(--dim); text-align: center; line-height: 1.5; }
 
@@ -264,7 +264,7 @@
     background: var(--card); border: 1px solid var(--card-b);
     border-radius: var(--r); transition: border-color 0.2s;
   }
-  .about-stat:hover { border-color: rgba(191,90,242,0.22); }
+  .about-stat:hover { border-color: rgba(34,197,94,0.22); }
   .about-stat .as-key { font-size: 10px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
   .about-stat .as-val { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums; }
   .about-stat .as-val.grad { background: linear-gradient(90deg, var(--p), var(--pk)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -275,26 +275,26 @@
   .update-section-hdr-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--dim); }
   #update-btn {
     width: 100%; padding: 10px;
-    background: rgba(191,90,242,0.08); border: 1px solid rgba(191,90,242,0.22);
-    color: rgba(191,90,242,0.9); -webkit-text-fill-color: rgba(191,90,242,0.9);
+    background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.22);
+    color: rgba(34,197,94,0.9); -webkit-text-fill-color: rgba(34,197,94,0.9);
     font-weight: 700; font-size: 11.5px; border-radius: var(--r); cursor: pointer;
     transition: all 0.2s; font-family: inherit; letter-spacing: 0.3px;
   }
-  #update-btn:hover { background: rgba(191,90,242,0.16); border-color: rgba(191,90,242,0.5); -webkit-text-fill-color: #fff; }
+  #update-btn:hover { background: rgba(34,197,94,0.16); border-color: rgba(34,197,94,0.5); -webkit-text-fill-color: #fff; }
   #update-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   #update-result { margin-top: 8px; border-radius: var(--r); padding: 10px 12px; font-size: 11px; line-height: 1.5; display: none; }
   #update-result.up-to-date { background: rgba(36,177,91,0.08); border: 1px solid rgba(36,177,91,0.2); color: rgba(36,177,91,0.9); -webkit-text-fill-color: rgba(36,177,91,0.9); }
-  #update-result.has-update { background: rgba(191,90,242,0.07); border: 1px solid rgba(191,90,242,0.2); color: rgba(255,255,255,0.75); -webkit-text-fill-color: rgba(255,255,255,0.75); }
+  #update-result.has-update { background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.2); color: rgba(255,255,255,0.75); -webkit-text-fill-color: rgba(255,255,255,0.75); }
   #update-result.update-error { background: rgba(255,69,58,0.08); border: 1px solid rgba(255,69,58,0.2); color: rgba(255,69,58,0.85); -webkit-text-fill-color: rgba(255,69,58,0.85); }
   #update-result-ver { font-weight: 800; font-size: 13px; margin-bottom: 4px; background: linear-gradient(90deg, var(--p), var(--pk)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   #bat-download-row { display: none; gap: 6px; margin-top: 8px; }
-  #bat-download-btn { flex: 1; padding: 9px 8px; background: linear-gradient(135deg, rgba(191,90,242,0.12), rgba(255,55,95,0.08)); border: 1px solid rgba(191,90,242,0.35); color: #fff; -webkit-text-fill-color: #fff; font-weight: 700; font-size: 11px; border-radius: var(--r); cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
+  #bat-download-btn { flex: 1; padding: 9px 8px; background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(74,222,128,0.08)); border: 1px solid rgba(34,197,94,0.35); color: #fff; -webkit-text-fill-color: #fff; font-weight: 700; font-size: 11px; border-radius: var(--r); cursor: pointer; transition: all 0.2s; font-family: inherit; text-align: center; }
   #zip-download-btn { flex: 0 0 auto; padding: 9px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); color: rgba(255,255,255,0.4); -webkit-text-fill-color: rgba(255,255,255,0.4); font-weight: 600; font-size: 11px; border-radius: var(--r); cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap; }
   .install-steps { margin-top: 8px; padding: 10px 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--r); font-size: 10.5px; color: var(--dim); line-height: 1.85; display: none; }
   .install-steps b { color: rgba(255,255,255,0.6); -webkit-text-fill-color: rgba(255,255,255,0.6); }
   .install-steps ol { padding-left: 16px; }
-  .steps-action-btn { width: 100%; margin-top: 8px; padding: 7px; background: rgba(191,90,242,0.08); border: 1px solid rgba(191,90,242,0.22); color: rgba(191,90,242,0.85); -webkit-text-fill-color: rgba(191,90,242,0.85); font-weight: 700; font-size: 11px; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
-  #zip-actual-download-btn { width: 100%; margin-top: 6px; padding: 9px; background: linear-gradient(135deg, rgba(191,90,242,0.12), rgba(255,55,95,0.08)); border: 1px solid rgba(191,90,242,0.35); color: #fff; -webkit-text-fill-color: #fff; font-weight: 700; font-size: 11.5px; border-radius: var(--r); cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .steps-action-btn { width: 100%; margin-top: 8px; padding: 7px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.22); color: rgba(34,197,94,0.85); -webkit-text-fill-color: rgba(34,197,94,0.85); font-weight: 700; font-size: 11px; border-radius: 8px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  #zip-actual-download-btn { width: 100%; margin-top: 6px; padding: 9px; background: linear-gradient(135deg, rgba(34,197,94,0.12), rgba(74,222,128,0.08)); border: 1px solid rgba(34,197,94,0.35); color: #fff; -webkit-text-fill-color: #fff; font-weight: 700; font-size: 11.5px; border-radius: var(--r); cursor: pointer; font-family: inherit; transition: all 0.2s; }
 
   /* ═══════════════════════════════════════════════════════════════
      SIGNALTRACK TAB

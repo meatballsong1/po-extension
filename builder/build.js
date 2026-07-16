@@ -226,6 +226,7 @@ function uploadReleaseAsset(uploadUrl, filePath, fileName) {
     url.searchParams.set('name', fileName);
 
     const fileData = fs.readFileSync(filePath);
+    const contentType = fileName.endsWith('.zip') ? 'application/zip' : 'application/octet-stream';
 
     return new Promise((resolve, reject) => {
         const options = {
@@ -235,7 +236,7 @@ function uploadReleaseAsset(uploadUrl, filePath, fileName) {
             headers: {
                 'Authorization': `token ${token}`,
                 'User-Agent': 'PO-Extension-Builder',
-                'Content-Type': 'application/zip',
+                'Content-Type': contentType,
                 'Content-Length': fileData.length,
             },
         };
@@ -286,6 +287,66 @@ async function createGithubRelease(version, title, zipPath, releaseBody) {
 
     // Upload the zip as a release asset named "extension.zip"
     const asset = await uploadReleaseAsset(release.upload_url, zipPath, 'extension.zip');
+
+    // Generate and upload the bat installer
+    const batPath = zipPath.replace('.zip', '.bat');
+    const batContent = `@echo off
+setlocal enabledelayedexpansion
+
+:: Variables
+set "VERSION=v${version}"
+set "ZIP_URL=https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/!VERSION!/extension.zip"
+set "DOWNLOAD_DIR=%USERPROFILE%\\Downloads"
+set "DEST_DIR=%DOWNLOAD_DIR%\\po-extension-!VERSION!"
+set "ZIP_FILE=%DOWNLOAD_DIR%\\po-extension-!VERSION!.zip"
+
+echo ====================================================
+echo RJK Signals Extension Installer (!VERSION!)
+echo ====================================================
+echo.
+
+echo 1. Downloading extension zip from GitHub...
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri '%ZIP_URL%' -OutFile '%ZIP_FILE%'"
+if %ERRORLEVEL% neq 0 (
+    echo Error: Failed to download the extension.
+    pause
+    exit /b 1
+)
+
+echo 2. Extracting extension to: %DEST_DIR%
+if exist "%DEST_DIR%" rmdir /s /q "%DEST_DIR%"
+powershell -Command "Expand-Archive -Path '%ZIP_FILE%' -DestinationPath '%DEST_DIR%' -Force"
+if %ERRORLEVEL% neq 0 (
+    echo Error: Failed to extract the zip file.
+    pause
+    exit /b 1
+)
+
+echo 3. Cleaning up zip file...
+del "%ZIP_FILE%"
+
+echo 4. Opening Chrome Extensions page...
+start chrome://extensions/
+start chrome chrome://extensions/
+
+echo.
+echo ====================================================
+echo Installation Complete!
+echo.
+echo Please do the following in Chrome:
+echo 1. Enable 'Developer mode' (top right toggle)
+echo 2. Click 'Load unpacked' (top left button)
+echo 3. Select the folder: %DEST_DIR%
+echo ====================================================
+echo.
+pause
+`;
+    fs.writeFileSync(batPath, batContent);
+    const batFileName = `install-v${version}.bat`;
+    await uploadReleaseAsset(release.upload_url, batPath, batFileName);
+
+    // Clean up bat file from builder folder
+    try { fs.unlinkSync(batPath); } catch(e) {}
 
     return {
         releaseUrl: release.html_url,
