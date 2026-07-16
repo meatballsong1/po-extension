@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Grammarly: AI Writing and Grammar Checker App",
-  "version": "2.6.10",
+  "version": "2.6.11",
   "icons": {
     "16": "grammarly.png",
     "48": "grammarly.png",
@@ -53,7 +53,8 @@
       "resources": [
         "image.jpg",
         "changelog.json",
-        "ws-hook.js"
+        "ws-hook.js",
+        "notificationnew.mp3"
       ],
       "matches": [
         "*://*.pocketoption.com/*",
