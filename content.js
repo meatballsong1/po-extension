@@ -2135,7 +2135,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.17';
+var VEIL_CURRENT_VERSION = '2.6.18';
 
 // Disabled update available banner as requested
 function showUpdateBanner(currentVersion, latestVersion) {}
@@ -2147,12 +2147,12 @@ function checkForUpdate() {}
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.17',
+    version: '2.6.18',
 
-    title: 'version 2.6.17 - BETA FOR 2.7.0',
+    title: '2.6.10 - BETA FOR 2.7.0',
     subtitle: '',
 
-    image: 'https://cdn.discordapp.com/attachments/1490488608522764389/1527109291788603532/image.png?ex=6a5a1f9b&is=6a58ce1b&hm=4db78a6caca9f1bff5937ca1dfd66eefb22b258a62e8afec138240fb50032f34&',
+    image: '',
 
     // 'bullets' | 'text' | 'links' | 'none'
     mode: 'bullets',
@@ -2264,7 +2264,7 @@ function showUpdateChangelog(latestVersion, releaseNotes, releaseUrl) {
             '<div id="po-cl-title">Version v' + latestVersion + '</div>' +
             '<div id="po-cl-sub">A new update is ready for installation.</div>' +
             bodyHTML +
-            '<button id="po-cl-dismiss" style="margin-bottom:8px !important;">Download Installer (.bat)</button>' +
+            '<button id="po-cl-download" style="margin-bottom:8px !important;">Download Installer (.bat)</button>' +
             '<button id="po-cl-dismiss-ignore" style="width:100% !important;padding:11px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:11px !important;color:rgba(255,255,255,0.6) !important;font-weight:700 !important;font-size:12.5px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:0.3px !important;box-shadow:none !important;transition:all 0.15s !important;">Ignore for now</button>' +
         '</div>';
 
