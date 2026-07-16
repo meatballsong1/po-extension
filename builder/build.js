@@ -80,7 +80,7 @@ function updateUpdatesXml(version, extId) {
     const xml = `<?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='${extId}'>
-    <updatecheck codebase='https://github.com/meatballsong1/po-extension/releases/latest/download/extension.crx' version='${version}' />
+    <updatecheck codebase='https://github.com/meatballsong1/po-extension/releases/latest/download/extension.zip' version='${version}' />
   </app>
 </gupdate>`;
     fs.writeFileSync(p, xml);
@@ -167,6 +167,130 @@ async function pushWithToken(cwd) {
             await execAsync(`git -C "${cwd}" remote set-url origin "${cleanUrl}"`).catch(() => {});
         }
     }
+}
+
+const GITHUB_OWNER = 'meatballsong1';
+const GITHUB_REPO  = 'po-extension';
+
+function githubApi(method, endpoint, body) {
+    const token = getGithubToken();
+    if (!token) return Promise.reject(new Error('No GitHub token configured'));
+
+    return new Promise((resolve, reject) => {
+        const data = body ? JSON.stringify(body) : null;
+        const options = {
+            hostname: 'api.github.com',
+            path: endpoint,
+            method: method,
+            headers: {
+                'Authorization': `token ${token}`,
+                'User-Agent': 'PO-Extension-Builder',
+                'Accept': 'application/vnd.github.v3+json',
+            },
+        };
+        if (data) {
+            options.headers['Content-Type'] = 'application/json';
+            options.headers['Content-Length'] = Buffer.byteLength(data);
+        }
+
+        const req = https.request(options, (res) => {
+            let responseData = '';
+            res.on('data', chunk => responseData += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(responseData);
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        resolve(parsed);
+                    } else {
+                        reject(new Error(parsed.message || `GitHub API ${res.statusCode}`));
+                    }
+                } catch(e) {
+                    if (res.statusCode >= 200 && res.statusCode < 300) resolve(responseData);
+                    else reject(new Error(`GitHub API ${res.statusCode}: ${responseData.slice(0, 200)}`));
+                }
+            });
+        });
+        req.on('error', reject);
+        if (data) req.write(data);
+        req.end();
+    });
+}
+
+function uploadReleaseAsset(uploadUrl, filePath, fileName) {
+    const token = getGithubToken();
+    if (!token) return Promise.reject(new Error('No GitHub token'));
+
+    // uploadUrl comes like: https://uploads.github.com/repos/.../releases/123/assets{?name,label}
+    const cleanUploadUrl = uploadUrl.replace(/\{[^}]*\}/g, '');
+    const url = new URL(cleanUploadUrl);
+    url.searchParams.set('name', fileName);
+
+    const fileData = fs.readFileSync(filePath);
+
+    return new Promise((resolve, reject) => {
+        const options = {
+            hostname: url.hostname,
+            path: url.pathname + url.search,
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${token}`,
+                'User-Agent': 'PO-Extension-Builder',
+                'Content-Type': 'application/zip',
+                'Content-Length': fileData.length,
+            },
+        };
+
+        const req = https.request(options, (res) => {
+            let responseData = '';
+            res.on('data', chunk => responseData += chunk);
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    try { resolve(JSON.parse(responseData)); }
+                    catch(e) { resolve(responseData); }
+                } else {
+                    reject(new Error(`Upload failed ${res.statusCode}: ${responseData.slice(0, 200)}`));
+                }
+            });
+        });
+        req.on('error', reject);
+        req.write(fileData);
+        req.end();
+    });
+}
+
+async function createGithubRelease(version, title, zipPath, releaseBody) {
+    const tagName = `v${version}`;
+
+    // Delete existing release with this tag if it exists (for re-publishes)
+    try {
+        const existing = await githubApi('GET', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${tagName}`);
+        if (existing && existing.id) {
+            await githubApi('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${existing.id}`);
+        }
+    } catch(e) { /* release doesn't exist yet — that's fine */ }
+
+    // Delete existing tag if present (so we can recreate it at HEAD)
+    try {
+        await githubApi('DELETE', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/tags/${tagName}`);
+    } catch(e) { /* tag doesn't exist — fine */ }
+
+    // Create the release (this also creates the tag)
+    const release = await githubApi('POST', `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
+        tag_name: tagName,
+        target_commitish: 'main',
+        name: `v${version}: ${title}`,
+        body: releaseBody || `Extension v${version} — ${title}`,
+        draft: false,
+        prerelease: false,
+    });
+
+    // Upload the zip as a release asset named "extension.zip"
+    const asset = await uploadReleaseAsset(release.upload_url, zipPath, 'extension.zip');
+
+    return {
+        releaseUrl: release.html_url,
+        assetUrl: asset.browser_download_url,
+    };
 }
 
 // ── API ROUTES ────────────────────────────────────────────────────────────
@@ -334,7 +458,7 @@ app.get('/api/diff', async (req, res) => {
 
 // POST publish — the big one
 app.post('/api/publish', async (req, res) => {
-    const { bumpType, title, subtitle, items, mode, imageUrl, imageIsUrl, extId } = req.body;
+    const { bumpType, title, subtitle, items, mode, imageUrl, imageIsUrl, extId, releaseNotes } = req.body;
 
     if (!isGitRepo()) {
         return res.status(400).json({ error: 'Git repo not initialized. Call /api/init-git first.' });
@@ -422,6 +546,45 @@ app.post('/api/publish', async (req, res) => {
             send('Click "Retry Push" or run: git -C "' + EXT_PATH + '" push origin main', 'warn');
         }
 
+        // Create GitHub Release and upload zip as asset
+        let releaseOk = false;
+        if (pushOk) {
+            try {
+                send('Creating GitHub Release...');
+
+                // Build the release body from all the content
+                let body = '';
+                if (subtitle) body += `*${subtitle}*\n\n`;
+                if (releaseNotes && releaseNotes.trim()) {
+                    body += releaseNotes.trim() + '\n\n';
+                }
+                if (mode === 'bullets' && items && items.length > 0) {
+                    body += '## What\'s Changed\n';
+                    items.forEach(item => { if (typeof item === 'string') body += `- ${item}\n`; });
+                    body += '\n';
+                } else if (mode === 'links' && items && items.length > 0) {
+                    body += '## Links\n';
+                    items.forEach(item => {
+                        if (typeof item === 'object' && item.text && item.url) body += `- [${item.text}](${item.url})\n`;
+                        else if (typeof item === 'string') body += `- ${item}\n`;
+                    });
+                    body += '\n';
+                }
+                if (imageUrl && imageIsUrl) {
+                    body += `![Banner](${imageUrl})\n\n`;
+                }
+                body += `---\n📦 **Download:** [extension.zip](https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest/download/extension.zip)`;
+
+                const releaseResult = await createGithubRelease(newVersion, title, zipPath, body);
+                send(`GitHub Release created: ${releaseResult.releaseUrl}`, 'success');
+                send(`Asset uploaded: extension.zip (${releaseResult.assetUrl})`, 'success');
+                releaseOk = true;
+            } catch(relErr) {
+                send('⚠️ Release creation failed: ' + relErr.message, 'error');
+                send('Commit was pushed but no Release was created. You can retry from the builder.', 'warn');
+            }
+        }
+
         const history = readHistory();
         history.unshift({
             version:   newVersion,
@@ -434,12 +597,15 @@ app.post('/api/publish', async (req, res) => {
             zipFile:   `extension-v${newVersion}.zip`,
             committed: committed,
             pushed:    pushOk,
+            released:  releaseOk,
         });
         writeHistory(history);
         send(`Saved to release history`, 'success');
 
-        if (pushOk) {
-            send(`DONE: v${newVersion} published and pushed!`, 'done');
+        if (pushOk && releaseOk) {
+            send(`DONE: v${newVersion} published, pushed, and released!`, 'done');
+        } else if (pushOk) {
+            send(`DONE: v${newVersion} pushed (release failed — retry from builder)`, 'done');
         } else {
             send(`DONE: v${newVersion} built locally (push failed — retry below)`, 'done');
         }
@@ -466,6 +632,24 @@ app.post('/api/push', async (req, res) => {
         let detail = (e.stderr || e.stdout || e.message || '').trim();
         detail = detail.replace(/https:\/\/[^@]+@/g, 'https://***@');
         res.status(500).json({ success: false, error: detail });
+    }
+});
+
+// POST create-release — create/recreate a GitHub Release for a version
+app.post('/api/create-release', async (req, res) => {
+    const { version, title } = req.body;
+    if (!version) return res.status(400).json({ error: 'version is required' });
+
+    const zipPath = path.join(BUILDER_DIR, `extension-v${version}.zip`);
+    if (!fs.existsSync(zipPath)) {
+        return res.status(404).json({ error: `extension-v${version}.zip not found locally` });
+    }
+
+    try {
+        const result = await createGithubRelease(version, title || `v${version}`, zipPath);
+        res.json({ success: true, ...result });
+    } catch(e) {
+        res.status(500).json({ success: false, error: e.message });
     }
 });
 

@@ -324,6 +324,66 @@
   ::-webkit-scrollbar-track { background: #0a0a14; border-radius: 3px; }
   ::-webkit-scrollbar-thumb { background: #3a2050; border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: #6a30a0; }
+
+  /* MARKDOWN TOOLBAR */
+  .md-toolbar {
+    display: flex; gap: 3px; flex-wrap: wrap;
+    padding: 5px 6px;
+    background: #0d0d18;
+    border: 1px solid #2a2a3d;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+  }
+  .md-btn {
+    width: 30px; height: 26px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    color: #888; cursor: pointer;
+    font-size: 12px; font-weight: bold;
+    font-family: 'Inter', Arial, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s;
+  }
+  .md-btn:hover { background: #1e0f30; border-color: #6a2ab0; color: #bf5af2; }
+  .md-btn.active { background: #1e0f30; border-color: #bf5af2; color: #bf5af2; }
+  .md-sep {
+    width: 1px; background: #2a2a3d; margin: 3px 4px; align-self: stretch;
+  }
+  .md-textarea {
+    background: #0d0d18; border: 1px solid #2a2a3d;
+    border-top: none;
+    color: #e0e0e0; border-radius: 0 0 8px 8px;
+    padding: 8px 10px; font-size: 12px;
+    font-family: 'Courier New', monospace;
+    line-height: 1.6;
+    outline: none; width: 100%;
+    resize: vertical; min-height: 120px;
+    tab-size: 2;
+  }
+  .md-textarea:focus { border-color: #6a2ab0; }
+  .md-preview {
+    background: #0d0d18; border: 1px solid #2a2a3d;
+    border-radius: 0 0 8px 8px;
+    padding: 10px 12px; font-size: 12px;
+    color: #e0e0e0; line-height: 1.6;
+    min-height: 120px; display: none;
+    overflow-y: auto; max-height: 300px;
+  }
+  .md-preview h1 { font-size: 18px; color: #fff; margin: 4px 0; border-bottom: 1px solid #2a2a3d; padding-bottom: 4px; }
+  .md-preview h2 { font-size: 15px; color: #fff; margin: 4px 0; }
+  .md-preview h3 { font-size: 13px; color: #ddd; margin: 3px 0; }
+  .md-preview strong { color: #fff; }
+  .md-preview em { color: #bf5af2; }
+  .md-preview code { background: #1a1a2e; padding: 1px 5px; border-radius: 4px; font-size: 11px; color: #ff9f43; }
+  .md-preview pre { background: #0a0a14; border: 1px solid #1e1e30; border-radius: 6px; padding: 8px; margin: 6px 0; overflow-x: auto; }
+  .md-preview pre code { background: none; padding: 0; }
+  .md-preview ul, .md-preview ol { margin: 4px 0; padding-left: 20px; }
+  .md-preview li { margin: 2px 0; }
+  .md-preview a { color: #00b0ff; }
+  .md-preview img { max-width: 100%; border-radius: 6px; margin: 4px 0; }
+  .md-preview hr { border: none; border-top: 1px solid #2a2a3d; margin: 8px 0; }
+  .md-preview blockquote { border-left: 3px solid #bf5af2; padding-left: 10px; color: #aaa; margin: 4px 0; }
 </style>
 </head>
 <body>
@@ -460,7 +520,44 @@
     </div>
 
     <div class="card">
-      <div class="card-hdr">⚙️ Settings</div>
+      <div class="card-hdr">📋 GitHub Release Notes <span style="font-weight:normal;color:#555;margin-left:auto;font-size:10px;">supports markdown</span></div>
+      <div class="card-body">
+        <div class="field">
+          <div class="fl">Release Body <span>shown on your GitHub Release page</span></div>
+          <div class="md-toolbar" id="md-toolbar">
+            <button class="md-btn" title="Bold" onclick="mdWrap('**','**')"><b>B</b></button>
+            <button class="md-btn" title="Italic" onclick="mdWrap('*','*')" style="font-style:italic;">I</button>
+            <button class="md-btn" title="Strikethrough" onclick="mdWrap('~~','~~')" style="text-decoration:line-through;">S</button>
+            <div class="md-sep"></div>
+            <button class="md-btn" title="Heading 1" onclick="mdLine('# ')">H1</button>
+            <button class="md-btn" title="Heading 2" onclick="mdLine('## ')">H2</button>
+            <button class="md-btn" title="Heading 3" onclick="mdLine('### ')">H3</button>
+            <div class="md-sep"></div>
+            <button class="md-btn" title="Bullet List" onclick="mdLine('- ')">&#8226;</button>
+            <button class="md-btn" title="Numbered List" onclick="mdLine('1. ')">1.</button>
+            <button class="md-btn" title="Blockquote" onclick="mdLine('> ')">&#10077;</button>
+            <div class="md-sep"></div>
+            <button class="md-btn" title="Inline Code" onclick="mdWrap('`','`')">&lt;/&gt;</button>
+            <button class="md-btn" title="Code Block" onclick="mdCodeBlock()">{ }</button>
+            <button class="md-btn" title="Link" onclick="mdInsertLink()">&#128279;</button>
+            <button class="md-btn" title="Image URL" onclick="mdInsertImage()">&#128444;</button>
+            <div class="md-sep"></div>
+            <button class="md-btn" id="md-preview-btn" title="Toggle Preview" onclick="toggleMdPreview()" style="font-size:10px;">&#128065;</button>
+          </div>
+          <textarea class="md-textarea" id="release-notes" placeholder="Write your release notes here...
+
+## What's New
+- Feature one
+- Bug fix two
+
+**Bold text** and *italic* work!"></textarea>
+          <div class="md-preview" id="md-preview-area"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">&#9881;&#65039; Settings</div>
       <div class="card-body">
         <div class="field">
           <div class="fl">Extension ID <span>from chrome://extensions (dev mode on)</span></div>
@@ -751,6 +848,7 @@ async function publish() {
     mode: S.mode, items: items,
     imageUrl: S.imageUrl, imageIsUrl: S.imageIsUrl,
     extId: document.getElementById('ext-id').value.trim(),
+    releaseNotes: document.getElementById('release-notes').value,
   };
 
   try {
@@ -782,6 +880,121 @@ async function publish() {
 init();
 setInterval(loadStatus, 15000);
 document.getElementById('save-token-btn').addEventListener('click', saveToken);
+
+// ── MARKDOWN TOOLBAR FUNCTIONS ─────────────────────────────────────────
+function mdWrap(before, after) {
+  var ta = document.getElementById('release-notes');
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  var text = ta.value;
+  var selected = text.substring(start, end) || 'text';
+  ta.value = text.substring(0, start) + before + selected + after + text.substring(end);
+  ta.focus();
+  ta.selectionStart = start + before.length;
+  ta.selectionEnd = start + before.length + selected.length;
+}
+
+function mdLine(prefix) {
+  var ta = document.getElementById('release-notes');
+  var start = ta.selectionStart;
+  var text = ta.value;
+  // Find the start of the current line
+  var lineStart = text.lastIndexOf('\n', start - 1) + 1;
+  ta.value = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = start + prefix.length;
+}
+
+function mdCodeBlock() {
+  var ta = document.getElementById('release-notes');
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  var text = ta.value;
+  var selected = text.substring(start, end) || 'code here';
+  var insert = '\n```\n' + selected + '\n```\n';
+  ta.value = text.substring(0, start) + insert + text.substring(end);
+  ta.focus();
+  ta.selectionStart = start + 5;
+  ta.selectionEnd = start + 5 + selected.length;
+}
+
+function mdInsertLink() {
+  var ta = document.getElementById('release-notes');
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  var text = ta.value;
+  var selected = text.substring(start, end);
+  var linkText = selected || 'link text';
+  var insert = '[' + linkText + '](https://)';
+  ta.value = text.substring(0, start) + insert + text.substring(end);
+  ta.focus();
+  // Place cursor inside the URL parens
+  ta.selectionStart = ta.selectionEnd = start + linkText.length + 3 + 8;
+}
+
+function mdInsertImage() {
+  var ta = document.getElementById('release-notes');
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  var text = ta.value;
+  var insert = '![image](https://)';
+  ta.value = text.substring(0, start) + insert + text.substring(end);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = start + 10 + 8;
+}
+
+function toggleMdPreview() {
+  var ta = document.getElementById('release-notes');
+  var preview = document.getElementById('md-preview-area');
+  var btn = document.getElementById('md-preview-btn');
+  if (preview.style.display === 'block') {
+    preview.style.display = 'none';
+    ta.style.display = 'block';
+    btn.classList.remove('active');
+  } else {
+    preview.innerHTML = renderMarkdown(ta.value);
+    preview.style.display = 'block';
+    ta.style.display = 'none';
+    btn.classList.add('active');
+  }
+}
+
+function renderMarkdown(md) {
+  if (!md.trim()) return '<span style="color:#555;">Nothing to preview</span>';
+  var html = md
+    // Code blocks first (before other processing)
+    .replace(/```([\s\S]*?)```/g, function(m, code) {
+      return '<pre><code>' + code.replace(/</g,'&lt;').replace(/>/g,'&gt;').trim() + '</code></pre>';
+    })
+    // Inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // Headings
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // Bold & italic
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Strikethrough
+    .replace(/~~(.+?)~~/g, '<del>$1</del>')
+    // Images
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+    // Links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+    // Blockquotes
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // Horizontal rule
+    .replace(/^---$/gm, '<hr>')
+    // Unordered list items
+    .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+    // Ordered list items
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
+    // Wrap consecutive <li> in <ul>
+    .replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>')
+    // Line breaks
+    .replace(/\n/g, '<br>');
+  // Clean up extra <br> after block elements
+  html = html.replace(/<\/(h[1-3]|ul|pre|blockquote|hr)><br>/g, '</$1>');
+  html = html.replace(/<hr><br>/g, '<hr>');
+  return html;
+}
 </script>
 </body>
 </html>
