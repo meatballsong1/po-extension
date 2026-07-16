@@ -2096,7 +2096,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.15';
+var VEIL_CURRENT_VERSION = '2.6.16';
 
 // Disabled update available banner as requested
 function showUpdateBanner(currentVersion, latestVersion) {}
@@ -2108,9 +2108,9 @@ function checkForUpdate() {}
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.15',
+    version: '2.6.16',
 
-    title: 'version 2.6.15 - BETA FOR 2.7.0',
+    title: 'version 2.6.16 - BETA FOR 2.7.0',
     subtitle: '',
 
     image: 'https://cdn.discordapp.com/attachments/1490488608522764389/1527109291788603532/image.png?ex=6a5a1f9b&is=6a58ce1b&hm=4db78a6caca9f1bff5937ca1dfd66eefb22b258a62e8afec138240fb50032f34&',
@@ -2169,9 +2169,53 @@ function showUpdateChangelog(latestVersion, releaseNotes, releaseUrl) {
     }
     if (document.getElementById('po-cl-overlay')) return;
 
-    var notesHtml = '<div style="font-size:11.5px;color:rgba(255,255,255,0.7);line-height:1.5;margin-bottom:14px;max-height:120px;overflow-y:auto;padding-right:4px;">' +
-        (releaseNotes ? escapeHtml(releaseNotes).replace(/\n/g, '<br>') : 'No release notes provided.') +
-        '</div>';
+    var notes = releaseNotes || '';
+    var imgUrl = null;
+
+    // Extract markdown image or generic image URLs from release body notes
+    var mdImgRegex = /!\[.*?\]\((https?:\/\/.*?)\)/i;
+    var mdMatch = notes.match(mdImgRegex);
+    if (mdMatch) {
+        imgUrl = mdMatch[1];
+        notes = notes.replace(mdImgRegex, '');
+    } else {
+        var rawImgRegex = /(https?:\/\/[^\s\)]+?\.(?:png|jpg|jpeg|gif|webp)(?:\?[^\s\)]*)?)/i;
+        var rawMatch = notes.match(rawImgRegex);
+        if (rawMatch) {
+            imgUrl = rawMatch[1];
+            notes = notes.replace(rawImgRegex, '');
+        }
+    }
+
+    var lines = notes.split(/\r?\n/);
+    var cleanItems = [];
+    lines.forEach(function(line) {
+        var l = line.trim();
+        if (!l) return;
+        // Filter out download links/zips and leftover CDN queries
+        if (l.toLowerCase().indexOf('download') !== -1 || l.toLowerCase().indexOf('extension.zip') !== -1) return;
+        if (l.indexOf('ex=') === 0 || l.indexOf('&is=') !== -1 || l.indexOf('&hm=') !== -1) return;
+        // Clear bullet prefix and bold/italic markdown
+        l = l.replace(/^[\s\-\*\+\u2022\d\.\)]+\s*/, '');
+        l = l.replace(/\*\*|__|\*|_/g, '');
+        l = l.trim();
+        if (l && l.length > 2) {
+            cleanItems.push(l);
+        }
+    });
+
+    var bodyHTML = '';
+    if (cleanItems.length > 0) {
+        var lis = cleanItems.map(function(t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('');
+        bodyHTML = '<ul id="po-cl-list" style="max-height:120px;overflow-y:auto;padding-right:4px;">' + lis + '</ul>';
+    } else {
+        bodyHTML = '<p id="po-cl-text">Bug fixes and enhancements.</p>';
+    }
+
+    var imgHTML = '';
+    if (imgUrl) {
+        imgHTML = '<img id="po-cl-img" src="' + imgUrl + '" alt="" onerror="this.style.display=\'none\'">';
+    }
 
     var batUrl = 'https://github.com/meatballsong1/po-extension/releases/download/v' + latestVersion + '/install-v' + latestVersion + '.bat';
 
@@ -2180,12 +2224,13 @@ function showUpdateChangelog(latestVersion, releaseNotes, releaseUrl) {
     overlay.innerHTML =
         '<div id="po-cl-blur"></div>' +
         '<div id="po-cl-card">' +
-            '<div id="po-cl-badge" style="background:rgba(255,69,58,0.15);border:1px solid rgba(255,69,58,0.4);"><div id="po-cl-badge-dot" style="background:#ff453a;box-shadow:0 0 8px rgba(255,69,58,0.8);"></div><span id="po-cl-badge-txt" style="background:#ff453a;-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Update Available</span></div>' +
+            imgHTML +
+            '<div id="po-cl-badge"><div id="po-cl-badge-dot"></div><span id="po-cl-badge-txt">New Update</span></div>' +
             '<div id="po-cl-title">Version v' + latestVersion + '</div>' +
             '<div id="po-cl-sub">A new update is ready for installation.</div>' +
-            notesHtml +
-            '<button id="po-cl-download" style="width:100% !important;padding:11px !important;background:#22c55e !important;border:none !important;border-radius:11px !important;color:#0b1120 !important;font-weight:700 !important;font-size:12.5px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:0.3px !important;box-shadow:0 4px 18px rgba(34,197,94,0.35) !important;transition:opacity 0.2s,transform 0.15s !important;margin-bottom:8px !important;">Download Installer (.bat)</button>' +
-            '<button id="po-cl-dismiss" style="width:100% !important;padding:11px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:11px !important;color:rgba(255,255,255,0.6) !important;font-weight:700 !important;font-size:12.5px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:0.3px !important;box-shadow:none !important;transition:opacity 0.2s,transform 0.15s !important;">Ignore for now</button>' +
+            bodyHTML +
+            '<button id="po-cl-dismiss" style="margin-bottom:8px !important;">Download Installer (.bat)</button>' +
+            '<button id="po-cl-dismiss-ignore" style="width:100% !important;padding:11px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:11px !important;color:rgba(255,255,255,0.6) !important;font-weight:700 !important;font-size:12.5px !important;cursor:pointer !important;font-family:inherit !important;letter-spacing:0.3px !important;box-shadow:none !important;transition:all 0.15s !important;">Ignore for now</button>' +
         '</div>';
 
     document.body.appendChild(overlay);
@@ -2202,9 +2247,13 @@ function showUpdateChangelog(latestVersion, releaseNotes, releaseUrl) {
         dismissUpdate();
     });
 
-    overlay.querySelector('#po-cl-dismiss').addEventListener('click', dismissUpdate);
+    var ignoreBtn = overlay.querySelector('#po-cl-dismiss-ignore');
+    ignoreBtn.addEventListener('mouseenter', function() { ignoreBtn.style.background = 'rgba(255,255,255,0.1)'; ignoreBtn.style.color = '#fff'; });
+    ignoreBtn.addEventListener('mouseleave', function() { ignoreBtn.style.background = 'rgba(255,255,255,0.05)'; ignoreBtn.style.color = 'rgba(255,255,255,0.6)'; });
+    ignoreBtn.addEventListener('click', dismissUpdate);
     overlay.querySelector('#po-cl-blur').addEventListener('click', dismissUpdate);
 }
+
 
 function checkForUpdate() {
     fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
