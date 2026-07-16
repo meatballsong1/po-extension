@@ -188,10 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const m = chrome.runtime.getManifest();
         const current = m.version;
 
-        fetch('https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now())
+        fetch('https://api.github.com/repos/meatballsong1/po-extension/releases/latest')
             .then(r => {
-                if (!r.ok) throw new Error('Could not reach GitHub');
-                return r.json();
+                if (!r.ok) {
+                    return fetch('https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now())
+                        .then(r2 => {
+                            if (!r2.ok) throw new Error('Could not reach GitHub');
+                            return r2.json();
+                        });
+                }
+                return r.json().then(j => ({ version: j.tag_name.startsWith('v') ? j.tag_name.slice(1) : j.tag_name }));
             })
             .then(data => {
                 const latest = data.version;

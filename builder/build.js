@@ -295,9 +295,9 @@ async function createGithubRelease(version, title, zipPath, releaseBody) {
 
 // ── API ROUTES ────────────────────────────────────────────────────────────
 
-function fetchGithubVersion() {
+function fetchGithubVersionFallback() {
     return new Promise((resolve) => {
-        const url = 'https://raw.githubusercontent.com/meatballsong1/po-extension/main/version.json?t=' + Date.now();
+        const url = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/version.json?t=` + Date.now();
         https.get(url, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
@@ -306,6 +306,45 @@ function fetchGithubVersion() {
                 catch(e) { resolve(null); }
             });
         }).on('error', () => resolve(null));
+    });
+}
+
+function fetchGithubVersion() {
+    return new Promise((resolve) => {
+        const token = getGithubToken();
+        const options = {
+            hostname: 'api.github.com',
+            path: `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`,
+            method: 'GET',
+            headers: {
+                'User-Agent': 'PO-Extension-Builder',
+                'Accept': 'application/vnd.github.v3+json',
+            }
+        };
+        if (token) {
+            options.headers['Authorization'] = `token ${token}`;
+        }
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (res.statusCode === 200 && parsed && parsed.tag_name) {
+                        let ver = parsed.tag_name;
+                        if (ver.startsWith('v')) ver = ver.slice(1);
+                        resolve(ver);
+                        return;
+                    }
+                } catch(e) {}
+                fetchGithubVersionFallback().then(resolve);
+            });
+        });
+        req.on('error', () => {
+            fetchGithubVersionFallback().then(resolve);
+        });
+        req.end();
     });
 }
 

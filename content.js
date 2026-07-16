@@ -1346,7 +1346,6 @@ document.addEventListener('keydown', function(e) {
 // =========================================================================
 // -- CUSTOM OVERLAY ELEMENTS SYSTEM ---------------------------------------
 // =========================================================================
-
 var VEIL_ELEMENTS = [
     // TEXT ELEMENTS
     { cat: 'Text',   id: 'live-badge',    label: 'LIVE Badge',         html: '<div style="background:linear-gradient(135deg,#ff375f,#bf5af2);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:1px;font-family:-apple-system,sans-serif;box-shadow:0 0 16px rgba(255,55,95,0.6)">LIVE</div>' },
@@ -1381,14 +1380,18 @@ var VEIL_ELEMENTS = [
     { cat: 'Panel',  id: 'note-box',      label: 'Sticky Note',        html: '<div style="background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.25);border-radius:10px;padding:10px 14px;font-family:-apple-system,sans-serif;max-width:180px"><div style="font-size:9px;font-weight:700;color:#ffd60a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Note</div><div style="font-size:11px;color:rgba(255,255,255,0.75);line-height:1.5" contenteditable="true">Your note here...</div></div>' },
     { cat: 'Panel',  id: 'social-links',  label: 'Social Links Bar',   html: '<div style="display:flex;gap:8px;align-items:center;background:rgba(10,10,16,0.8);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 12px;font-family:-apple-system,sans-serif"><span style="font-size:11px;color:rgba(255,255,255,0.5)">Follow:</span><span style="font-size:11px;font-weight:600;color:#00b0ff" contenteditable="true">@yourname</span></div>' },
 
+    // RJK ADVERTISING ELEMENTS
+    { cat: 'RJK Trades', id: 'ad1', label: 'RJK Signals Ad', html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><svg width="24" height="24" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:13px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span></div><span style="font-size:9.5px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:6px;padding:1px 6px;text-transform:uppercase;letter-spacing:0.5px;font-family:\'Fira Code\',monospace;">v2</span></div><div style="font-size:11px;line-height:1.45;color:#e2e8f0;font-weight:500;">stop <b style="color:#ffffff;text-shadow:0 0 8px rgba(255,255,255,0.2)">guessing</b>. trade with an <b style="color:#22c55e;text-shadow:0 0 8px rgba(34,197,94,0.3)">edge</b>.</div><a href="https://rjktrades.com" target="_blank" style="display:flex;align-items:center;justify-content:center;padding:7px;background:#22c55e;color:#0b1120;font-weight:700;font-size:10.5px;border-radius:8px;text-decoration:none;transition:opacity 0.2s;text-transform:uppercase;letter-spacing:0.5px;">Get Access</a></div>' },
+
     // STREAM SPECIFIC
     { cat: 'Stream', id: 'stream-badge',  label: 'Stream Live Badge',  html: '<div style="display:flex;align-items:center;gap:8px;background:rgba(10,10,16,0.9);backdrop-filter:blur(10px);border:1px solid rgba(255,55,95,0.3);border-radius:20px;padding:6px 14px;font-family:-apple-system,sans-serif"><div style="width:7px;height:7px;border-radius:50%;background:#ff375f;box-shadow:0 0 8px rgba(255,55,95,0.9);animation:po-drain 0s"></div><span style="font-size:11px;font-weight:700;color:#fff;letter-spacing:0.5px">LIVE</span><span style="font-size:10px;color:rgba(255,255,255,0.4)" contenteditable="true">0 viewers</span></div>' },
     { cat: 'Stream', id: 'no-spoilers',   label: 'No Spoilers Bar',    html: '<div style="background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);padding:6px 16px;font-family:-apple-system,sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);letter-spacing:0.3px;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)">Stream - No Spoilers Please</div>' },
     { cat: 'Stream', id: 'hype-train',    label: 'Hype Bar',           html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(191,90,242,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px">Hype</span><span contenteditable="true">0%</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#bf5af2,#ff375f);border-radius:4px;transition:width 0.5s ease"></div></div></div>' },
     { cat: 'Stream', id: 'goal-tracker',  label: 'Goal Tracker',       html: '<div style="background:rgba(10,10,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(36,177,91,0.2);border-radius:10px;padding:8px 14px;font-family:-apple-system,sans-serif;width:200px"><div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:5px"><span style="text-transform:uppercase;letter-spacing:0.5px" contenteditable="true">Daily Goal</span><span contenteditable="true">$0 / $100</span></div><div style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden"><div style="height:100%;width:0%;background:linear-gradient(90deg,#24b15b,#00b0ff);border-radius:4px"></div></div></div>' },
 
-    // TRACKER (interactive — handled by spawnWinRateTracker, not spawnVeilElement)
+    // TRACKERS (interactive — handled by spawnWinRateTracker or spawnProfitCalculator, not spawnVeilElement)
     { cat: 'Tracker', id: 'win-rate-tracker', label: 'Win Rate Tracker', special: true },
+    { cat: 'Tracker', id: 'profit-calc', label: 'Profit Calculator', special: true }
 ];
 
 // ---- CUSTOM ELEMENTS CSS ----
@@ -1419,34 +1422,34 @@ function injectVeilElementsCSS() {
         '#po-vel-toggle:hover{background:rgba(191,90,242,0.12) !important;color:#bf5af2 !important;transform:translateY(-50%) !important;box-shadow:none !important;}',
 
         // ------ WIN RATE TRACKER ------
-        '#po-wrt{font-family:-apple-system,BlinkMacSystemFont,sans-serif !important;background:rgba(8,8,14,0.92) !important;backdrop-filter:blur(20px) !important;border:1px solid rgba(255,255,255,0.08) !important;border-radius:16px !important;padding:14px 16px 12px !important;display:flex !important;flex-direction:column !important;align-items:center !important;gap:8px !important;min-width:160px !important;}',
-        '#po-wrt-label{font-size:8.5px !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:1.2px !important;color:rgba(255,255,255,0.35) !important;}',
+        '#po-wrt{font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif !important;background:#121b2f !important;backdrop-filter:blur(20px) !important;border:1px solid #1e293b !important;border-radius:16px !important;padding:14px 16px 12px !important;display:flex !important;flex-direction:column !important;align-items:center !important;gap:8px !important;min-width:160px !important;box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.05) !important;}',
+        '#po-wrt-label{font-size:8.5px !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:1.2px !important;color:#94a3b8 !important;}',
         '#po-wrt-ring{position:relative !important;width:110px !important;height:110px !important;}',
         '#po-wrt-svg{transform:rotate(-90deg) !important;}',
         '#po-wrt-track{fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:8 !important;}',
-        '#po-wrt-fill{fill:none !important;stroke:#24b15b !important;stroke-width:8 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s cubic-bezier(0.22,1,0.36,1),stroke 0.45s ease,filter 0.45s ease !important;}',
+        '#po-wrt-fill{fill:none !important;stroke:#22c55e !important;stroke-width:8 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s cubic-bezier(0.22,1,0.36,1),stroke 0.45s ease,filter 0.45s ease !important;}',
         '#po-wrt-pct{position:absolute !important;inset:0 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;}',
-        '#po-wrt-num{font-size:24px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;transition:color 0.45s ease !important;}',
+        '#po-wrt-num{font-size:24px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;transition:color 0.45s ease !important;font-family:\'Fira Code\',monospace !important;}',
         '#po-wrt-wl{display:flex !important;gap:22px !important;align-items:center !important;}',
         '.po-wrt-stat{display:flex !important;flex-direction:column !important;align-items:center !important;gap:2px !important;}',
-        '.po-wrt-stat-val{font-size:20px !important;font-weight:800 !important;line-height:1 !important;}',
-        '.po-wrt-stat-lbl{font-size:8px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.5px !important;color:rgba(255,255,255,0.3) !important;}',
-        '.po-wrt-w{color:#24b15b !important;}',
-        '.po-wrt-l{color:#ff453a !important;}',
+        '.po-wrt-stat-val{font-size:20px !important;font-weight:800 !important;line-height:1 !important;font-family:\'Fira Code\',monospace !important;}',
+        '.po-wrt-stat-lbl{font-size:8px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.5px !important;color:#64748b !important;}',
+        '.po-wrt-w{color:#22c55e !important;}',
+        '.po-wrt-l{color:#ef4444 !important;}',
         '#po-wrt-btns{display:flex !important;gap:5px !important;align-items:center !important;}',
-        '.po-wrt-btn{width:30px !important;height:30px !important;border-radius:8px !important;border:1px solid rgba(255,255,255,0.1) !important;background:rgba(255,255,255,0.05) !important;color:rgba(255,255,255,0.7) !important;font-size:13px !important;font-weight:700 !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:inherit !important;transition:all 0.15s !important;padding:0 !important;margin:0 !important;box-shadow:none !important;line-height:1 !important;}',
+        '.po-wrt-btn{width:30px !important;height:30px !important;border-radius:8px !important;border:1px solid #1e293b !important;background:#0b1120 !important;color:rgba(255,255,255,0.7) !important;font-size:13px !important;font-weight:700 !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;font-family:inherit !important;transition:all 0.15s !important;padding:0 !important;margin:0 !important;box-shadow:none !important;line-height:1 !important;}',
         '.po-wrt-btn:hover{transform:scale(1.1) !important;box-shadow:none !important;}',
-        '.po-wrt-btn.win{background:rgba(36,177,91,0.14) !important;border-color:rgba(36,177,91,0.35) !important;color:#24b15b !important;}',
-        '.po-wrt-btn.win:hover{background:rgba(36,177,91,0.28) !important;}',
-        '.po-wrt-btn.loss{background:rgba(255,69,58,0.14) !important;border-color:rgba(255,69,58,0.35) !important;color:#ff453a !important;}',
-        '.po-wrt-btn.loss:hover{background:rgba(255,69,58,0.28) !important;}',
-        '.po-wrt-btn.undo{background:rgba(255,193,7,0.1) !important;border-color:rgba(255,193,7,0.25) !important;color:#ffd60a !important;font-size:11px !important;}',
-        '.po-wrt-btn.undo:hover{background:rgba(255,193,7,0.22) !important;}',
+        '.po-wrt-btn.win{background:rgba(34,197,94,0.15) !important;border-color:rgba(34,197,94,0.4) !important;color:#22c55e !important;}',
+        '.po-wrt-btn.win:hover{background:rgba(34,197,94,0.28) !important;}',
+        '.po-wrt-btn.loss{background:rgba(239,68,68,0.15) !important;border-color:rgba(239,68,68,0.4) !important;color:#ef4444 !important;}',
+        '.po-wrt-btn.loss:hover{background:rgba(239,68,68,0.28) !important;}',
+        '.po-wrt-btn.undo{background:rgba(234,179,8,0.1) !important;border-color:rgba(234,179,8,0.25) !important;color:#eab308 !important;font-size:11px !important;}',
+        '.po-wrt-btn.undo:hover{background:rgba(234,179,8,0.22) !important;}',
         '.po-wrt-btn.reset{background:rgba(255,255,255,0.04) !important;border-color:rgba(255,255,255,0.08) !important;color:rgba(255,255,255,0.3) !important;font-size:12px !important;}',
         '.po-wrt-btn.reset:hover{background:rgba(255,255,255,0.09) !important;color:rgba(255,255,255,0.7) !important;}',
-        '.po-wrt-sep{width:1px !important;height:16px !important;background:rgba(255,255,255,0.1) !important;flex-shrink:0 !important;}',
+        '.po-wrt-sep{width:1px !important;height:16px !important;background:#1e293b !important;flex-shrink:0 !important;}',
         '.po-wrt-pair{display:flex !important;flex-direction:column !important;align-items:center !important;gap:3px !important;}',
-        '.po-wrt-pair-label{font-size:7.5px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.4px !important;color:rgba(255,255,255,0.25) !important;}',
+        '.po-wrt-pair-label{font-size:7.5px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:0.4px !important;color:#64748b !important;}',
         '.po-wrt-pair-btns{display:flex !important;gap:4px !important;}',
     ].join('');
     document.documentElement.appendChild(s);
@@ -1467,6 +1470,8 @@ function restoreVeilElements() {
                 if (!def) return;
                 if (data.type === 'win-rate-tracker') {
                     spawnWinRateTracker(data.x, data.y, true);
+                } else if (data.type === 'profit-calc') {
+                    spawnProfitCalculator(data.x, data.y, true);
                 } else {
                     spawnVeilElement(def, data.x, data.y, true);
                 }
@@ -1580,7 +1585,7 @@ function spawnWinRateTracker(x, y, restored) {
         fill.style.strokeDashoffset = (CIRC * (1 - pct / 100)).toFixed(2);
 
         // Color: red → yellow → green
-        var color = pct >= 60 ? '#24b15b' : pct >= 40 ? '#ffd60a' : '#ff453a';
+        var color = pct >= 60 ? '#22c55e' : pct >= 40 ? '#eab308' : '#ef4444';
         fill.style.stroke = color;
         fill.style.filter = 'drop-shadow(0 0 7px ' + color + ')';
 
@@ -1631,6 +1636,201 @@ function spawnWinRateTracker(x, y, restored) {
     document.body.appendChild(wrap);
     return wrap;
 }
+
+function spawnProfitCalculator(x, y, restored) {
+    injectVeilElementsCSS();
+
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-veil-overlay', '1');
+    wrap.setAttribute('data-veil-type', 'profit-calc');
+    if (restored) wrap.setAttribute('data-veil-restored', '1');
+    wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '120px') + ';top:' + (y || '120px') + ';width:240px;background:#121b2f;border:1px solid #1e293b;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.05);overflow:hidden;color:#fff;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;';
+
+    wrap.innerHTML = [
+        '<div id="po-pc-hdr" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#0b1120;border-bottom:1px solid #1e293b;cursor:grab;user-select:none;">',
+            '<span style="font-size:11.5px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px;">',
+                '🧮 RJK Profit Calculator',
+            '</span>',
+            '<button id="po-pc-toggle" style="background:none;border:none;color:#94a3b8;font-size:11px;cursor:pointer;padding:2px 6px;outline:none;">▲</button>',
+        '</div>',
+        '<div id="po-pc-body" style="padding:12px;display:flex;flex-direction:column;gap:10px;">',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;font-weight:700;letter-spacing:0.3px;">Balance ($)</div>',
+                    '<input type="number" id="po-pc-in-bal" value="1000" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:11px;font-family:\'Fira Code\',monospace;padding:5px 6px;border-radius:6px;outline:none;" />',
+                '</div>',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;font-weight:700;letter-spacing:0.3px;">Daily Target (%)</div>',
+                    '<input type="number" id="po-pc-in-tgt" value="10" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:11px;font-family:\'Fira Code\',monospace;padding:5px 6px;border-radius:6px;outline:none;" />',
+                '</div>',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;font-weight:700;letter-spacing:0.3px;">Risk / Trade (%)</div>',
+                    '<input type="number" id="po-pc-in-risk" value="2" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:11px;font-family:\'Fira Code\',monospace;padding:5px 6px;border-radius:6px;outline:none;" />',
+                '</div>',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;font-weight:700;letter-spacing:0.3px;">Payout (%)</div>',
+                    '<input type="number" id="po-pc-in-pay" value="80" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:11px;font-family:\'Fira Code\',monospace;padding:5px 6px;border-radius:6px;outline:none;" />',
+                '</div>',
+                '<div style="grid-column: span 2;">',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;font-weight:700;letter-spacing:0.3px;">Max MG Steps</div>',
+                    '<input type="number" id="po-pc-in-steps" value="5" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:11px;font-family:\'Fira Code\',monospace;padding:5px 6px;border-radius:6px;outline:none;" />',
+                '</div>',
+            '</div>',
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0b1120;padding:8px;border-radius:8px;border:1px solid #1e293b;">',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Base Stake</div>',
+                    '<div id="po-pc-out-stake" style="font-size:11px;font-weight:800;color:#fff;font-family:\'Fira Code\',monospace;">$20.00</div>',
+                '</div>',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Profit / Win</div>',
+                    '<div id="po-pc-out-profit" style="font-size:11px;font-weight:800;color:#22c55e;font-family:\'Fira Code\',monospace;">$16.00</div>',
+                '</div>',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Wins Target</div>',
+                    '<div id="po-pc-out-wins" style="font-size:11px;font-weight:800;color:#22c55e;font-family:\'Fira Code\',monospace;">7</div>',
+                '</div>',
+                '<div>',
+                    '<div style="font-size:7.5px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Drawdown</div>',
+                    '<div id="po-pc-out-dd" style="font-size:11px;font-weight:800;color:#ef4444;font-family:\'Fira Code\',monospace;">$906.64</div>',
+                '</div>',
+            '</div>',
+            '<div id="po-pc-table-wrap" style="max-height:100px;overflow-y:auto;border:1px solid #1e293b;border-radius:6px;background:#0b1120;">',
+                '<table style="width:100%;border-collapse:collapse;font-size:9.5px;text-align:left;">',
+                    '<thead>',
+                        '<tr style="border-bottom:1px solid #1e293b;background:#121b2f;">',
+                            '<th style="padding:4px;color:#94a3b8;font-weight:700;letter-spacing:0.2px;">Step</th>',
+                            '<th style="padding:4px;color:#94a3b8;font-weight:700;letter-spacing:0.2px;">Stake</th>',
+                            '<th style="padding:4px;color:#22c55e;font-weight:700;letter-spacing:0.2px;">Net Win</th>',
+                            '<th style="padding:4px;color:#ef4444;font-weight:700;letter-spacing:0.2px;">Cum. Risk</th>',
+                        '</tr>',
+                    '</thead>',
+                    '<tbody id="po-pc-table-body" style="font-family:\'Fira Code\',monospace;color:#e2e8f0;">',
+                    '</tbody>',
+                '</table>',
+            '</div>',
+        '</div>'
+    ].join('');
+
+    var body = wrap.querySelector('#po-pc-body');
+    var toggleBtn = wrap.querySelector('#po-pc-toggle');
+    var inBal = wrap.querySelector('#po-pc-in-bal');
+    var inTgt = wrap.querySelector('#po-pc-in-tgt');
+    var inRisk = wrap.querySelector('#po-pc-in-risk');
+    var inPay = wrap.querySelector('#po-pc-in-pay');
+    var inSteps = wrap.querySelector('#po-pc-in-steps');
+
+    var outStake = wrap.querySelector('#po-pc-out-stake');
+    var outProfit = wrap.querySelector('#po-pc-out-profit');
+    var outWins = wrap.querySelector('#po-pc-out-wins');
+    var outDd = wrap.querySelector('#po-pc-out-dd');
+    var tableBody = wrap.querySelector('#po-pc-table-body');
+
+    var PC_SETTINGS_KEY = 'po_pc_settings';
+    var PC_MINIMIZED_KEY = 'po_pc_minimized';
+
+    function recalculate() {
+        var balance = parseFloat(inBal.value) || 1000;
+        var dailyTarget = parseFloat(inTgt.value) || 10;
+        var risk = parseFloat(inRisk.value) || 2;
+        var payout = parseFloat(inPay.value) || 80;
+        var maxSteps = parseInt(inSteps.value) || 5;
+
+        // Perform formulas
+        var baseStake = balance * (risk / 100);
+        var profitWin = baseStake * (payout / 100);
+        var targetAmt = balance * (dailyTarget / 100);
+        var winsToHit = profitWin > 0 ? Math.ceil(targetAmt / profitWin) : 0;
+
+        var tableHtml = '';
+        var prevCumRisk = 0;
+        for (var k = 1; k <= maxSteps; k++) {
+            var stake = (profitWin + prevCumRisk) / (payout / 100);
+            var cumRisk = prevCumRisk + stake;
+            tableHtml += '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">' +
+                '<td style="padding:4px;">' + k + '</td>' +
+                '<td style="padding:4px;font-weight:700;">$' + stake.toFixed(2) + '</td>' +
+                '<td style="padding:4px;color:#22c55e;">+$' + profitWin.toFixed(2) + '</td>' +
+                '<td style="padding:4px;color:#ef4444;">$' + cumRisk.toFixed(2) + '</td>' +
+            '</tr>';
+            prevCumRisk = cumRisk;
+        }
+
+        // Render outputs
+        outStake.textContent = '$' + baseStake.toFixed(2);
+        outProfit.textContent = '$' + profitWin.toFixed(2);
+        outWins.textContent = winsToHit;
+        outDd.textContent = '$' + prevCumRisk.toFixed(2);
+        tableBody.innerHTML = tableHtml;
+
+        // Persist settings
+        chrome.storage.local.set({ [PC_SETTINGS_KEY]: {
+            balance: balance,
+            dailyTarget: dailyTarget,
+            risk: risk,
+            payout: payout,
+            maxSteps: maxSteps
+        }});
+    }
+
+    // Toggle minimize
+    var minimized = false;
+    function setMinimized(min) {
+        minimized = min;
+        body.style.display = minimized ? 'none' : 'flex';
+        toggleBtn.textContent = minimized ? '▼' : '▲';
+        chrome.storage.local.set({ [PC_MINIMIZED_KEY]: minimized });
+    }
+
+    toggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        setMinimized(!minimized);
+    });
+
+    // Inputs listeners
+    var inputs = [inBal, inTgt, inRisk, inPay, inSteps];
+    inputs.forEach(function(input) {
+        input.addEventListener('input', recalculate);
+        input.addEventListener('change', recalculate);
+    });
+
+    // Load initial state
+    chrome.storage.local.get([PC_SETTINGS_KEY, PC_MINIMIZED_KEY], function(d) {
+        if (d[PC_SETTINGS_KEY]) {
+            var s = d[PC_SETTINGS_KEY];
+            inBal.value = s.balance !== undefined ? s.balance : 1000;
+            inTgt.value = s.dailyTarget !== undefined ? s.dailyTarget : 10;
+            inRisk.value = s.risk !== undefined ? s.risk : 2;
+            inPay.value = s.payout !== undefined ? s.payout : 80;
+            inSteps.value = s.maxSteps !== undefined ? s.maxSteps : 5;
+        }
+        recalculate();
+        if (d[PC_MINIMIZED_KEY] !== undefined) {
+            setMinimized(!!d[PC_MINIMIZED_KEY]);
+        }
+    });
+
+    // Double-click to remove
+    wrap.addEventListener('dblclick', function(e) {
+        if (e.target.closest && (e.target.closest('input') || e.target.closest('button') || e.target.closest('table'))) return;
+        wrap.parentNode.removeChild(wrap);
+    });
+
+    // Drag
+    wrap.addEventListener('mousedown', function(e) {
+        if (e.target.closest && (e.target.closest('input') || e.target.closest('button') || e.target.closest('table') || e.target.closest('#po-pc-table-wrap'))) return;
+        if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+        e.preventDefault();
+        var sx = e.clientX - wrap.offsetLeft, sy = e.clientY - wrap.offsetTop;
+        function onMove(ev) { wrap.style.left = (ev.clientX - sx) + 'px'; wrap.style.top = (ev.clientY - sy) + 'px'; }
+        function onUp()   { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+
+    document.body.appendChild(wrap);
+    return wrap;
+}
+
 function buildElementsPanel() {
     if (document.getElementById('po-vel-panel')) return;
     injectVeilElementsCSS();
@@ -1684,6 +1884,8 @@ function buildElementsPanel() {
                 if (!def) return;
                 if (id === 'win-rate-tracker') {
                     spawnWinRateTracker('120px', '120px', false);
+                } else if (id === 'profit-calc') {
+                    spawnProfitCalculator('120px', '120px', false);
                 } else {
                     spawnVeilElement(def, '120px', '120px', false);
                 }
@@ -1746,7 +1948,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.11';
+var VEIL_CURRENT_VERSION = '2.6.12';
 
 // Disabled update available banner as requested
 function showUpdateBanner(currentVersion, latestVersion) {}
@@ -1758,15 +1960,15 @@ function checkForUpdate() {}
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.11',
+    version: '2.6.12',
 
-    title: 'welcome to 2.6.11',
-    subtitle: 'minor bug fixes to prepare for 2.7.0',
+    title: 'welcome to 2.6.12',
+    subtitle: 'idk',
 
     image: '',
 
     // 'bullets' | 'text' | 'links' | 'none'
-    mode: 'none',
+    mode: 'bullets',
 
     items: [
         'icons are FULLY fixed so you can effortlessly swap',
