@@ -1,3 +1,10 @@
+// Extension context safety guard — prevents "Extension context invalidated" errors
+// when the extension is reloaded while the tab is still open.
+function chromeOk() {
+    try { return !!(chrome && chrome.runtime && chrome.runtime.id); }
+    catch(e) { return false; }
+}
+
 // 1. CSS Masking & Overrides
 const style = document.createElement('style');
 style.innerHTML = `
@@ -1439,12 +1446,16 @@ document.addEventListener('keydown', function(e) {
 var VEIL_ELEMENTS = [
     // STREAMING (RJK Trades Branded - first category)
     { cat: 'Streaming', id: 'win-rate-tracker', label: 'RJK Win Rate Tracker', special: true },
-    { cat: 'Streaming', id: 'winrate-v2-ad',    label: 'Winrate v2 Ad',         special: true },
-    { cat: 'Streaming', id: 'profit-calc',      label: 'RJK Profit Calculator',  special: true },
+    { cat: 'Streaming', id: 'winrate-v3-ad',    label: 'Winrate v3 Ad',         special: true },
     { cat: 'Streaming', id: 'ad1',              label: 'RJK Signals Ad',        html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><svg width="24" height="24" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:13px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span></div><span style="font-size:9.5px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:6px;padding:1px 6px;text-transform:uppercase;letter-spacing:0.5px;font-family:\'Fira Code\',monospace;">v2</span></div><div style="font-size:11px;line-height:1.45;color:#e2e8f0;font-weight:500;">Stop guessing. <span style="color:#22c55e;font-weight:700;">Trade with an </span><span style="background:linear-gradient(90deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800;">edge.</span></div><div style="text-align:center;font-size:10px;font-family:\'Fira Code\',monospace;color:#22c55e;font-weight:700;margin-top:2px;letter-spacing:0.5px;user-select:all;">rjktrades.com</div></div>' },
     { cat: 'Streaming', id: 'disclaimer',       label: 'RJK Risk Disclaimer',   html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:6px;text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:2px;"><svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:12px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Trades</span></span></div><div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:6px 10px;"><span style="color:#ef4444;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;font-size:10px;">⚠️ Risk Disclaimer</span></div><div style="font-size:9.5px;color:#94a3b8;line-height:1.5;">Trading involves substantial risk of loss. Past performance does not guarantee future results. Only trade with capital you can afford to lose.</div><div style="font-size:10px;line-height:1.4;color:#e2e8f0;font-weight:500;margin-top:2px;">Stop guessing. <span style="color:#22c55e;font-weight:700;">Trade with an </span><span style="background:linear-gradient(90deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800;">edge.</span></div><div style="font-size:9px;font-family:\'Fira Code\',monospace;color:#22c55e;font-weight:700;letter-spacing:0.5px;user-select:all;">rjktrades.com</div></div>' },
-
-    // TEXT ELEMENTS
+    { cat: 'Streaming', id: 'rjk-note',         label: 'RJK Signals Note',      html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><svg width="18" height="18" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:12px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span></div><span style="font-size:8px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">Note</span></div><div style="font-size:11px;color:#e2e8f0;line-height:1.5;min-height:85px;background:rgba(255,255,255,0.03);border:1px dashed rgba(34,197,94,0.3);border-radius:8px;padding:8px;outline:none;position:relative;z-index:1;" contenteditable="true" data-placeholder="Enter note here...">Your note here...</div></div>' },
+    { cat: 'Streaming', id: 'rjk-goals',        label: 'RJK Session Goals',     html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><svg width="18" height="18" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:12px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Goals</span></span></div><span style="font-size:8px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">Goals</span></div><div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:#e2e8f0;font-weight:500;position:relative;z-index:1;"><div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="accent-color:#22c55e;" /> <span contenteditable="true">Daily profit goal reached</span></div><div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="accent-color:#22c55e;" /> <span contenteditable="true">Loss limit respected</span></div><div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="accent-color:#22c55e;" /> <span contenteditable="true">Analyses followed correctly</span></div></div></div>' },
+    { cat: 'Streaming', id: 'rjk-sidebar-ad',   label: 'RJK Sidebar Ad',        html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:10px 12px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:160px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:6px;text-align:center;position:relative;z-index:1;"><div style="display:flex;align-items:center;justify-content:center;gap:4px;"><svg width="16" height="16" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:11px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span></div><div style="font-size:9.5px;line-height:1.35;color:#e2e8f0;font-weight:500;">Trade with an <span style="background:linear-gradient(90deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800;">edge.</span></div><div style="font-size:9px;font-family:\'Fira Code\',monospace;color:#22c55e;font-weight:700;letter-spacing:0.3px;user-select:all;margin-top:2px;">rjktrades.com</div></div>' },
+    { cat: 'Streaming', id: 'rjk-socials',      label: 'RJK Socials Card',      html: '<div style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:6px;"><svg width="18" height="18" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;"><path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="7" r="2.4" fill="#22c55e"/></svg><span style="font-size:12px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Trades</span></span></div><span style="font-size:8px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">Socials</span></div><div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:#e2e8f0;font-weight:500;position:relative;z-index:1;"><div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);"><div style="display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg><span style="color:#94a3b8;">TikTok</span></div><span style="color:#22c55e;font-weight:700;" contenteditable="true">@rjktrades</span></div><div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);"><div style="display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#22c55e;flex-shrink:0;"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z"/></svg><span style="color:#94a3b8;">Discord</span></div><span style="color:#22c55e;font-weight:700;" contenteditable="true">discord.gg/rjk</span></div><div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);"><div style="display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#22c55e;flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-1-.65-.35-1 .22-1.62.15-.15 2.7-2.46 2.75-2.67.01-.03.01-.15-.06-.21a.25.25 0 0 0-.22-.02c-.3.07-5.13 3.26-5.18 3.3-.5.34-.96.51-1.38.5-.46-.01-1.35-.26-2.01-.48-.81-.27-1.46-.42-1.4-.88.03-.24.37-.49 1.02-.75 4-1.74 6.67-2.88 8-3.45 3.81-1.63 4.6-1.91 5.12-1.92.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.16-.03.22z"/></svg><span style="color:#94a3b8;">Telegram</span></div><span style="color:#22c55e;font-weight:700;" contenteditable="true">t.me/rjktrades</span></div></div></div>' },
+    { cat: 'Streaming', id: 'rjk-daily-target',    label: 'RJK Daily Target',        special: true },
+    { cat: 'Streaming', id: 'rjk-trade-panel',     label: 'RJK Trade Panel Overlay', special: true },
+// TEXT ELEMENTS
     { cat: 'Text',   id: 'live-badge',    label: 'LIVE Badge',         html: '<div style="background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:1px;font-family:-apple-system,sans-serif;box-shadow:0 0 16px rgba(74,222,128,0.6)">LIVE</div>' },
     { cat: 'Text',   id: 'not-financial', label: 'Not Financial Advice', html: '<div style="background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.6);padding:5px 12px;border-radius:8px;font-size:10px;font-family:-apple-system,sans-serif;border:1px solid rgba(255,255,255,0.1)">Not financial advice</div>' },
     { cat: 'Text',   id: 'custom-label',  label: 'Custom Text Label',  html: '<div style="color:#fff;font-size:14px;font-weight:600;font-family:-apple-system,sans-serif;text-shadow:0 2px 8px rgba(0,0,0,0.8)" contenteditable="true">Your text here</div>' },
@@ -1509,6 +1520,15 @@ function injectVeilElementsCSS() {
         '[data-veil-overlay] [contenteditable]{cursor:text !important;outline:none !important;}',
         '#po-vel-toggle{position:absolute !important;left:-22px !important;top:50% !important;transform:translateY(-50%) !important;width:22px !important;height:44px !important;background:#121b2f !important;border:1px solid #1e293b !important;border-right:none !important;border-radius:8px 0 0 8px !important;cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:center !important;color:#22c55e !important;font-size:10px !important;padding:0 !important;margin:0 !important;box-shadow:none !important;transition:background 0.2s !important;}',
         '#po-vel-toggle:hover{background:rgba(34,197,94,0.12) !important;color:#4ade80 !important;transform:translateY(-50%) !important;box-shadow:none !important;}',
+        '@property --po-angle{syntax:\'<angle>\';initial-value:0deg;inherits:false;}',
+        '.po-streaming-card{position:relative !important;background-clip:padding-box !important;border:1px solid transparent !important;animation:po-border-glow 2.5s infinite ease-in-out !important;}',
+        '.po-streaming-card::before{content:"" !important;position:absolute !important;inset:-2.5px !important;border-radius:inherit !important;padding:2.5px !important;background:conic-gradient(from var(--po-angle),transparent 10%,#22c55e 40%,#4ade80 50%,#22c55e 60%,transparent 90%) !important;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0) !important;-webkit-mask-composite:xor !important;mask-composite:exclude !important;pointer-events:none !important;z-index:0 !important;filter:drop-shadow(0 0 5px rgba(34,197,94,0.9)) drop-shadow(0 0 2px rgba(34,197,94,0.6)) !important;animation:po-rotate-border 2.5s linear infinite !important;}',
+        '@keyframes po-rotate-border{to{--po-angle:360deg;}}',
+        '@keyframes po-border-glow{0%{box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 10px rgba(34,197,94,0.35),inset 0 0 4px rgba(34,197,94,0.15);}50%{box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 28px rgba(34,197,94,0.8),inset 0 0 12px rgba(34,197,94,0.45);}100%{box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 10px rgba(34,197,94,0.35),inset 0 0 4px rgba(34,197,94,0.15);}}',
+        
+        
+        
+        '[data-veil-overlay]{-webkit-font-smoothing:antialiased !important;-moz-osx-font-smoothing:grayscale !important;text-rendering:geometricPrecision !important;}',
 
         // ------ WIN RATE TRACKER ------
         '#po-wrt{font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif !important;background:#121b2f !important;backdrop-filter:blur(20px) !important;border:1px solid #1e293b !important;border-radius:16px !important;padding:14px 16px 12px !important;display:flex !important;flex-direction:column !important;align-items:center !important;gap:8px !important;min-width:160px !important;box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.05) !important;}',
@@ -1518,7 +1538,7 @@ function injectVeilElementsCSS() {
         '#po-wrt-ad #po-wrt-ring{position:relative !important;width:110px !important;height:110px !important;margin:8px 0 !important;overflow:visible !important;}',
         '#po-wrt-ad #po-wrt-svg{transform:rotate(-90deg) !important;overflow:visible !important;width:110px !important;height:110px !important;}',
         '#po-wrt-track{fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:10 !important;}',
-        '#po-wrt-fill{fill:none !important;stroke:#22c55e !important;stroke-width:10 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s cubic-bezier(0.22,1,0.36,1),stroke 0.45s ease,filter 0.45s ease !important;}',
+        '#po-wrt-fill{fill:none !important;stroke-width:10 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s cubic-bezier(0.22,1,0.36,1),stroke 0.45s ease,filter 0.45s ease !important;}',
         '#po-wrt-pct{position:absolute !important;inset:0 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;}',
         '#po-wrt-num{font-size:32px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;transition:color 0.45s ease !important;font-family:\'Fira Code\',monospace !important;}',
         '#po-wrt-wl{display:flex !important;gap:22px !important;align-items:center !important;}',
@@ -1566,10 +1586,12 @@ function restoreVeilElements() {
                 if (!def) return;
                 if (data.type === 'win-rate-tracker') {
                     wrap = spawnWinRateTracker(data.x, data.y, true);
-                } else if (data.type === 'winrate-v2-ad') {
+                } else if (data.type === 'winrate-v3-ad') {
                     wrap = spawnWinRateTrackerAd(data.x, data.y, true);
-                } else if (data.type === 'profit-calc') {
-                    wrap = spawnProfitCalculator(data.x, data.y, true);
+                } else if (data.type === 'rjk-daily-target') {
+                    wrap = spawnDailyTarget(data.x, data.y, true);
+                } else if (data.type === 'rjk-trade-panel') {
+                    wrap = spawnTradePanelOverlay(data.x, data.y, true);
                 } else {
                     wrap = spawnVeilElement(def, data.x, data.y, true);
                 }
@@ -1761,6 +1783,196 @@ function spawnVeilElement(def, x, y, restored) {
 }
 
 
+function getCurrentBalance() {
+    // Read the active balance directly from the top header block
+    var activeBalEl = document.querySelector('.balance-info-block__balance .js-hd, .balance-info-block__balance span');
+    if (activeBalEl) {
+        var val = parseFloat(activeBalEl.getAttribute('data-hd-show') || activeBalEl.textContent.replace(/[^0-9.]/g, ''));
+        if (!isNaN(val)) return val;
+    }
+    // Sibling or item class fallback
+    var demoEl = document.querySelector('.js-balance-demo');
+    var realEl = document.querySelector('.js-balance-real, .js-balance-real-USD, .js-balance-tournament');
+    var isDemo = window.location.href.includes('demo');
+    if (isDemo && demoEl) {
+        var val = parseFloat(demoEl.getAttribute('data-hd-show') || demoEl.textContent.replace(/[^0-9.]/g, ''));
+        if (!isNaN(val)) return val;
+    } else if (realEl) {
+        var val = parseFloat(realEl.getAttribute('data-hd-show') || realEl.textContent.replace(/[^0-9.]/g, ''));
+        if (!isNaN(val)) return val;
+    }
+    if (typeof AppData !== 'undefined') {
+        var isDemoApp = AppData['is-demo'] === 1;
+        var bal = isDemoApp ? AppData['user-demo-balance'] : AppData['user-balance'];
+        var val = parseFloat(bal);
+        if (!isNaN(val)) return val;
+    }
+    return 0;
+}
+
+function spawnDailyTarget(x, y, restored) {
+    injectVeilElementsCSS();
+    
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-veil-overlay', '1');
+    wrap.setAttribute('data-veil-type', 'rjk-daily-target');
+    if (restored) wrap.setAttribute('data-veil-restored', '1');
+    wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '120px') + ';top:' + (y || '120px') + ';';
+    
+    wrap.innerHTML = [
+        '<div id="po-target-card" style="background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:12px 14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:240px;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:8px;position:relative;z-index:1;">',
+            '<!-- Header -->',
+            '<div style="display:flex;align-items:center;justify-content:space-between;">',
+                '<div style="display:flex;align-items:center;gap:6px;">',
+                    '<svg width="18" height="18" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;">',
+                        '<path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+                        '<circle cx="26" cy="7" r="2.4" fill="#22c55e"/>',
+                    '</svg>',
+                    '<span style="font-size:12px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Target</span></span>',
+                '</div>',
+                '<span style="font-size:8px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">Progress</span>',
+            '</div>',
+            '<div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:#e2e8f0;font-weight:500;position:relative;z-index:1;">',
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">',
+                    '<span style="color:#94a3b8;">Start Bal:</span>',
+                    '<span style="color:#fff;font-weight:700;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;outline:none;" contenteditable="true" id="po-target-start">0.00</span>',
+                '</div>',
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">',
+                    '<span style="color:#94a3b8;">Daily Target:</span>',
+                    '<span style="color:#fff;font-weight:700;background:rgba(255,255,255,0.05);border:1px dashed rgba(34,197,94,0.3);padding:1px 6px;border-radius:4px;outline:none;" contenteditable="true" id="po-target-val">100.00</span>',
+                '</div>',
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">',
+                    '<span style="color:#94a3b8;">Current Profit:</span>',
+                    '<span id="po-target-profit" style="color:#22c55e;font-weight:800;">+$0.00</span>',
+                '</div>',
+                '<div style="height:6px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-top:2px;position:relative;">',
+                    '<div id="po-target-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#06b6d4);border-radius:4px;transition:width 0.4s ease;"></div>',
+                '</div>',
+                '<div style="display:flex;justify-content:space-between;font-size:9.5px;color:#64748b;margin-top:1px;">',
+                    '<span id="po-target-pct">0%</span>',
+                    '<span style="cursor:pointer;color:#22c55e;font-weight:700;" id="po-target-reset">Reset Start</span>',
+                '</div>',
+            '</div>',
+        '</div>'
+    ].join('');
+    
+    var startEl = wrap.querySelector('#po-target-start');
+    var targetEl = wrap.querySelector('#po-target-val');
+    var profitEl = wrap.querySelector('#po-target-profit');
+    var barEl = wrap.querySelector('#po-target-bar');
+    var pctEl = wrap.querySelector('#po-target-pct');
+    var resetEl = wrap.querySelector('#po-target-reset');
+    var card = wrap.querySelector('#po-target-card');
+    
+    var STORAGE_KEY = 'po_target_data';
+    var startBal = getCurrentBalance();
+    var targetProfit = 100.00;
+    
+    startEl.textContent = startBal.toFixed(2);
+    targetEl.textContent = targetProfit.toFixed(2);
+    
+    function update() {
+        var currentBal = getCurrentBalance();
+        var profit = currentBal - startBal;
+        
+        if (profit >= 0) {
+            profitEl.textContent = "+" + "$" + profit.toFixed(2);
+            profitEl.style.color = "#22c55e";
+        } else {
+            profitEl.textContent = "-" + "$" + Math.abs(profit).toFixed(2);
+            profitEl.style.color = "#ef4444";
+        }
+        
+        var pct = targetProfit > 0 ? (profit / targetProfit * 100) : 0;
+        pct = Math.max(0, Math.min(100, pct));
+        barEl.style.width = pct.toFixed(0) + "%";
+        pctEl.textContent = pct.toFixed(0) + "%";
+        
+        if (chromeOk()) try { chrome.storage.local.set({ [STORAGE_KEY]: { startBal: startBal, targetProfit: targetProfit } }); } catch(e) {}
+    }
+    
+    startEl.addEventListener("blur", function() {
+        var val = parseFloat(startEl.textContent);
+        if (!isNaN(val)) {
+            startBal = val;
+            update();
+        } else {
+            startEl.textContent = startBal.toFixed(2);
+        }
+    });
+    startEl.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            startEl.blur();
+        }
+    });
+    
+    targetEl.addEventListener("blur", function() {
+        var val = parseFloat(targetEl.textContent);
+        if (!isNaN(val)) {
+            targetProfit = val;
+            update();
+        } else {
+            targetEl.textContent = targetProfit.toFixed(2);
+        }
+    });
+    targetEl.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            targetEl.blur();
+        }
+    });
+    
+    resetEl.addEventListener("click", function(e) {
+        e.stopPropagation();
+        startBal = getCurrentBalance();
+        startEl.textContent = startBal.toFixed(2);
+        update();
+        showPageNotif({ desc: "Starting balance reset to current!" });
+    });
+    
+    chrome.storage.local.get(STORAGE_KEY, function(d) {
+        if (d[STORAGE_KEY]) {
+            var data = d[STORAGE_KEY];
+            if (data.startBal !== undefined) {
+                startBal = data.startBal;
+                startEl.textContent = startBal.toFixed(2);
+            }
+            if (data.targetProfit !== undefined) {
+                targetProfit = data.targetProfit;
+                targetEl.textContent = targetProfit.toFixed(2);
+            }
+        }
+        update();
+    });
+    
+    var updateInterval = setInterval(update, 1500);
+    
+    wrap.addEventListener("DOMNodeRemovedFromDocument", function() {
+        clearInterval(updateInterval);
+    });
+    
+    wrap.addEventListener("dblclick", function(e) {
+        if (e.target.getAttribute && e.target.getAttribute("contenteditable")) return;
+        wrap.parentNode.removeChild(wrap);
+    });
+    
+    wrap.addEventListener("mousedown", function(e) {
+        if (e.target.getAttribute && e.target.getAttribute("contenteditable")) return;
+        if (e.target.id === "po-target-reset") return;
+        e.preventDefault();
+        var sx = e.clientX - wrap.offsetLeft, sy = e.clientY - wrap.offsetTop;
+        function onMove(ev) { wrap.style.left = (ev.clientX - sx) + "px"; wrap.style.top = (ev.clientY - sy) + "px"; }
+        function onUp()   { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); }
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+    });
+    
+    if (card) addSheenToCard(card);
+    document.body.appendChild(wrap);
+    return wrap;
+}
+
 function spawnWinRateTracker(x, y, restored) {
     injectVeilElementsCSS();
     var CIRC = 2 * Math.PI * 50; // 314.16
@@ -1847,17 +2059,30 @@ function spawnWinRateTracker(x, y, restored) {
         if (!fill) return;
 
         fill.style.strokeDashoffset = (CIRC * (1 - pct / 100)).toFixed(2);
-        var color = pct >= 60 ? '#22c55e' : pct >= 40 ? '#eab308' : '#ef4444';
+        // Ring + ring glow: <50 red, 50-56 yellow, >56 green
+        var color = '#22c55e';
+        if (pct < 50) {
+            color = '#ef4444';
+        } else if (pct <= 56) {
+            color = '#eab308';
+        }
+        fill.setAttribute('stroke', color);
         fill.style.stroke = color;
-        fill.style.filter = 'drop-shadow(0 0 7px ' + color + ')';
+        fill.style.filter = 'drop-shadow(0 0 8px ' + color + ') drop-shadow(0 0 14px ' + color + ')';
 
         num.textContent  = pct.toFixed(1) + '%';
         num.style.color  = color;
         wval.textContent = wins;
         lval.textContent = losses;
 
+        // Outer card glow always stays green — do not change with winrate
+        var card = wrap.querySelector('#po-wrt');
+        if (card) {
+            card.style.setProperty('box-shadow', '0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(34,197,94,0.7), inset 0 0 12px rgba(34,197,94,0.25)', 'important');
+        }
+
         if (writeToStorage !== false) {
-            chrome.storage.local.set({ [WRT_KEY]: { wins: wins, losses: losses } });
+            if (chromeOk()) try { chrome.storage.local.set({ [WRT_KEY]: { wins: wins, losses: losses } }); } catch(e) {}
         }
     }
 
@@ -1917,47 +2142,69 @@ function spawnWinRateTracker(x, y, restored) {
 // ---- WIN RATE TRACKER V2 AD SPAWN ----
 function spawnWinRateTrackerAd(x, y, restored) {
     injectVeilElementsCSS();
-    var CIRC = 2 * Math.PI * 40; // 251.33
+    var CIRC = 2 * Math.PI * 38; // 238.76
 
     var wrap = document.createElement('div');
     wrap.setAttribute('data-veil-overlay', '1');
-    wrap.setAttribute('data-veil-type', 'winrate-v2-ad');
+    wrap.setAttribute('data-veil-type', 'winrate-v3-ad');
     if (restored) wrap.setAttribute('data-veil-restored', '1');
     wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '120px') + ';top:' + (y || '120px') + ';';
 
     wrap.innerHTML = [
-        '<div id="po-wrt-ad" style="font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif !important;background:#121b2f !important;backdrop-filter:blur(20px) !important;border:1px solid #1e293b !important;border-radius:16px !important;padding:14px 16px 12px !important;display:flex !important;flex-direction:column !important;align-items:center !important;gap:8px !important;min-width:180px !important;box-shadow:0 8px 32px rgba(0,0,0,0.5),0 0 16px rgba(34,197,94,0.05) !important;">',
-            '<div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid #1e293b;padding-bottom:6px;width:100%;justify-content:center;">',
-                '<svg width="18" height="18" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;">',
-                    '<path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
-                    '<circle cx="26" cy="7" r="2.4" fill="#22c55e"/>',
-                '</svg>',
-                '<span style="font-size:14px;font-weight:800;letter-spacing:-0.2px;color:#fff;font-family:\'Fira Sans\',sans-serif;">RJK <span style="color:#22c55e;">Signals</span></span>',
+        '<div id="po-wrt-ad" style="font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif !important;background:#0b1120 !important;backdrop-filter:blur(20px) !important;border:1px solid rgba(34,197,94,0.4) !important;border-radius:16px !important;padding:12px 14px !important;display:flex !important;flex-direction:column !important;gap:8px !important;width:240px !important;position:relative;z-index:1;">',
+
+            '<!-- Header -->',
+            '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;width:100%;">',
+                '<div style="display:flex;align-items:center;gap:6px;">',
+                    '<svg width="18" height="18" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;">',
+                        '<path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+                        '<circle cx="26" cy="7" r="2.4" fill="#22c55e"/>',
+                    '</svg>',
+                    '<span style="font-size:12px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span>',
+                '</div>',
+                '<span style="font-size:9px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:6px;padding:1px 6px;text-transform:uppercase;letter-spacing:0.5px;font-family:\'Fira Code\',monospace;">v2</span>',
             '</div>',
-            '<div style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:\'Fira Code\',monospace;">',
-                '<div class="po-wrt-pair-text" style="font-size:14px;font-weight:700;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;">EUR/USD (OTC)</div>',
-                '<div class="po-wrt-time-text" style="font-size:11px;color:#94a3b8;">13:48:01 UTC +0</div>',
-            '</div>',
-            '<div style="font-size:10px;line-height:1.4;color:#e2e8f0;font-weight:500;text-align:center;margin:2px 0;">Stop guessing. <span style="color:#22c55e;font-weight:700;">Trade with an </span><span style="background:linear-gradient(90deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800;">edge.</span></div>',
-            '<div id="po-wrt-ring" style="position:relative !important;width:110px !important;height:110px !important;overflow:visible !important;">',
-                '<svg id="po-wrt-svg" width="110" height="110" viewBox="0 0 110 110" style="transform:rotate(-90deg) !important;display:block !important;overflow:visible !important;">',
-                    '<circle id="po-wrt-track" cx="55" cy="55" r="40" style="fill:none !important;stroke:rgba(255,255,255,0.07) !important;stroke-width:8 !important;"/>',
-                    '<circle id="po-wrt-fill" cx="55" cy="55" r="40" style="fill:none !important;stroke:#22c55e !important;stroke-width:8 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s ease,stroke 0.45s ease,filter 0.45s ease !important;" stroke-dasharray="' + CIRC.toFixed(2) + '" stroke-dashoffset="' + CIRC.toFixed(2) + '"/>',
-                '</svg>',
-                '<div id="po-wrt-pct" style="position:absolute !important;inset:0 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;">',
-                    '<div id="po-wrt-num" style="font-size:22px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;font-family:\'Fira Code\',monospace !important;">0.0%</div>',
+            
+            '<!-- Body Content (Side-by-Side Flex) -->',
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative;z-index:1;">',
+                '<!-- Left Side: Ring -->',
+                '<div id="po-wrt-ring" style="position:relative !important;width:95px !important;height:95px !important;overflow:visible !important;display:flex;align-items:center;justify-content:center;">',
+                    '<svg id="po-wrt-svg" width="95" height="95" viewBox="0 0 95 95" style="transform:rotate(-90deg) !important;display:block !important;overflow:visible !important;">',
+                        '<circle id="po-wrt-track" cx="47.5" cy="47.5" r="38" style="fill:none !important;stroke:rgba(255,255,255,0.06) !important;stroke-width:8 !important;"/>',
+                        '<circle id="po-wrt-fill" cx="47.5" cy="47.5" r="38" style="fill:none;stroke:#22c55e;stroke-width:8 !important;stroke-linecap:round !important;transition:stroke-dashoffset 0.45s ease,stroke 0.45s ease,filter 0.45s ease !important;" stroke-dasharray="238.76" stroke-dashoffset="238.76"/>',
+                    '</svg>',
+                    '<div id="po-wrt-pct" style="position:absolute !important;inset:0 !important;display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:center !important;">',
+                        '<div id="po-wrt-num" style="font-size:18px !important;font-weight:900 !important;color:#fff !important;line-height:1 !important;letter-spacing:-0.5px !important;font-family:\'Fira Code\',monospace !important;">0.0%</div>',
+                    '</div>',
+                '</div>',
+                
+                '<!-- Right Side: Stats & Asset Info -->',
+                '<div style="display:flex;flex-direction:column;gap:6px;flex:1;">',
+                    '<div style="display:flex;flex-direction:column;font-family:\'Fira Code\',monospace;">',
+                        '<div class="po-wrt-pair-text" style="font-size:11px;font-weight:800;color:#22c55e;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">EUR/USD (OTC)</div>',
+                        '<div class="po-wrt-time-text" style="font-size:9.5px;color:#64748b;margin-top:1px;">13:48:01 UTC</div>',
+                    '</div>',
+                    
+                    '<!-- W/L Counters -->',
+                    '<div id="po-wrt-wl" style="display:flex !important;gap:8px !important;margin-top:2px;">',
+                        '<div class="po-wrt-stat" style="display:flex !important;flex-direction:column !important;align-items:center !important;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);padding:4px 10px;border-radius:8px;flex:1;"><div class="po-wrt-stat-val po-wrt-w" id="po-wrt-wval" style="font-size:13px !important;font-weight:800 !important;color:#22c55e !important;font-family:\'Fira Code\',monospace !important;">0</div><div class="po-wrt-stat-lbl" style="font-size:7px !important;font-weight:600 !important;color:#94a3b8 !important;text-transform:uppercase !important;margin-top:1px;">Wins</div></div>',
+                        '<div class="po-wrt-stat" style="display:flex !important;flex-direction:column !important;align-items:center !important;background:rgba(255,69,58,0.06);border:1px solid rgba(255,69,58,0.15);padding:4px 10px;border-radius:8px;flex:1;"><div class="po-wrt-stat-val po-wrt-l" id="po-wrt-lval" style="font-size:13px !important;font-weight:800 !important;color:#ef4444 !important;font-family:\'Fira Code\',monospace !important;">0</div><div class="po-wrt-stat-lbl" style="font-size:7px !important;font-weight:600 !important;color:#94a3b8 !important;text-transform:uppercase !important;margin-top:1px;">Loss</div></div>',
+                    '</div>',
                 '</div>',
             '</div>',
-            '<div id="po-wrt-wl" style="display:flex !important;gap:12px !important;margin:2px 0 !important;">',
-                '<div class="po-wrt-stat" style="display:flex !important;flex-direction:column !important;align-items:center !important;"><div class="po-wrt-stat-val po-wrt-w" id="po-wrt-wval" style="font-size:15px !important;font-weight:800 !important;color:#22c55e !important;font-family:\'Fira Code\',monospace !important;">0</div><div class="po-wrt-stat-lbl" style="font-size:8px !important;font-weight:600 !important;color:#94a3b8 !important;text-transform:uppercase !important;">W</div></div>',
-                '<div class="po-wrt-stat" style="display:flex !important;flex-direction:column !important;align-items:center !important;"><div class="po-wrt-stat-val po-wrt-l" id="po-wrt-lval" style="font-size:15px !important;font-weight:800 !important;color:#ef4444 !important;font-family:\'Fira Code\',monospace !important;">0</div><div class="po-wrt-stat-lbl" style="font-size:8px !important;font-weight:600 !important;color:#94a3b8 !important;text-transform:uppercase !important;">L</div></div>',
+            
+            '<!-- Tagline & Buttons -->',
+            '<div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;width:100%;position:relative;z-index:1;">',
+                '<div style="font-size:9.5px;line-height:1.35;color:#e2e8f0;font-weight:500;text-align:center;">Stop guessing. <span style="color:#22c55e;font-weight:700;">Trade with an </span><span style="background:linear-gradient(90deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:800;">edge.</span></div>',
+                
+                '<div id="po-wrt-btns" style="display:flex !important;align-items:center !important;gap:4px !important;width:100% !important;justify-content:center !important;margin-top:2px;">',
+                    '<button class="po-wrt-btn win" id="po-wrt-addw" style="padding:4px 8px !important;background:rgba(34,197,94,0.12) !important;border:1px solid rgba(34,197,94,0.25) !important;color:#22c55e !important;font-size:10px !important;font-weight:700 !important;border-radius:6px !important;cursor:pointer !important;transition:all 0.15s !important;line-height:1 !important;flex:1;">+ W</button>',
+                    '<button class="po-wrt-btn loss" id="po-wrt-addl" style="padding:4px 8px !important;background:rgba(239,68,68,0.12) !important;border:1px solid rgba(239,68,68,0.25) !important;color:#ef4444 !important;font-size:10px !important;font-weight:700 !important;border-radius:6px !important;cursor:pointer !important;transition:all 0.15s !important;line-height:1 !important;flex:1;">+ L</button>',
+                    '<button class="po-wrt-btn reset" id="po-wrt-reset" style="padding:4px 8px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.08) !important;color:#94a3b8 !important;font-size:10px !important;font-weight:700 !important;border-radius:6px !important;cursor:pointer !important;transition:all 0.15s !important;line-height:1 !important;width:30px;">?</button>',
+                '</div>',
+                
+                '<div style="font-size:8.5px;font-family:\'Fira Code\',monospace;color:#22c55e;font-weight:700;text-align:center;user-select:all;margin-top:2px;letter-spacing:0.2px;">rjktrades.com</div>',
             '</div>',
-            '<div id="po-wrt-btns" style="display:flex !important;align-items:center !important;gap:6px !important;border-top:1px solid #1e293b !important;padding-top:8px !important;width:100% !important;justify-content:center !important;">',
-                '<button class="po-wrt-btn win" id="po-wrt-addw" style="padding:4px 8px !important;background:rgba(34,197,94,0.12) !important;border:1px solid rgba(34,197,94,0.25) !important;color:#22c55e !important;font-size:11px !important;font-weight:700 !important;border-radius:6px !important;cursor:pointer !important;transition:all 0.15s !important;line-height:1 !important;">+ W</button>',
-                '<button class="po-wrt-btn loss" id="po-wrt-addl" style="padding:4px 8px !important;background:rgba(239,68,68,0.12) !important;border:1px solid rgba(239,68,68,0.25) !important;color:#ef4444 !important;font-size:11px !important;font-weight:700 !important;border-radius:6px !important;cursor:pointer !important;transition:all 0.15s !important;line-height:1 !important;">+ L</button>',
-                '<button class="po-wrt-btn reset" id="po-wrt-reset" style="padding:4px 8px !important;background:rgba(255,255,255,0.05) !important;border:1px solid rgba(255,255,255,0.08) !important;color:#94a3b8 !important;font-size:11px !important;font-weight:700 !important;border-radius:6px !important;cursor:pointer !important;transition:all 0.15s !important;line-height:1 !important;">↺</button>',
-            '</div>',
-            '<div style="font-size:9px;font-family:\'Fira Code\',monospace;color:#22c55e;font-weight:700;margin-top:4px;border-top:1px solid #1e293b;padding-top:6px;width:100%;text-align:center;user-select:all;">rjktrades.com</div>',
         '</div>'
     ].join('');
 
@@ -1975,56 +2222,70 @@ function spawnWinRateTrackerAd(x, y, restored) {
     var timeInterval = setInterval(function() {
         var el = wrap.querySelector('.po-wrt-time-text');
         if (el) el.textContent = getActiveTime();
-    }, 500);
+    }, 1000);
 
     function update(writeToStorage) {
         var total = wins + losses;
-        var pct   = total === 0 ? 0 : (wins / total * 100);
+        var pct = total > 0 ? (wins / total * 100) : 0.0;
 
         var fill = wrap.querySelector('#po-wrt-fill');
         var num  = wrap.querySelector('#po-wrt-num');
         var wval = wrap.querySelector('#po-wrt-wval');
         var lval = wrap.querySelector('#po-wrt-lval');
+        var card = wrap.querySelector('#po-wrt-ad');
         if (!fill) return;
 
         fill.style.strokeDashoffset = (CIRC * (1 - pct / 100)).toFixed(2);
-        var color = pct >= 60 ? '#22c55e' : pct >= 40 ? '#eab308' : '#ef4444';
-        fill.style.stroke = color;
-        fill.style.filter = 'drop-shadow(0 0 7px ' + color + ')';
+
+        // Ring + ring glow color: <50 red, 50-56 yellow, >56 green
+        var ringColor = '#22c55e';
+        if (pct < 50) {
+            ringColor = '#ef4444';
+        } else if (pct <= 56) {
+            ringColor = '#eab308';
+        }
+        fill.setAttribute('stroke', ringColor);
+        fill.style.stroke = ringColor;
+        fill.style.filter = 'drop-shadow(0 0 8px ' + ringColor + ') drop-shadow(0 0 14px ' + ringColor + ')';
 
         num.textContent  = pct.toFixed(1) + '%';
-        num.style.color  = color;
+        num.style.color  = ringColor;
         wval.textContent = wins;
         lval.textContent = losses;
 
+        // Outer card glow always stays green — do not touch
+        if (card) {
+            card.style.setProperty('box-shadow', '0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(34,197,94,0.7), inset 0 0 12px rgba(34,197,94,0.25)', 'important');
+        }
+
         if (writeToStorage !== false) {
-            chrome.storage.local.set({ [WRT_KEY]: { wins: wins, losses: losses } });
+            if (chromeOk()) try { chrome.storage.local.set({ [WRT_KEY]: { wins: wins, losses: losses } }); } catch(e) {}
         }
     }
 
-    chrome.storage.local.get(WRT_KEY, function(d) {
-        if (d[WRT_KEY]) { wins = d[WRT_KEY].wins || 0; losses = d[WRT_KEY].losses || 0; }
-        update(false);
-    });
-
-    var storageListener = function(changes, area) {
-        if (area === 'local' && changes[WRT_KEY]) {
-            var val = changes[WRT_KEY].newValue || { wins: 0, losses: 0 };
-            if (val.wins !== wins || val.losses !== losses) {
-                wins = val.wins;
-                losses = val.losses;
-                update(false);
-            }
+    var storageListener = function(changes) {
+        if (changes[WRT_KEY] && changes[WRT_KEY].newValue) {
+            var data = changes[WRT_KEY].newValue;
+            wins = data.wins || 0;
+            losses = data.losses || 0;
+            update(false);
         }
     };
     chrome.storage.onChanged.addListener(storageListener);
+
+    chrome.storage.local.get(WRT_KEY, function(d) {
+        var data = d[WRT_KEY] || {};
+        wins = data.wins || 0;
+        losses = data.losses || 0;
+        update(false);
+    });
 
     wrap.querySelector('#po-wrt-addw').addEventListener('click',  function(e) { e.stopPropagation(); wins++;  update(); });
     wrap.querySelector('#po-wrt-addl').addEventListener('click',  function(e) { e.stopPropagation(); losses++; update(); });
     wrap.querySelector('#po-wrt-reset').addEventListener('click', function(e) {
         e.stopPropagation();
         wins = 0; losses = 0; update();
-        showPageNotif({ desc: 'win rate reset!' });
+        showPageNotif({ desc: "win rate reset!" });
     });
 
     wrap.addEventListener('dblclick', function(e) {
@@ -2049,185 +2310,320 @@ function spawnWinRateTrackerAd(x, y, restored) {
         chrome.storage.onChanged.removeListener(storageListener);
     });
 
+    var card = wrap.querySelector('#po-wrt-ad');
+    if (card) addSheenToCard(card);
     document.body.appendChild(wrap);
     return wrap;
 }
 
-// ---- PROFIT CALCULATOR SPAWN ----
-function spawnProfitCalculator(x, y, restored) {
+function spawnTradePanelOverlay(x, y, restored) {
     injectVeilElementsCSS();
-
+    
     var wrap = document.createElement('div');
     wrap.setAttribute('data-veil-overlay', '1');
-    wrap.setAttribute('data-veil-type', 'profit-calc');
+    wrap.setAttribute('data-veil-type', 'rjk-trade-panel');
+    wrap.setAttribute('data-lock-ratio', 'false');
     if (restored) wrap.setAttribute('data-veil-restored', '1');
-    wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '120px') + ';top:' + (y || '120px') + ';width:200px;background:#121b2f;border:1px solid #1e293b;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.05);overflow:hidden;color:#fff;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;';
-
+    wrap.style.cssText = 'position:fixed !important;z-index:2147483641 !important;left:' + (x || '120px') + ';top:' + (y || '120px') + ';width:240px;height:355px;';
+    
     wrap.innerHTML = [
-        '<div id="po-pc-hdr" style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#0b1120;border-bottom:1px solid #1e293b;cursor:grab;user-select:none;">',
-            '<span style="font-size:10.5px;font-weight:800;color:#fff;display:flex;align-items:center;gap:4px;">',
-                '🧮 RJK Calculator',
-            '</span>',
-            '<button id="po-pc-toggle" style="background:none;border:none;color:#94a3b8;font-size:10px;cursor:pointer;padding:2px 4px;outline:none;">▲</button>',
-        '</div>',
-        '<div id="po-pc-body" style="padding:8px 10px;display:flex;flex-direction:column;gap:6px;">',
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Bal ($)</div>',
-                    '<input type="number" id="po-pc-in-bal" value="1000" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:9.5px;font-family:\'Fira Code\',monospace;padding:3px 4px;border-radius:4px;outline:none;" />',
+        '<div id="po-trade-panel-card" style="background:#0b1120;border:1px solid #1e293b;border-radius:16px;padding:14px;font-family:\'Fira Sans\',-apple-system,BlinkMacSystemFont,sans-serif;width:100%;height:100%;box-shadow:0 10px 25px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.15);display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;box-sizing:border-box;">',
+            '<!-- Header -->',
+            '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:6px;width:100%;flex-shrink:0;">',
+                '<div style="display:flex;align-items:center;gap:6px;">',
+                    '<svg width="18" height="18" viewBox="0 0 32 32" fill="none" style="flex-shrink:0;">',
+                        '<path d="M6 21 L12 13 L17 18 L26 7" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+                        '<circle cx="26" cy="7" r="2.4" fill="#22c55e"/>',
+                    '</svg>',
+                    '<span style="font-size:12px;font-weight:800;letter-spacing:-0.2px;color:#fff;">RJK <span style="color:#22c55e;">Signals</span></span>',
                 '</div>',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Target (%)</div>',
-                    '<input type="number" id="po-pc-in-tgt" value="10" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:9.5px;font-family:\'Fira Code\',monospace;padding:3px 4px;border-radius:4px;outline:none;" />',
-                '</div>',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Risk (%)</div>',
-                    '<input type="number" id="po-pc-in-risk" value="2" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:9.5px;font-family:\'Fira Code\',monospace;padding:3px 4px;border-radius:4px;outline:none;" />',
-                '</div>',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Payout (%)</div>',
-                    '<input type="number" id="po-pc-in-pay" value="80" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:9.5px;font-family:\'Fira Code\',monospace;padding:3px 4px;border-radius:4px;outline:none;" />',
-                '</div>',
-                '<div style="grid-column: span 2;">',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:2px;font-weight:700;">Max MG Steps</div>',
-                    '<input type="number" id="po-pc-in-steps" value="5" style="width:100%;background:#0b1120;border:1px solid #1e293b;color:#fff;font-size:9.5px;font-family:\'Fira Code\',monospace;padding:3px 4px;border-radius:4px;outline:none;" />',
-                '</div>',
+                '<span style="font-size:9px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:6px;padding:1px 6px;text-transform:uppercase;letter-spacing:0.5px;font-family:\'Fira Code\',monospace;">v2</span>',
             '</div>',
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#0b1120;padding:6px;border-radius:6px;border:1px solid #1e293b;">',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:1px;font-weight:700;">Base Stake</div>',
-                    '<div id="po-pc-out-stake" style="font-size:10px;font-weight:800;color:#fff;font-family:\'Fira Code\',monospace;">$20.00</div>',
+            
+            '<!-- Body/Fields -->',
+            '<div style="display:flex;flex-direction:column;gap:8px;flex:1;overflow:hidden;justify-content:space-between;">',
+                '<!-- Time block -->',
+                '<div style="display:flex;flex-direction:column;gap:4px;">',
+                    '<span style="font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Time</span>',
+                    '<div style="position:relative;display:flex;align-items:center;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 10px;height:36px;box-sizing:border-box;">',
+                        '<input id="po-tp-time" type="text" value="00:01:00" style="background:transparent;border:none;color:#fff;font-family:\'Fira Code\',monospace;font-size:13px;font-weight:700;width:100%;outline:none;padding:0;">',
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:10px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+                    '</div>',
                 '</div>',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:1px;font-weight:700;">Profit/Win</div>',
-                    '<div id="po-pc-out-profit" style="font-size:10px;font-weight:800;color:#22c55e;font-family:\'Fira Code\',monospace;">$16.00</div>',
+                
+                '<!-- Amount block -->',
+                '<div style="display:flex;flex-direction:column;gap:4px;">',
+                    '<span style="font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Amount</span>',
+                    '<div style="position:relative;display:flex;align-items:center;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 10px;height:36px;box-sizing:border-box;">',
+                        '<input id="po-tp-amount" type="text" value="2" style="background:transparent;border:none;color:#fff;font-family:\'Fira Code\',monospace;font-size:13px;font-weight:700;width:100%;outline:none;padding:0;">',
+                        '<span style="font-family:\'Fira Sans\',sans-serif;font-size:13px;color:#94a3b8;font-weight:700;position:absolute;right:10px;">$</span>',
+                    '</div>',
                 '</div>',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:1px;font-weight:700;">Wins Target</div>',
-                    '<div id="po-pc-out-wins" style="font-size:10px;font-weight:800;color:#22c55e;font-family:\'Fira Code\',monospace;">7</div>',
+                
+                '<!-- Payout block -->',
+                '<div style="display:flex;flex-direction:column;gap:4px;">',
+                    '<span style="font-size:11px;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Payout</span>',
+                    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(34,197,94,0.04);border:1px dashed rgba(34,197,94,0.25);border-radius:8px;padding:6px;height:42px;box-sizing:border-box;gap:2px;">',
+                        '<div id="po-tp-payout-pct" style="color:#22c55e;font-size:12px;font-weight:800;font-family:\'Fira Code\',monospace;">+0%</div>',
+                        '<div id="po-tp-payout-val" style="color:#22c55e;font-size:10px;font-weight:700;font-family:\'Fira Code\',monospace;">+$0.00</div>',
+                    '</div>',
                 '</div>',
-                '<div>',
-                    '<div style="font-size:7px;color:#94a3b8;text-transform:uppercase;margin-bottom:1px;font-weight:700;">Drawdown</div>',
-                    '<div id="po-pc-out-dd" style="font-size:10px;font-weight:800;color:#ef4444;font-family:\'Fira Code\',monospace;">$906.64</div>',
+                
+                '<!-- Buttons -->',
+                '<div style="display:flex;flex-direction:column;gap:6px;margin-top:2px;">',
+                    '<button id="po-tp-buy" style="background:#22c55e;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:800;text-transform:uppercase;padding:8px 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;height:34px;box-shadow:0 4px 12px rgba(34,197,94,0.3);transition:all 0.15s;outline:none;">',
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>',
+                        'Buy',
+                    '</button>',
+                    '<button id="po-tp-sell" style="background:#ef4444;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:800;text-transform:uppercase;padding:8px 12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;height:34px;box-shadow:0 4px 12px rgba(239,68,68,0.3);transition:all 0.15s;outline:none;">',
+                        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>',
+                        'Sell',
+                    '</button>',
                 '</div>',
-            '</div>',
-            '<div id="po-pc-table-wrap" style="max-height:80px;overflow-y:auto;border:1px solid #1e293b;border-radius:6px;background:#0b1120;">',
-                '<table style="width:100%;border-collapse:collapse;font-size:8.5px;text-align:left;">',
-                    '<thead>',
-                        '<tr style="border-bottom:1px solid #1e293b;background:#121b2f;">',
-                            '<th style="padding:3px;color:#94a3b8;font-weight:700;">St.</th>',
-                            '<th style="padding:3px;color:#94a3b8;font-weight:700;">Stake</th>',
-                            '<th style="padding:3px;color:#22c55e;font-weight:700;">Net Win</th>',
-                            '<th style="padding:3px;color:#ef4444;font-weight:700;">Cum. Risk</th>',
-                        '</tr>',
-                    '</thead>',
-                    '<tbody id="po-pc-table-body" style="font-family:\'Fira Code\',monospace;color:#e2e8f0;">',
-                    '</tbody>',
-                '</table>',
             '</div>',
         '</div>'
     ].join('');
-
-    var body = wrap.querySelector('#po-pc-body');
-    var toggleBtn = wrap.querySelector('#po-pc-toggle');
-    var inBal = wrap.querySelector('#po-pc-in-bal');
-    var inTgt = wrap.querySelector('#po-pc-in-tgt');
-    var inRisk = wrap.querySelector('#po-pc-in-risk');
-    var inPay = wrap.querySelector('#po-pc-in-pay');
-    var inSteps = wrap.querySelector('#po-pc-in-steps');
-
-    var outStake = wrap.querySelector('#po-pc-out-stake');
-    var outProfit = wrap.querySelector('#po-pc-out-profit');
-    var outWins = wrap.querySelector('#po-pc-out-wins');
-    var outDd = wrap.querySelector('#po-pc-out-dd');
-    var tableBody = wrap.querySelector('#po-pc-table-body');
-
-    var PC_SETTINGS_KEY = 'po_pc_settings';
-    var PC_MINIMIZED_KEY = 'po_pc_minimized';
-
-    function recalculate() {
-        var balance = parseFloat(inBal.value) || 1000;
-        var dailyTarget = parseFloat(inTgt.value) || 10;
-        var risk = parseFloat(inRisk.value) || 2;
-        var payout = parseFloat(inPay.value) || 80;
-        var maxSteps = parseInt(inSteps.value) || 5;
-
-        var baseStake = balance * (risk / 100);
-        var profitWin = baseStake * (payout / 100);
-        var targetAmt = balance * (dailyTarget / 100);
-        var winsToHit = profitWin > 0 ? Math.ceil(targetAmt / profitWin) : 0;
-
-        var tableHtml = '';
-        var prevCumRisk = 0;
-        for (var k = 1; k <= maxSteps; k++) {
-            var stake = (profitWin + prevCumRisk) / (payout / 100);
-            var cumRisk = prevCumRisk + stake;
-            tableHtml += '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">' +
-                '<td style="padding:3px;">' + k + '</td>' +
-                '<td style="padding:3px;font-weight:700;">$' + stake.toFixed(2) + '</td>' +
-                '<td style="padding:3px;color:#22c55e;">+$' + profitWin.toFixed(2) + '</td>' +
-                '<td style="padding:3px;color:#ef4444;">$' + cumRisk.toFixed(2) + '</td>' +
-            '</tr>';
-            prevCumRisk = cumRisk;
+    
+    var timeEl = wrap.querySelector('#po-tp-time');
+    var amountEl = wrap.querySelector('#po-tp-amount');
+    var payoutPctEl = wrap.querySelector('#po-tp-payout-pct');
+    var payoutValEl = wrap.querySelector('#po-tp-payout-val');
+    var buyBtn = wrap.querySelector('#po-tp-buy');
+    var sellBtn = wrap.querySelector('#po-tp-sell');
+    var card = wrap.querySelector('#po-trade-panel-card');
+    
+    function setReactInputValue(element, value) {
+        if (!element) return;
+        try {
+            var valueSetter = Object.getOwnPropertyDescriptor(element, 'value')?.set;
+            var prototype = Object.getPrototypeOf(element);
+            var prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+            
+            if (prototypeValueSetter && valueSetter !== prototypeValueSetter) {
+                prototypeValueSetter.call(element, value);
+            } else if (valueSetter) {
+                valueSetter.call(element, value);
+            } else {
+                element.value = value;
+            }
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+            element.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Enter' }));
+        } catch(e) {
+            element.value = value;
+            element.dispatchEvent(new Event('input', { bubbles: true }));
         }
-
-        outStake.textContent = '$' + baseStake.toFixed(2);
-        outProfit.textContent = '$' + profitWin.toFixed(2);
-        outWins.textContent = winsToHit;
-        outDd.textContent = '$' + prevCumRisk.toFixed(2);
-        tableBody.innerHTML = tableHtml;
-
-        chrome.storage.local.set({ [PC_SETTINGS_KEY]: {
-            balance: balance,
-            dailyTarget: dailyTarget,
-            risk: risk,
-            payout: payout,
-            maxSteps: maxSteps
-        }});
     }
-
-    var minimized = false;
-    function setMinimized(min) {
-        minimized = min;
-        body.style.display = minimized ? 'none' : 'flex';
-        toggleBtn.textContent = minimized ? '▼' : '▲';
-        chrome.storage.local.set({ [PC_MINIMIZED_KEY]: minimized });
+    
+    function getPOElements() {
+        var elements = {
+            timeInput: null,
+            amountInput: null,
+            payoutPercent: null,
+            payoutValue: null,
+            buyBtn: null,
+            sellBtn: null
+        };
+        
+        elements.buyBtn = document.querySelector('.btn-call, [data-action="call"], .call-btn, .btn-green, .js-bet-call, button.green, button.success');
+        elements.sellBtn = document.querySelector('.btn-put, [data-action="put"], .put-btn, .btn-red, .js-bet-put, button.red, button.danger');
+        
+        if (!elements.buyBtn || !elements.sellBtn) {
+            var allBtns = Array.from(document.querySelectorAll('button, a, div'));
+            allBtns.forEach(btn => {
+                var txt = btn.textContent.trim().toUpperCase();
+                if (txt.includes('BUY') || txt.includes('HIGHER') || txt.includes('CALL')) {
+                    if (btn.offsetWidth > 0 && btn.offsetHeight > 0) elements.buyBtn = btn;
+                } else if (txt.includes('SELL') || txt.includes('LOWER') || txt.includes('PUT')) {
+                    if (btn.offsetWidth > 0 && btn.offsetHeight > 0) elements.sellBtn = btn;
+                }
+            });
+        }
+        
+        // Find Inputs using text content search
+        var allElements = Array.from(document.querySelectorAll('div, span, label, p, h1, h2, h3, h4, h5, h6'));
+        
+        // Time Input
+        var timeLabel = null;
+        for (var i = 0; i < allElements.length; i++) {
+            var el = allElements[i];
+            if (el.childNodes.length === 1 && el.textContent.trim().toLowerCase() === 'time') {
+                timeLabel = el;
+                break;
+            }
+        }
+        if (timeLabel) {
+            var parent = timeLabel.parentElement;
+            var count = 0;
+            while (parent && parent !== document.body && count < 3) {
+                var inp = parent.querySelector('input');
+                if (inp) {
+                    elements.timeInput = inp;
+                    break;
+                }
+                parent = parent.parentElement;
+                count++;
+            }
+        }
+        if (!elements.timeInput) {
+            elements.timeInput = document.querySelector('input[name="time"], .quick-deal__time input, .quick-deal__duration input, .expiration-value, .timer-value, .js-bet-time, input.js-time-value');
+        }
+        
+        // Amount Input
+        var amountLabel = null;
+        for (var i = 0; i < allElements.length; i++) {
+            var el = allElements[i];
+            if (el.childNodes.length === 1 && el.textContent.trim().toLowerCase() === 'amount') {
+                amountLabel = el;
+                break;
+            }
+        }
+        if (amountLabel) {
+            var parent = amountLabel.parentElement;
+            var count = 0;
+            while (parent && parent !== document.body && count < 3) {
+                var inp = parent.querySelector('input');
+                if (inp) {
+                    elements.amountInput = inp;
+                    break;
+                }
+                parent = parent.parentElement;
+                count++;
+            }
+        }
+        if (!elements.amountInput) {
+            elements.amountInput = document.querySelector('input[name="amount"], input.js-amount-value, .trade-amount__input, .js-bet-amount, .quick-deal__bet-input, .quick-deal__amount input');
+        }
+        
+        // Payout Percentage and Value
+        var payoutLabel = null;
+        for (var i = 0; i < allElements.length; i++) {
+            var el = allElements[i];
+            if (el.childNodes.length === 1 && el.textContent.trim().toLowerCase() === 'payout') {
+                payoutLabel = el;
+                break;
+            }
+        }
+        if (payoutLabel) {
+            var parent = payoutLabel.parentElement;
+            var count = 0;
+            while (parent && parent !== document.body && count < 3) {
+                var children = Array.from(parent.querySelectorAll('div, span, p, font, b, strong, td'));
+                children.forEach(child => {
+                    var txt = child.textContent.trim();
+                    if (txt.includes('%') && txt.length < 8) {
+                        elements.payoutPercent = child;
+                    }
+                    if (txt.includes('$') && (txt.includes('+') || txt.includes('-') || !isNaN(parseFloat(txt.replace(/[^0-9.]/g, '')))) && txt.length < 15) {
+                        elements.payoutValue = child;
+                    }
+                });
+                if (elements.payoutPercent && elements.payoutValue) break;
+                parent = parent.parentElement;
+                count++;
+            }
+        }
+        if (!elements.payoutPercent) {
+            elements.payoutPercent = document.querySelector('.profit-percent, .payout-percent, .quick-deal__payout-percent, .profit__percent');
+        }
+        if (!elements.payoutValue) {
+            elements.payoutValue = document.querySelector('.profit-value, .payout-value, .quick-deal__payout-value, .profit__value');
+        }
+        
+        return elements;
     }
-
-    toggleBtn.addEventListener('click', function(e) {
+    
+    function update() {
+        var po = getPOElements();
+        
+        // Sync Time (only if user is not typing)
+        if (po.timeInput && document.activeElement !== timeEl) {
+            var val = po.timeInput.value !== undefined ? po.timeInput.value : po.timeInput.textContent;
+            val = (val || '').trim();
+            if (val && timeEl.value !== val) {
+                timeEl.value = val;
+            }
+        }
+        
+        // Sync Amount (only if user is not typing)
+        if (po.amountInput && document.activeElement !== amountEl) {
+            var val = po.amountInput.value !== undefined ? po.amountInput.value : po.amountInput.textContent;
+            val = (val || '').trim();
+            if (val && amountEl.value !== val) {
+                amountEl.value = val;
+            }
+        }
+        
+        // Sync Payout
+        if (po.payoutPercent) {
+            var pctText = po.payoutPercent.textContent.trim();
+            if (pctText && payoutPctEl.textContent !== pctText) {
+                payoutPctEl.textContent = pctText;
+            }
+        }
+        if (po.payoutValue) {
+            var valText = po.payoutValue.textContent.trim();
+            if (valText && payoutValEl.textContent !== valText) {
+                payoutValEl.textContent = valText;
+            }
+        } else if (po.payoutPercent && po.amountInput) {
+            // Manual calculate fallback
+            var amt = parseFloat(amountEl.value);
+            var pct = parseFloat(payoutPctEl.textContent.replace(/[^0-9.]/g, ''));
+            if (!isNaN(amt) && !isNaN(pct)) {
+                var pVal = amt * (pct / 100);
+                payoutValEl.textContent = '+$' + pVal.toFixed(2);
+            }
+        }
+    }
+    
+    function syncTimeOut() {
+        var po = getPOElements();
+        if (po.timeInput) {
+            setReactInputValue(po.timeInput, timeEl.value);
+        }
+    }
+    timeEl.addEventListener('input', syncTimeOut);
+    timeEl.addEventListener('change', syncTimeOut);
+    
+    function syncAmountOut() {
+        var po = getPOElements();
+        if (po.amountInput) {
+            setReactInputValue(po.amountInput, amountEl.value);
+        }
+    }
+    amountEl.addEventListener('input', syncAmountOut);
+    amountEl.addEventListener('change', syncAmountOut);
+    
+    buyBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        setMinimized(!minimized);
-    });
-
-    var inputs = [inBal, inTgt, inRisk, inPay, inSteps];
-    inputs.forEach(function(input) {
-        input.addEventListener('input', recalculate);
-        input.addEventListener('change', recalculate);
-    });
-
-    chrome.storage.local.get([PC_SETTINGS_KEY, PC_MINIMIZED_KEY], function(d) {
-        if (d[PC_SETTINGS_KEY]) {
-            var s = d[PC_SETTINGS_KEY];
-            inBal.value = s.balance !== undefined ? s.balance : 1000;
-            inTgt.value = s.dailyTarget !== undefined ? s.dailyTarget : 10;
-            inRisk.value = s.risk !== undefined ? s.risk : 2;
-            inPay.value = s.payout !== undefined ? s.payout : 80;
-            inSteps.value = s.maxSteps !== undefined ? s.maxSteps : 5;
-        }
-        recalculate();
-        if (d[PC_MINIMIZED_KEY] !== undefined) {
-            setMinimized(!!d[PC_MINIMIZED_KEY]);
+        var po = getPOElements();
+        if (po.buyBtn) {
+            po.buyBtn.click();
+            showPageNotif({ desc: "Buy trade executed!" });
+        } else {
+            showPageNotif({ desc: "Could not find BUY button on page!" });
         }
     });
-
+    
+    sellBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var po = getPOElements();
+        if (po.sellBtn) {
+            po.sellBtn.click();
+            showPageNotif({ desc: "Sell trade executed!" });
+        } else {
+            showPageNotif({ desc: "Could not find SELL button on page!" });
+        }
+    });
+    
     wrap.addEventListener('dblclick', function(e) {
-        if (e.target.closest && (e.target.closest('input') || e.target.closest('button') || e.target.closest('table'))) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
         wrap.parentNode.removeChild(wrap);
     });
-
+    
     wrap.addEventListener('mousedown', function(e) {
-        if (e.target.closest && (e.target.closest('input') || e.target.closest('button') || e.target.closest('table') || e.target.closest('#po-pc-table-wrap'))) return;
-        if (e.target.getAttribute && e.target.getAttribute('contenteditable')) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
         e.preventDefault();
         var sx = e.clientX - wrap.offsetLeft, sy = e.clientY - wrap.offsetTop;
         function onMove(ev) { wrap.style.left = (ev.clientX - sx) + 'px'; wrap.style.top = (ev.clientY - sy) + 'px'; }
@@ -2235,11 +2631,16 @@ function spawnProfitCalculator(x, y, restored) {
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
     });
-
+    
+    var syncInterval = setInterval(update, 200);
+    wrap.addEventListener('DOMNodeRemovedFromDocument', function() {
+        clearInterval(syncInterval);
+    });
+    
+    if (card) addSheenToCard(card);
     document.body.appendChild(wrap);
     return wrap;
 }
-
 
 function buildElementsPanel() {
     if (document.getElementById('po-vel-panel')) return;
@@ -2261,7 +2662,7 @@ function buildElementsPanel() {
     });
 
     var cats = ['All'].concat([...new Set(VEIL_ELEMENTS.map(function(e) { return e.cat; }))]);
-    var activeCat = 'All';
+    var activeCat = 'Streaming';
 
     panel.innerHTML =
         '<div id="po-vel-hdr">Add Elements</div>' +
@@ -2270,7 +2671,7 @@ function buildElementsPanel() {
             cats.map(function(c) {
                 var isStreaming = c === 'Streaming';
                 var style = isStreaming ? ' style="border-color:#22c55e !important;color:#22c55e !important;box-shadow:0 0 10px rgba(34,197,94,0.4) !important;font-size:10px !important;padding:3px 10px !important;font-weight:700 !important;"' : '';
-                return '<button class="po-vel-cat' + (c === 'All' ? ' active' : '') + '" data-cat="' + c + '"' + style + '>' + c + '</button>';
+                return '<button class="po-vel-cat' + (c === 'Streaming' ? ' active' : '') + '" data-cat="' + c + '"' + style + '>' + c + '</button>';
             }).join('') +
         '</div>' +
         '<div id="po-vel-list"></div>';
@@ -2298,10 +2699,12 @@ function buildElementsPanel() {
                 if (!def) return;
                 if (id === 'win-rate-tracker') {
                     spawnWinRateTracker('120px', '120px', false);
-                } else if (id === 'winrate-v2-ad') {
+                } else if (id === 'winrate-v3-ad') {
                     spawnWinRateTrackerAd('120px', '120px', false);
-                } else if (id === 'profit-calc') {
-                    spawnProfitCalculator('120px', '120px', false);
+                } else if (id === 'rjk-daily-target') {
+                    spawnDailyTarget('120px', '120px', false);
+                } else if (id === 'rjk-trade-panel') {
+                    spawnTradePanelOverlay('120px', '120px', false);
                 } else {
                     spawnVeilElement(def, '120px', '120px', false);
                 }
@@ -2310,7 +2713,7 @@ function buildElementsPanel() {
         });
     }
 
-    renderList('', 'All');
+    renderList('', activeCat);
 
     document.getElementById('po-vel-search').addEventListener('input', function() {
         renderList(this.value, activeCat);
@@ -2406,7 +2809,7 @@ edStop = function() {
 // -- UPDATE NOTIFIER ------------------------------------------------------
 // =========================================================================
 
-var VEIL_CURRENT_VERSION = '2.6.20';
+var VEIL_CURRENT_VERSION = '2.7.0';
 
 // Disabled update available banner as requested
 function showUpdateBanner(currentVersion, latestVersion) {}
@@ -2418,12 +2821,12 @@ function checkForUpdate() {}
 // EDIT THIS OBJECT TO CUSTOMIZE THE CHANGELOG POPUP
 // ============================================================
 var CHANGELOG = {
-    version: '2.6.20',
+    version: '2.7.0',
 
-    title: '2.6.20 - FINAL BETA TEST',
-    subtitle: 'aaaa',
+    title: 'welcome to v2.7.0 | final release',
+    subtitle: '',
 
-    image: '',
+    image: 'changelog-banner.webp',
 
     // 'bullets' | 'text' | 'links' | 'none'
     mode: 'bullets',
@@ -2698,15 +3101,17 @@ function renderChangelogPopup(version, bodyHTML, imgHTML) {
 
 
 function maybeShowChangelog() {
-    chrome.storage.local.get(CL_KEY, function(d) {
-        if (chrome.runtime.lastError) return;
-        if ((d[CL_KEY] || '') !== CHANGELOG.version) {
-            setTimeout(showChangelog, 1200);
-        } else {
-            showPageNotif({ title: 'pocket option config', desc: 'Extension active: v' + CHANGELOG.version });
-            setTimeout(checkForUpdate, 2000);
-        }
-    });
+    if (!chromeOk()) return;
+    try {
+        chrome.storage.local.get(CL_KEY, function(d) {
+            if (chrome.runtime.lastError) return;
+            if ((d[CL_KEY] || '') !== CHANGELOG.version) {
+                setTimeout(showChangelog, 1200);
+            } else {
+                setTimeout(checkForUpdate, 2000);
+            }
+        });
+    } catch(e) { /* extension context invalidated — ignore */ }
 }
 
 if (window.location.href.indexOf('pocketoption.com') !== -1) {
@@ -2724,3 +3129,13 @@ chrome.runtime.onMessage.addListener(function(msg) {
 });
 
 })();
+
+function addSheenToCard(card) {
+    if (!card) return;
+    card.classList.add('po-streaming-card');
+    if (card.querySelector('.po-sheen-bg')) return;
+    card.style.setProperty('position', 'relative', 'important');
+    var bg = document.createElement('div');
+    bg.className = 'po-sheen-bg';
+    card.insertBefore(bg, card.firstChild);
+}
